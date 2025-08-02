@@ -1,0 +1,67 @@
+# Genesis Tool Configuration
+# Default settings for genesis generation
+
+# Output directory for generated configs
+outputDir: ./configs
+
+# Default network settings
+defaults:
+  gasLimit: 30000000
+  difficulty: 1
+  
+# Network presets
+networks:
+  lux-mainnet:
+    chainId: 96369
+    validators: 21
+    consensusTime: 9630  # ms
+    
+  lux-testnet:
+    chainId: 96368
+    validators: 11
+    consensusTime: 6300  # ms
+    
+  zoo-mainnet:
+    chainId: 200200
+    baseChain: lux
+    type: l2
+    
+  zoo-testnet:
+    chainId: 200201
+    baseChain: lux
+    type: l2
+    
+  quantum-mainnet:
+    chainId: 369369
+    validators: 7
+    consensusMode: quantum-byzantine
+
+# Validator presets
+validators:
+  mainnet:
+    - address: "0x1234567890123456789012345678901234567890"
+      weight: 100
+    - address: "0x2345678901234567890123456789012345678901"
+      weight: 100
+    - address: "0x3456789012345678901234567890123456789012"
+      weight: 100
+      
+  testnet:
+    - address: "0x4567890123456789012345678901234567890123"
+      weight: 50
+    - address: "0x5678901234567890123456789012345678901234"
+      weight: 50
+
+# Standard allocations
+allocations:
+  treasury:
+    address: "0x1000000000000000000000000000000000000000"
+    balance: "1000000000000000000000000000"  # 1B tokens
+    
+  development:
+    address: "0x2000000000000000000000000000000000000000"
+    balance: "500000000000000000000000000"   # 500M tokens
+    
+  ecosystem:
+    address: "0x3000000000000000000000000000000000000000"
+    balance: "300000000000000000000000000"   # 300M tokens

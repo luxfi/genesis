@@ -1,0 +1,53 @@
+# Binary outputs
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# State data (cloned on-demand)
+state/
+chaindata/
+
+# Test outputs
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependency directories
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Generated genesis files (keep configs directory but not contents)
+configs/*.json
+!configs/.gitkeep
+
+# Output directories
+output/
+dist/
+
+# Go build cache
+go.sum.backup
