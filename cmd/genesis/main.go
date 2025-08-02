@@ -118,6 +118,114 @@ func initConfig() {
 	}
 }
 
+// Command getters for plugin system
+
+func getConsensusCmd() *cobra.Command {
+	consensusCmd := &cobra.Command{
+		Use:   "consensus",
+		Short: "Manage consensus parameters",
+		Long:  "View and manage consensus parameters for all supported chains",
+	}
+
+	// List consensus params
+	listConsensusCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List consensus parameters for all chains",
+		Run:   runListConsensus,
+	}
+
+	// Show specific chain consensus
+	showConsensusCmd := &cobra.Command{
+		Use:   "show [network]",
+		Short: "Show consensus parameters for a specific network",
+		Args:  cobra.ExactArgs(1),
+		Run:   runShowConsensus,
+	}
+
+	// Update consensus params
+	updateConsensusCmd := &cobra.Command{
+		Use:   "update [network]",
+		Short: "Update consensus parameters for a network",
+		Args:  cobra.ExactArgs(1),
+		Run:   runUpdateConsensus,
+	}
+
+	consensusCmd.AddCommand(listConsensusCmd, showConsensusCmd, updateConsensusCmd)
+	return consensusCmd
+}
+
+func getPipelineCmd() *cobra.Command {
+	pipelineCmd := &cobra.Command{
+		Use:   "pipeline",
+		Short: "Run full genesis pipeline",
+		Long:  "Execute the complete pipeline from cloning state to importing into node",
+	}
+
+	// Full pipeline
+	fullCmd := &cobra.Command{
+		Use:   "full [network]",
+		Short: "Run full pipeline for a network",
+		Args:  cobra.ExactArgs(1),
+		Run:   runFullPipeline,
+	}
+
+	// Individual steps
+	cloneCmd := &cobra.Command{
+		Use:   "clone",
+		Short: "Clone state repository",
+		Run:   runCloneState,
+	}
+
+	processCmd := &cobra.Command{
+		Use:   "process [network]",
+		Short: "Process chaindata into ancient store format",
+		Args:  cobra.ExactArgs(1),
+		Run:   runProcessChaindata,
+	}
+
+	importCmd := &cobra.Command{
+		Use:   "import [network]",
+		Short: "Import processed data into node",
+		Args:  cobra.ExactArgs(1),
+		Run:   runImportToNode,
+	}
+
+	pipelineCmd.AddCommand(fullCmd, cloneCmd, processCmd, importCmd)
+	return pipelineCmd
+}
+
+func getStateCmd() *cobra.Command {
+	stateCmd := &cobra.Command{
+		Use:   "state",
+		Short: "Manage state repository",
+		Long:  "Clone, update, and manage historic chaindata from state repository",
+	}
+
+	// Clone state
+	cloneStateCmd := &cobra.Command{
+		Use:   "clone",
+		Short: "Clone state repository",
+		Run:   runCloneState,
+	}
+
+	// Update state
+	updateStateCmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update cloned state repository",
+		Run:   runUpdateState,
+	}
+
+	// Clean state
+	cleanStateCmd := &cobra.Command{
+		Use:   "clean",
+		Short: "Remove cloned state data",
+		Run:   runCleanState,
+	}
+
+	stateCmd.AddCommand(cloneStateCmd, updateStateCmd, cleanStateCmd)
+	return stateCmd
+}
+
 // Genesis configuration structures
 type GenesisConfig struct {
 	ChainID        uint64                       `json:"chainId"`
