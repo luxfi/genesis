@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -266,7 +265,19 @@ type QuantumConfig struct {
 }
 
 func runGenerate(cmd *cobra.Command, args []string) {
-	fmt.Printf("Generating %s genesis configuration for %s...\n", chainType, network)
+	// Check if network matches a known chain
+	if info, exists := consensus.GetChainInfo(network); exists {
+		chainID = info.ChainID
+		chainType = info.Type
+		if info.BaseChain != "" {
+			baseChain = info.BaseChain
+		}
+		
+		fmt.Printf("Generating %s genesis for %s (Chain ID: %d)...\n", 
+			chainType, info.Name, chainID)
+	} else {
+		fmt.Printf("Generating %s genesis configuration for %s...\n", chainType, network)
+	}
 
 	config := &GenesisConfig{
 		ChainID:    chainID,
@@ -278,22 +289,9 @@ func runGenerate(cmd *cobra.Command, args []string) {
 		Alloc:      make(map[string]GenesisAccount),
 	}
 
-	// Set default chain IDs if not specified
+	// Set default chain ID if not specified and not a known network
 	if chainID == 0 {
-		switch network {
-		case "lux-mainnet":
-			config.ChainID = 96369
-		case "lux-testnet":
-			config.ChainID = 96368
-		case "zoo-mainnet":
-			config.ChainID = 200200
-		case "zoo-testnet":
-			config.ChainID = 200201
-		case "quantum-mainnet":
-			config.ChainID = 369369
-		default:
-			config.ChainID = 1337 // Default for custom networks
-		}
+		config.ChainID = 1337 // Default for custom networks
 	}
 
 	// Configure based on chain type
@@ -571,7 +569,7 @@ func runListConsensus(cmd *cobra.Command, args []string) {
 	fmt.Println("Consensus Parameters for All Chains:")
 	fmt.Println("=====================================")
 	
-	for network, info := range consensus.AllChains {
+	for _, info := range consensus.AllChains {
 		fmt.Printf("\n%s (Chain ID: %d)\n", info.Name, info.ChainID)
 		fmt.Printf("  Type: %s\n", info.Type)
 		if info.BaseChain != "" {
@@ -756,22 +754,3 @@ func runImportToNode(cmd *cobra.Command, args []string) {
 	fmt.Printf("Node data directory: %s\n", targetPath)
 }
 
-// Update generate function to use chain info
-func runGenerateUpdated(cmd *cobra.Command, args []string) {
-	// Check if network matches a known chain
-	if info, exists := consensus.GetChainInfo(network); exists {
-		chainID = info.ChainID
-		chainType = info.Type
-		if info.BaseChain != "" {
-			baseChain = info.BaseChain
-		}
-		
-		fmt.Printf("Generating %s genesis for %s (Chain ID: %d)...\n", 
-			chainType, info.Name, chainID)
-	} else {
-		fmt.Printf("Generating %s genesis configuration for %s...\n", chainType, network)
-	}
-	
-	// Continue with existing generate logic
-	runGenerate(cmd, args)
-}

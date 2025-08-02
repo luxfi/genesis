@@ -100,18 +100,36 @@ gen-l3:
 	@echo "Generating L3 genesis configuration..."
 	$(BUILD_DIR)/$(BINARY_NAME) generate --type l3 --network custom --base-chain zoo
 
-# Quick commands for common operations
+# Quick commands for all 8 chains
 lux-mainnet:
-	$(BUILD_DIR)/$(BINARY_NAME) generate --type l1 --network lux-mainnet --chain-id 96369
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network lux-mainnet
 
 lux-testnet:
-	$(BUILD_DIR)/$(BINARY_NAME) generate --type l1 --network lux-testnet --chain-id 96368
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network lux-testnet
+
+lux-local:
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network lux-local
 
 zoo-mainnet:
-	$(BUILD_DIR)/$(BINARY_NAME) generate --type l2 --network zoo-mainnet --chain-id 200200 --base-chain lux
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network zoo-mainnet
 
 zoo-testnet:
-	$(BUILD_DIR)/$(BINARY_NAME) generate --type l2 --network zoo-testnet --chain-id 200201 --base-chain lux
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network zoo-testnet
+
+spc-mainnet:
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network spc-mainnet
+
+spc-testnet:
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network spc-testnet
+
+hanzo-mainnet:
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network hanzo-mainnet
+
+hanzo-testnet:
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network hanzo-testnet
+
+# Generate all chains
+gen-all: lux-mainnet lux-testnet zoo-mainnet zoo-testnet spc-mainnet spc-testnet hanzo-mainnet hanzo-testnet
 
 # Launch commands
 launch-l1:
@@ -129,11 +147,35 @@ launch-l3:
 # Quantum chain specific targets
 quantum-genesis:
 	@echo "Generating quantum chain genesis..."
-	$(BUILD_DIR)/$(BINARY_NAME) generate --type quantum --network quantum-mainnet
+	$(BUILD_DIR)/$(BINARY_NAME) generate --network quantum-mainnet
 
 quantum-launch:
 	@echo "Launching quantum chain..."
 	$(BUILD_DIR)/$(BINARY_NAME) launch --type quantum --config $(CONFIG_DIR)/quantum-genesis.json
+
+# Pipeline commands
+pipeline-lux:
+	$(BUILD_DIR)/$(BINARY_NAME) pipeline full lux-mainnet
+
+pipeline-zoo:
+	$(BUILD_DIR)/$(BINARY_NAME) pipeline full zoo-mainnet
+
+pipeline-all: build
+	@for network in lux-mainnet zoo-mainnet spc-mainnet hanzo-mainnet; do \
+		echo "Running pipeline for $$network..."; \
+		$(BUILD_DIR)/$(BINARY_NAME) pipeline full $$network || exit 1; \
+	done
+
+# Consensus management
+consensus-list:
+	$(BUILD_DIR)/$(BINARY_NAME) consensus list
+
+consensus-show:
+	@if [ -z "$(NETWORK)" ]; then \
+		echo "Usage: make consensus-show NETWORK=lux-mainnet"; \
+		exit 1; \
+	fi
+	$(BUILD_DIR)/$(BINARY_NAME) consensus show $(NETWORK)
 
 # Help
 help:

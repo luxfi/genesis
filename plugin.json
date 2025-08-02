@@ -1,0 +1,143 @@
+{
+  "name": "genesis",
+  "version": "1.0.0",
+  "description": "Genesis configuration and management for Lux ecosystem",
+  "repository": "https://github.com/luxfi/genesis",
+  "author": "Lux Team",
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "genesis",
+      "description": "Genesis configuration and management",
+      "subcommands": [
+        {
+          "name": "generate",
+          "description": "Generate genesis configuration for any network",
+          "usage": "lux genesis generate --network [network-name]"
+        },
+        {
+          "name": "consensus",
+          "description": "Manage consensus parameters",
+          "subcommands": [
+            {
+              "name": "list",
+              "description": "List consensus parameters for all chains"
+            },
+            {
+              "name": "show",
+              "description": "Show consensus parameters for a specific network"
+            },
+            {
+              "name": "update",
+              "description": "Update consensus parameters for a network"
+            }
+          ]
+        },
+        {
+          "name": "pipeline",
+          "description": "Run full genesis pipeline",
+          "subcommands": [
+            {
+              "name": "full",
+              "description": "Run complete pipeline for a network"
+            },
+            {
+              "name": "clone",
+              "description": "Clone state repository"
+            },
+            {
+              "name": "process",
+              "description": "Process chaindata into ancient store format"
+            },
+            {
+              "name": "import",
+              "description": "Import processed data into node"
+            }
+          ]
+        },
+        {
+          "name": "state",
+          "description": "Manage state repository",
+          "subcommands": [
+            {
+              "name": "clone",
+              "description": "Clone state repository"
+            },
+            {
+              "name": "update",
+              "description": "Update cloned state repository"
+            },
+            {
+              "name": "clean",
+              "description": "Remove cloned state data"
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Validate genesis configuration"
+        },
+        {
+          "name": "launch",
+          "description": "Launch chain with genesis configuration"
+        }
+      ]
+    }
+  ],
+  "supportedChains": [
+    {
+      "name": "lux-mainnet",
+      "chainId": 96369,
+      "type": "l1"
+    },
+    {
+      "name": "lux-testnet",
+      "chainId": 96368,
+      "type": "l1"
+    },
+    {
+      "name": "lux-local",
+      "chainId": 1337,
+      "type": "l1"
+    },
+    {
+      "name": "zoo-mainnet",
+      "chainId": 200200,
+      "type": "l2"
+    },
+    {
+      "name": "zoo-testnet",
+      "chainId": 200201,
+      "type": "l2"
+    },
+    {
+      "name": "spc-mainnet",
+      "chainId": 36911,
+      "type": "l1"
+    },
+    {
+      "name": "spc-testnet",
+      "chainId": 36912,
+      "type": "l1"
+    },
+    {
+      "name": "hanzo-mainnet",
+      "chainId": 36963,
+      "type": "l1"
+    },
+    {
+      "name": "hanzo-testnet",
+      "chainId": 36962,
+      "type": "l1"
+    },
+    {
+      "name": "quantum-mainnet",
+      "chainId": 369369,
+      "type": "quantum"
+    }
+  ],
+  "binary": "bin/genesis",
+  "requirements": {
+    "luxCli": ">=1.0.0"
+  }
+}
