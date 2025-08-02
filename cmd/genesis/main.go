@@ -7,10 +7,14 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/luxfi/genesis/pkg/ancient"
+	"github.com/luxfi/genesis/pkg/consensus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -91,6 +95,11 @@ func init() {
 	rootCmd.AddCommand(launchCmd)
 	rootCmd.AddCommand(validateCmd)
 	rootCmd.AddCommand(versionCmd)
+	
+	// Add new commands for consensus and pipeline
+	rootCmd.AddCommand(getConsensusCmd())
+	rootCmd.AddCommand(getPipelineCmd())
+	rootCmd.AddCommand(getStateCmd())
 }
 
 func initConfig() {
@@ -446,4 +455,215 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+// Consensus command implementations
+
+func runListConsensus(cmd *cobra.Command, args []string) {
+	fmt.Println("Consensus Parameters for All Chains:")
+	fmt.Println("=====================================")
+	
+	for network, info := range consensus.AllChains {
+		fmt.Printf("\n%s (Chain ID: %d)\n", info.Name, info.ChainID)
+		fmt.Printf("  Type: %s\n", info.Type)
+		if info.BaseChain != "" {
+			fmt.Printf("  Base Chain: %s\n", info.BaseChain)
+		}
+		fmt.Printf("  Consensus:\n")
+		fmt.Printf("    K: %d\n", info.Consensus.K)
+		fmt.Printf("    Alpha Preference: %d\n", info.Consensus.AlphaPreference)
+		fmt.Printf("    Alpha Confidence: %d\n", info.Consensus.AlphaConfidence)
+		fmt.Printf("    Beta: %d\n", info.Consensus.Beta)
+		fmt.Printf("    Max Processing Time: %s\n", info.Consensus.MaxItemProcessingTimeStr)
+	}
+}
+
+func runShowConsensus(cmd *cobra.Command, args []string) {
+	network := args[0]
+	
+	info, exists := consensus.GetChainInfo(network)
+	if !exists {
+		log.Fatalf("Unknown network: %s", network)
+	}
+	
+	// Output as JSON for easy parsing
+	data, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		log.Fatalf("Failed to marshal consensus info: %v", err)
+	}
+	
+	fmt.Println(string(data))
+}
+
+func runUpdateConsensus(cmd *cobra.Command, args []string) {
+	network := args[0]
+	
+	// TODO: Implement consensus parameter updates
+	// This would read new params from flags and update the configuration
+	fmt.Printf("Updating consensus parameters for %s...\n", network)
+	fmt.Println("(Not implemented yet)")
+}
+
+// Pipeline command implementations
+
+func runFullPipeline(cmd *cobra.Command, args []string) {
+	network := args[0]
+	
+	fmt.Printf("Running full genesis pipeline for %s...\n", network)
+	
+	// Step 1: Clone state if needed
+	if _, err := os.Stat("state"); os.IsNotExist(err) {
+		fmt.Println("Step 1: Cloning state repository...")
+		runCloneState(cmd, []string{})
+	} else {
+		fmt.Println("Step 1: State repository already exists")
+	}
+	
+	// Step 2: Process chaindata
+	fmt.Println("Step 2: Processing chaindata...")
+	runProcessChaindata(cmd, []string{network})
+	
+	// Step 3: Generate genesis
+	fmt.Println("Step 3: Generating genesis configuration...")
+	chainType = "l1" // Default, will be overridden based on network
+	if info, exists := consensus.GetChainInfo(network); exists {
+		chainType = info.Type
+		chainID = info.ChainID
+	}
+	runGenerate(cmd, []string{})
+	
+	// Step 4: Import to node
+	fmt.Println("Step 4: Importing to node...")
+	runImportToNode(cmd, []string{network})
+	
+	fmt.Println("Pipeline completed successfully!")
+}
+
+func runCloneState(cmd *cobra.Command, args []string) {
+	fmt.Println("Cloning state repository...")
+	
+	// Use make command
+	makeCmd := exec.Command("make", "clone-state")
+	makeCmd.Stdout = os.Stdout
+	makeCmd.Stderr = os.Stderr
+	
+	if err := makeCmd.Run(); err != nil {
+		log.Fatalf("Failed to clone state: %v", err)
+	}
+}
+
+func runUpdateState(cmd *cobra.Command, args []string) {
+	fmt.Println("Updating state repository...")
+	
+	makeCmd := exec.Command("make", "update-state")
+	makeCmd.Stdout = os.Stdout
+	makeCmd.Stderr = os.Stderr
+	
+	if err := makeCmd.Run(); err != nil {
+		log.Fatalf("Failed to update state: %v", err)
+	}
+}
+
+func runCleanState(cmd *cobra.Command, args []string) {
+	fmt.Println("Cleaning state data...")
+	
+	if err := os.RemoveAll("state"); err != nil {
+		log.Fatalf("Failed to clean state: %v", err)
+	}
+	
+	fmt.Println("State data removed")
+}
+
+func runProcessChaindata(cmd *cobra.Command, args []string) {
+	network := args[0]
+	
+	fmt.Printf("Processing chaindata for %s...\n", network)
+	
+	// Get chain info
+	info, exists := consensus.GetChainInfo(network)
+	if !exists {
+		log.Fatalf("Unknown network: %s", network)
+	}
+	
+	// Determine paths
+	chainDataPath := fmt.Sprintf("state/chaindata/%s-%d", network, info.ChainID)
+	if _, err := os.Stat(chainDataPath); os.IsNotExist(err) {
+		// Try alternate path
+		chainDataPath = fmt.Sprintf("state/chaindata/%s", network)
+		if _, err := os.Stat(chainDataPath); os.IsNotExist(err) {
+			log.Fatalf("Chaindata not found for %s. Run 'make clone-state' first.", network)
+		}
+	}
+	
+	// Create ancient data config
+	ancientConfig := &ancient.CChainAncientData{
+		ChainID:      info.ChainID,
+		GenesisHash:  common.HexToHash("0x0"), // Will be updated
+		StartBlock:   0,
+		EndBlock:     1000000, // Process first 1M blocks
+		DataPath:     chainDataPath,
+		CompactedDir: fmt.Sprintf("output/ancient-%s", network),
+	}
+	
+	// Build ancient store
+	builder, err := ancient.NewBuilder(ancientConfig)
+	if err != nil {
+		log.Fatalf("Failed to create ancient builder: %v", err)
+	}
+	defer builder.Close()
+	
+	// Compact data
+	if err := builder.CompactAncientData(); err != nil {
+		log.Fatalf("Failed to compact ancient data: %v", err)
+	}
+	
+	// Export for genesis
+	outputPath := fmt.Sprintf("output/genesis-%s", network)
+	if err := builder.ExportToGenesis(outputPath); err != nil {
+		log.Fatalf("Failed to export genesis data: %v", err)
+	}
+	
+	fmt.Printf("Chaindata processed and exported to: %s\n", outputPath)
+}
+
+func runImportToNode(cmd *cobra.Command, args []string) {
+	network := args[0]
+	
+	fmt.Printf("Importing genesis data to node for %s...\n", network)
+	
+	// Get paths
+	genesisPath := fmt.Sprintf("output/genesis-%s", network)
+	nodePath := os.Getenv("LUXD_PATH")
+	if nodePath == "" {
+		nodePath = filepath.Join(os.Getenv("HOME"), ".luxd")
+	}
+	
+	// Import using ancient package
+	targetPath := filepath.Join(nodePath, "chains", "C")
+	if err := ancient.ImportFromGenesis(genesisPath, targetPath); err != nil {
+		log.Fatalf("Failed to import genesis data: %v", err)
+	}
+	
+	fmt.Println("Genesis data imported successfully!")
+	fmt.Printf("Node data directory: %s\n", targetPath)
+}
+
+// Update generate function to use chain info
+func runGenerateUpdated(cmd *cobra.Command, args []string) {
+	// Check if network matches a known chain
+	if info, exists := consensus.GetChainInfo(network); exists {
+		chainID = info.ChainID
+		chainType = info.Type
+		if info.BaseChain != "" {
+			baseChain = info.BaseChain
+		}
+		
+		fmt.Printf("Generating %s genesis for %s (Chain ID: %d)...\n", 
+			chainType, info.Name, chainID)
+	} else {
+		fmt.Printf("Generating %s genesis configuration for %s...\n", chainType, network)
+	}
+	
+	// Continue with existing generate logic
+	runGenerate(cmd, args)
 }
