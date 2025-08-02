@@ -21,7 +21,9 @@ GOMOD := $(GOCMD) mod
 BINARY_NAME := genesis
 
 # State repository (can be overridden)
-STATE_REPO ?= ../state
+# Use HTTPS by default for CI compatibility, can override with SSH for local dev
+STATE_REPO ?= https://github.com/luxfi/state.git
+STATE_LOCAL ?= ../state
 
 all: build
 
@@ -41,10 +43,19 @@ clone-state:
 	@if [ -d "$(STATE_DIR)" ]; then \
 		echo "State directory already exists. Use 'make update-state' to update."; \
 	else \
-		echo "Copying state from $(STATE_REPO)..."; \
-		mkdir -p $(STATE_DIR); \
-		cp -r $(STATE_REPO)/chaindata $(STATE_DIR)/ 2>/dev/null || echo "Warning: chaindata not found"; \
-		cp -r $(STATE_REPO)/configs $(STATE_DIR)/ 2>/dev/null || echo "Warning: configs not found"; \
+		if [ -d "$(STATE_LOCAL)" ]; then \
+			echo "Copying from local state at $(STATE_LOCAL)..."; \
+			mkdir -p $(STATE_DIR); \
+			cp -r $(STATE_LOCAL)/chaindata $(STATE_DIR)/ 2>/dev/null || echo "Warning: chaindata not found"; \
+			cp -r $(STATE_LOCAL)/configs $(STATE_DIR)/ 2>/dev/null || echo "Warning: configs not found"; \
+		else \
+			echo "Cloning from remote $(STATE_REPO)..."; \
+			git clone --depth 1 --sparse $(STATE_REPO) $(STATE_DIR).tmp; \
+			cd $(STATE_DIR).tmp && git sparse-checkout set chaindata configs; \
+			mv $(STATE_DIR).tmp/* $(STATE_DIR)/ 2>/dev/null || true; \
+			mv $(STATE_DIR).tmp/.git $(STATE_DIR)/ 2>/dev/null || true; \
+			rm -rf $(STATE_DIR).tmp; \
+		fi; \
 		echo "State cloned successfully."; \
 	fi
 

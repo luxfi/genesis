@@ -46,6 +46,9 @@ make quantum-genesis
 # Clone chaindata from state repo (on-demand)
 make clone-state
 
+# For local development with SSH
+STATE_REPO=git@github.com:luxfi/state.git make clone-state
+
 # Update existing chaindata
 make update-state
 ```
