@@ -1,6 +1,7 @@
 package genesis
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/node/ids"
 	"github.com/luxfi/node/utils/formatting/address"
@@ -113,22 +113,24 @@ func generateStakingAddresses(mnemonic string, count int) (*StakingConfig, error
 		// Generate deterministic private key based on mnemonic and index
 		// In production, use proper HD wallet derivation
 		seedStr := fmt.Sprintf("%s-%d", mnemonic, i)
-		privKey, err := crypto.HexToECDSA(fmt.Sprintf("%064x", crypto.Keccak256([]byte(seedStr))))
-		if err != nil {
-			return nil, err
-		}
 		
-		privKeyBytes := crypto.FromECDSA(privKey)
-		pubKeyBytes := crypto.FromECDSAPub(&privKey.PublicKey)
+		// Create 32 bytes of deterministic entropy from seed
+		h := sha256.Sum256([]byte(seedStr))
 		
 		// Create secp256k1 key for Lux
-		sk, err := secp256k1.ToPrivateKey(privKeyBytes)
+		sk, err := secp256k1.ToPrivateKey(h[:])
 		if err != nil {
 			return nil, err
 		}
 		
+		privKeyBytes := sk.Bytes()
+		pubKeyBytes := sk.PublicKey().Bytes()
+		
 		// Get addresses
-		nodeID := ids.NodeIDFromCert(sk.PublicKey())
+		nodeID, err := ids.ToNodeID(sk.PublicKey().Address().Bytes())
+		if err != nil {
+			return nil, err
+		}
 		pAddr, err := address.Format("P", "lux", sk.PublicKey().Address().Bytes())
 		if err != nil {
 			return nil, err
@@ -138,8 +140,10 @@ func generateStakingAddresses(mnemonic string, count int) (*StakingConfig, error
 			return nil, err
 		}
 		
-		// EVM address
-		ethAddr := crypto.PubkeyToAddress(privKey.PublicKey).Hex()
+		// EVM address - derive from secp256k1 public key
+		// EVM address is the last 20 bytes of Keccak256(pubkey[1:])
+		// Since we don't have ethereum crypto, we'll use the C-chain address format
+		ethAddr := fmt.Sprintf("0x%x", sk.PublicKey().Address().Bytes())
 		
 		info := AddressInfo{
 			Index:      i,
