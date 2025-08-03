@@ -14,7 +14,7 @@
   "config": {
     "berlinBlock": 0,
     "byzantiumBlock": 0,
-    "chainId": 96369,
+    "chainId": 0,
     "constantinopleBlock": 0,
     "eip150Block": 0,
     "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",

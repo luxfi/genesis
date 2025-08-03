@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -83,6 +84,10 @@ func init() {
 	// Add commands
 	rootCmd.AddCommand(generateCmd)
 	rootCmd.AddCommand(getLaunchCmd())
+	rootCmd.AddCommand(getNetworkCmd())
+	rootCmd.AddCommand(getSetupNodeCmd())
+	rootCmd.AddCommand(getSingleNodeCmd())
+	rootCmd.AddCommand(getMinimalConsensusCmd())
 	rootCmd.AddCommand(validateCmd)
 	rootCmd.AddCommand(versionCmd)
 	
@@ -95,9 +100,9 @@ func init() {
 	rootCmd.AddCommand(getImportBlockchainCmd())
 	rootCmd.AddCommand(getSetupChainStateCmd())
 	rootCmd.AddCommand(getSubnetBlockReplayerCmd())
-	rootCmd.AddCommand(getDebugKeysCmd())
 	rootCmd.AddCommand(getCompactAncientCmd())
 	rootCmd.AddCommand(getInspectCmd())
+	rootCmd.AddCommand(getDatabaseCmd())
 }
 
 func initConfig() {
@@ -234,7 +239,7 @@ type GenesisConfig struct {
 	Difficulty     *big.Int                     `json:"difficulty"`
 	Alloc          map[string]GenesisAccount    `json:"alloc"`
 	Validators     []Validator                  `json:"validators,omitempty"`
-	L2Config       *L2Config                    `json:"l2Config,omitempty"`
+	L2Config       *L2GenesisConfig             `json:"l2Config,omitempty"`
 	QuantumConfig  *QuantumConfig               `json:"quantumConfig,omitempty"`
 }
 
@@ -250,7 +255,7 @@ type Validator struct {
 	Weight  uint64 `json:"weight"`
 }
 
-type L2Config struct {
+type L2GenesisConfig struct {
 	BaseChain       string `json:"baseChain"`
 	SequencerURL    string `json:"sequencerUrl"`
 	BatcherAddress  string `json:"batcherAddress"`
@@ -264,8 +269,21 @@ type QuantumConfig struct {
 }
 
 func runGenerate(cmd *cobra.Command, args []string) {
+	// Try full network name first, then with prefix
+	fullNetwork := network
+	if !strings.Contains(network, "-") {
+		// Try common prefixes
+		for _, prefix := range []string{"lux", "zoo", "spc", "hanzo", "quantum"} {
+			testNetwork := fmt.Sprintf("%s-%s", prefix, network)
+			if _, exists := consensus.GetChainInfo(testNetwork); exists {
+				fullNetwork = testNetwork
+				break
+			}
+		}
+	}
+	
 	// Check if network matches a known chain
-	if info, exists := consensus.GetChainInfo(network); exists {
+	if info, exists := consensus.GetChainInfo(fullNetwork); exists {
 		chainID = info.ChainID
 		chainType = info.Type
 		if info.BaseChain != "" {
@@ -276,6 +294,12 @@ func runGenerate(cmd *cobra.Command, args []string) {
 			chainType, info.Name, chainID)
 	} else {
 		fmt.Printf("Generating %s genesis configuration for %s...\n", chainType, network)
+	}
+
+	// For L1 networks (especially mainnet), generate P, C, X chain genesis files
+	if chainType == "l1" && (network == "mainnet" || fullNetwork == "lux-mainnet") {
+		generateMainnetGenesis()
+		return
 	}
 
 	config := &GenesisConfig{
@@ -329,7 +353,7 @@ func configureL2(config *GenesisConfig, baseChain string) {
 		baseChain = "lux"
 	}
 	
-	config.L2Config = &L2Config{
+	config.L2Config = &L2GenesisConfig{
 		BaseChain:      baseChain,
 		SequencerURL:   fmt.Sprintf("https://sequencer.%s.network", network),
 		BatcherAddress: "0x4567890123456789012345678901234567890123",
@@ -343,7 +367,7 @@ func configureL3(config *GenesisConfig, baseChain string) {
 		baseChain = "zoo"
 	}
 	
-	config.L2Config = &L2Config{
+	config.L2Config = &L2GenesisConfig{
 		BaseChain:      baseChain,
 		SequencerURL:   fmt.Sprintf("https://l3-sequencer.%s.network", network),
 		BatcherAddress: "0x6789012345678901234567890123456789012345",
@@ -486,6 +510,145 @@ func validateConfig(config *GenesisConfig) []string {
 	}
 	
 	return errors
+}
+
+func generateMainnetGenesis() {
+	// Create output directory structure
+	baseDir := filepath.Join(outputDir, fmt.Sprintf("lux-mainnet-%d", chainID))
+	pDir := filepath.Join(baseDir, "P")
+	cDir := filepath.Join(baseDir, "C")
+	xDir := filepath.Join(baseDir, "X")
+	
+	for _, dir := range []string{pDir, cDir, xDir} {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			log.Fatalf("Failed to create directory %s: %v", dir, err)
+		}
+	}
+	
+	fmt.Printf("Generating P-Chain, C-Chain, and X-Chain genesis files...\n")
+	
+	// Generate C-Chain genesis (EVM chain)
+	cChainGenesis := generateCChainGenesis()
+	cGenesisPath := filepath.Join(cDir, "genesis.json")
+	cGenesisData, _ := json.MarshalIndent(cChainGenesis, "", "  ")
+	if err := os.WriteFile(cGenesisPath, cGenesisData, 0644); err != nil {
+		log.Fatalf("Failed to write C-Chain genesis: %v", err)
+	}
+	fmt.Printf("✓ C-Chain genesis saved to: %s\n", cGenesisPath)
+	
+	// Generate P-Chain genesis (Platform chain - validators)
+	pChainGenesis := generatePChainGenesis(string(cGenesisData))
+	pGenesisPath := filepath.Join(pDir, "genesis.json")
+	pGenesisData, _ := json.MarshalIndent(pChainGenesis, "", "  ")
+	if err := os.WriteFile(pGenesisPath, pGenesisData, 0644); err != nil {
+		log.Fatalf("Failed to write P-Chain genesis: %v", err)
+	}
+	fmt.Printf("✓ P-Chain genesis saved to: %s\n", pGenesisPath)
+	
+	// Generate X-Chain genesis (Exchange chain - native LUX transfers)
+	xChainGenesis := generateXChainGenesis()
+	xGenesisPath := filepath.Join(xDir, "genesis.json")
+	xGenesisData, _ := json.MarshalIndent(xChainGenesis, "", "  ")
+	if err := os.WriteFile(xGenesisPath, xGenesisData, 0644); err != nil {
+		log.Fatalf("Failed to write X-Chain genesis: %v", err)
+	}
+	fmt.Printf("✓ X-Chain genesis saved to: %s\n", xGenesisPath)
+	
+	fmt.Printf("\n✅ All genesis files generated in: %s\n", baseDir)
+}
+
+func generateCChainGenesis() map[string]interface{} {
+	// C-Chain is the EVM-compatible chain
+	return map[string]interface{}{
+		"config": map[string]interface{}{
+			"chainId":             chainID,
+			"homesteadBlock":      0,
+			"eip150Block":         0,
+			"eip150Hash":          "0x0000000000000000000000000000000000000000000000000000000000000000",
+			"eip155Block":         0,
+			"eip158Block":         0,
+			"byzantiumBlock":      0,
+			"constantinopleBlock": 0,
+			"petersburgBlock":     0,
+			"istanbulBlock":       0,
+			"muirGlacierBlock":    0,
+			"berlinBlock":         0,
+			"londonBlock":         0,
+		},
+		"nonce":      "0x0",
+		"timestamp":  "0x687C3105", // 1750460293 in hex
+		"extraData":  "0x00",
+		"gasLimit":   "0x1C9C380", // 30000000
+		"difficulty": "0x1",
+		"mixHash":    "0x0000000000000000000000000000000000000000000000000000000000000000",
+		"coinbase":   "0x0000000000000000000000000000000000000000",
+		"alloc": map[string]interface{}{
+			// Treasury
+			"0x1000000000000000000000000000000000000000": map[string]string{
+				"balance": "1000000000000000000000000000",
+			},
+			// Development
+			"0x2000000000000000000000000000000000000000": map[string]string{
+				"balance": "500000000000000000000000000",
+			},
+			// Ecosystem
+			"0x3000000000000000000000000000000000000000": map[string]string{
+				"balance": "300000000000000000000000000",
+			},
+		},
+		"number":     "0x0",
+		"gasUsed":    "0x0",
+		"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+	}
+}
+
+func generatePChainGenesis(cChainGenesis string) map[string]interface{} {
+	// P-Chain manages validators and staking
+	return map[string]interface{}{
+		"networkID":                  chainID,
+		"startTime":                  1750460293,
+		"initialStakeDuration":       31536000, // 1 year
+		"initialStakeDurationOffset": 5400,     // 90 minutes
+		"message":                    "lux mainnet genesis",
+		"cChainGenesis":              cChainGenesis,
+		"allocations": []map[string]interface{}{
+			{
+				"ethAddr":       "0x9011E888251AB053B7bD1cdB598Db4f9DEd94714",
+				"luxAddr":       "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9",
+				"initialAmount": 500000000000000000, // 500M LUX
+				"unlockSchedule": []map[string]interface{}{
+					{
+						"amount":   500000000000000000,
+						"locktime": 0,
+					},
+				},
+			},
+		},
+		"initialStakedFunds": []string{
+			"X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9",
+		},
+		"initialStakers": []map[string]interface{}{
+			{
+				"nodeID":        "NodeID-7Xhw2mDxuDS44j42TCB6U5579esbSt3Lg",
+				"rewardAddress": "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9",
+				"delegationFee": 20000, // 2%
+			},
+		},
+	}
+}
+
+func generateXChainGenesis() map[string]interface{} {
+	// X-Chain handles native LUX asset transfers
+	return map[string]interface{}{
+		"networkID":     chainID,
+		"initialSupply": 500000000000000000, // 500M LUX
+		"allocations": []map[string]interface{}{
+			{
+				"address": "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9",
+				"balance": 500000000000000000,
+			},
+		},
+	}
 }
 
 func main() {

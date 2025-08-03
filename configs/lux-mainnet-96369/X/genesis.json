@@ -1,0 +1,10 @@
+{
+  "allocations": [
+    {
+      "address": "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9",
+      "balance": 500000000000000000
+    }
+  ],
+  "initialSupply": 500000000000000000,
+  "networkID": 96369
+}

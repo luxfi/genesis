@@ -1,0 +1,31 @@
+{
+  "allocations": [
+    {
+      "ethAddr": "0x9011E888251AB053B7bD1cdB598Db4f9DEd94714",
+      "initialAmount": 500000000000000000,
+      "luxAddr": "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9",
+      "unlockSchedule": [
+        {
+          "amount": 500000000000000000,
+          "locktime": 0
+        }
+      ]
+    }
+  ],
+  "cChainGenesis": "{\n  \"alloc\": {\n    \"0x1000000000000000000000000000000000000000\": {\n      \"balance\": \"1000000000000000000000000000\"\n    },\n    \"0x2000000000000000000000000000000000000000\": {\n      \"balance\": \"500000000000000000000000000\"\n    },\n    \"0x3000000000000000000000000000000000000000\": {\n      \"balance\": \"300000000000000000000000000\"\n    }\n  },\n  \"coinbase\": \"0x0000000000000000000000000000000000000000\",\n  \"config\": {\n    \"berlinBlock\": 0,\n    \"byzantiumBlock\": 0,\n    \"chainId\": 0,\n    \"constantinopleBlock\": 0,\n    \"eip150Block\": 0,\n    \"eip150Hash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n    \"eip155Block\": 0,\n    \"eip158Block\": 0,\n    \"homesteadBlock\": 0,\n    \"istanbulBlock\": 0,\n    \"londonBlock\": 0,\n    \"muirGlacierBlock\": 0,\n    \"petersburgBlock\": 0\n  },\n  \"difficulty\": \"0x1\",\n  \"extraData\": \"0x00\",\n  \"gasLimit\": \"0x1C9C380\",\n  \"gasUsed\": \"0x0\",\n  \"mixHash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n  \"nonce\": \"0x0\",\n  \"number\": \"0x0\",\n  \"parentHash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n  \"timestamp\": \"0x687C3105\"\n}",
+  "initialStakeDuration": 31536000,
+  "initialStakeDurationOffset": 5400,
+  "initialStakedFunds": [
+    "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9"
+  ],
+  "initialStakers": [
+    {
+      "delegationFee": 20000,
+      "nodeID": "NodeID-7Xhw2mDxuDS44j42TCB6U5579esbSt3Lg",
+      "rewardAddress": "X-lux1w6ajywx2t9wfqej7ddxk9v0ej3qtxs5p6f7q9"
+    }
+  ],
+  "message": "lux mainnet genesis",
+  "networkID": 0,
+  "startTime": 1750460293
+}

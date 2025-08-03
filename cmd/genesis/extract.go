@@ -9,10 +9,9 @@ import (
 	"sort"
 
 	"github.com/cockroachdb/pebble"
-	"github.com/luxfi/database"
-	"github.com/luxfi/geth/common"
-	"github.com/luxfi/geth/core/types"
-	"github.com/luxfi/geth/rlp"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/spf13/cobra"
 )
 
@@ -85,10 +84,6 @@ func runExtractGenesis(cmd *cobra.Command, args []string) error {
 	withState, _ := cmd.Flags().GetBool("with-state")
 	dbType, _ := cmd.Flags().GetString("db-type")
 
-	// Open database using luxfi/database
-	var db database.Database
-	var err error
-	
 	// For now, let's use the approach from the existing code that works
 	// We'll use PebbleDB directly since that's what the source data uses
 	if dbType == "auto" || dbType == "pebbledb" {

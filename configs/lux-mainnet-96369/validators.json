@@ -1,0 +1,149 @@
+[
+  {
+    "nodeID": "NodeID-508433b29ee4eaba5d77afe8108b70f79437a059",
+    "ethAddress": "0x0000000000000000000000000000000000000001",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-b5a5293fb7bb17fd70b7ee1f02138c745791c10b",
+    "ethAddress": "0x0000000000000000000000000000000000000002",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-91d659e2fc72e45e90b348982099838f4c7900ad",
+    "ethAddress": "0x0000000000000000000000000000000000000003",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-444a0d7f1343bddf03dd4871e68cc953a4cd77fc",
+    "ethAddress": "0x0000000000000000000000000000000000000004",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-d64403b6e07cb3ebcd68a0c9e2bf848205e9cfe2",
+    "ethAddress": "0x0000000000000000000000000000000000000005",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-a58cafc20e1bea2f7ef5e81f2c8cb8328bc2eda6",
+    "ethAddress": "0x0000000000000000000000000000000000000006",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-4b6f5265fb7f0c8ad62567bef407eb0d89d81165",
+    "ethAddress": "0x0000000000000000000000000000000000000007",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-2316210e409b577cb2521b9b2fd55ba5c71993b9",
+    "ethAddress": "0x0000000000000000000000000000000000000008",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-843f1df83847b992b4c887f6948aab96aefd47d5",
+    "ethAddress": "0x0000000000000000000000000000000000000009",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-867b2f0c85900c6e55951683b077d06d88012ae9",
+    "ethAddress": "0x000000000000000000000000000000000000000a",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-4f78077b02b3d5c139d56df46c285e0416c963c7",
+    "ethAddress": "0x000000000000000000000000000000000000000b",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-4ebad48981ed87900092564cf1bfed41132fd21c",
+    "ethAddress": "0x000000000000000000000000000000000000000c",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-478a7dfff1170f5b4bf90dc90153d9ae1bb1d674",
+    "ethAddress": "0x000000000000000000000000000000000000000d",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-6a5f5e1f4f3afc5326faec2c86fd4d63f00ab41e",
+    "ethAddress": "0x000000000000000000000000000000000000000e",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-8c4c5b5098fe74d4a1cec80f6a3945281f4c89f5",
+    "ethAddress": "0x000000000000000000000000000000000000000f",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-ab8d81865775f507b0952f46eef3d6f778699e91",
+    "ethAddress": "0x0000000000000000000000000000000000000010",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-0b65c1acdcf168017375cb6178f8b4a6e38b6005",
+    "ethAddress": "0x0000000000000000000000000000000000000011",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-b1dca24ca37b5086e91df909f624ef3d5d0af892",
+    "ethAddress": "0x0000000000000000000000000000000000000012",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-d7d37bb9b4f45443cf47d08186058289a279d155",
+    "ethAddress": "0x0000000000000000000000000000000000000013",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-6e46a32391dd097bf690f42578ce588db20da9de",
+    "ethAddress": "0x0000000000000000000000000000000000000014",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+,
+  {
+    "nodeID": "NodeID-5d4ff9ba137da718cfc86c0ef6acc2dcba6ca80d",
+    "ethAddress": "0x0000000000000000000000000000000000000015",
+    "weight": 2000000000000000,
+    "delegationFee": 20000
+  }
+
+]

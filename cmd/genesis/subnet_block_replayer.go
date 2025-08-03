@@ -289,26 +289,26 @@ func replayDirectToDB(src *pebble.DB, blockNumbers []uint64, canonicalBlocks map
 
 // Key construction helpers
 func makeHeaderKey(number uint64, hash common.Hash) []byte {
-	return append(append(encodeBlockNumber(number), hash[:]...), []byte("h")...)
+	return append(append(encodeSubnetBlockNumber(number), hash[:]...), []byte("h")...)
 }
 
 func makeBodyKey(number uint64, hash common.Hash) []byte {
-	return append(append([]byte("b"), encodeBlockNumber(number)...), hash[:]...)
+	return append(append([]byte("b"), encodeSubnetBlockNumber(number)...), hash[:]...)
 }
 
 func makeReceiptsKey(number uint64, hash common.Hash) []byte {
-	return append(append([]byte("r"), encodeBlockNumber(number)...), hash[:]...)
+	return append(append([]byte("r"), encodeSubnetBlockNumber(number)...), hash[:]...)
 }
 
 func makeTDKey(number uint64, hash common.Hash) []byte {
-	return append(append(append([]byte("h"), encodeBlockNumber(number)...), hash[:]...), []byte("t")...)
+	return append(append(append([]byte("h"), encodeSubnetBlockNumber(number)...), hash[:]...), []byte("t")...)
 }
 
 func makeCanonicalKey(number uint64) []byte {
-	return append(append([]byte("h"), encodeBlockNumber(number)...), []byte("n")...)
+	return append(append([]byte("h"), encodeSubnetBlockNumber(number)...), []byte("n")...)
 }
 
-func encodeBlockNumber(number uint64) []byte {
+func encodeSubnetBlockNumber(number uint64) []byte {
 	enc := make([]byte, 8)
 	binary.BigEndian.PutUint64(enc, number)
 	return enc
@@ -501,7 +501,10 @@ func submitCanonicalBlock(rpcURL string, block *FullBlock) error {
 	// Since these are already finalized subnet blocks, we use a special admin API
 	
 	// First, try the admin API to directly insert the block
-	fullBlock := types.NewBlockWithHeader(block.Header).WithBody(block.Body.Transactions, block.Body.Uncles)
+	fullBlock := types.NewBlockWithHeader(block.Header).WithBody(types.Body{
+		Transactions: block.Body.Transactions,
+		Uncles:       block.Body.Uncles,
+	})
 	
 	// Encode the block
 	blockRLP, err := rlp.EncodeToBytes(fullBlock)

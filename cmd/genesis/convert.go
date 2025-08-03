@@ -6,10 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/luxfi/database"
-	"github.com/luxfi/geth/common"
-	"github.com/luxfi/geth/core/types"
-	"github.com/luxfi/geth/rlp"
+	"github.com/cockroachdb/pebble"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
 
@@ -243,7 +241,7 @@ func runConvertToL2(cmd *cobra.Command, args []string) error {
 	fmt.Println("📋 Copying blockchain data for L2...")
 	
 	// Use cp command for efficiency
-	cpCmd := fmt.Sprintf("cp -r %s %s", sourceDB, outputDB)
+	// cpCmd := fmt.Sprintf("cp -r %s %s", sourceDB, outputDB)
 	if err := os.RemoveAll(outputDB); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove existing output: %w", err)
 	}
