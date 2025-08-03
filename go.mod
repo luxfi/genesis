@@ -5,7 +5,6 @@ go 1.24.5
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/cockroachdb/pebble v1.1.5
-	github.com/ethereum/go-ethereum v1.16.1
 	github.com/luxfi/crypto v1.2.1
 	github.com/luxfi/database v1.1.7
 	github.com/luxfi/geth v1.16.23
