@@ -80,12 +80,12 @@ func newConvertAddressCmd(app *application.Genesis) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			
+
 			// Display results
 			for format, addr := range results {
 				app.Log.Info("Address", format, addr)
 			}
-			
+
 			return nil
 		},
 	}

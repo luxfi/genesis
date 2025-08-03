@@ -9,10 +9,10 @@ import (
 	"sort"
 
 	"github.com/cockroachdb/pebble"
+	"github.com/luxfi/genesis/pkg/application"
 	"github.com/luxfi/geth/common"
 	"github.com/luxfi/geth/core/types"
 	"github.com/luxfi/geth/rlp"
-	"github.com/luxfi/genesis/pkg/application"
 )
 
 // Options holds configuration for extraction operations

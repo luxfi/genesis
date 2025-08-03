@@ -21,20 +21,20 @@ func New(app *application.Genesis) *Converter {
 // DenamespaceDB converts a namespaced database to denamespaced format
 func (c *Converter) DenamespaceDB(sourceDB, destDB string, namespace string) error {
 	c.app.Log.Info("Denamespacing database", "source", sourceDB, "dest", destDB, "namespace", namespace)
-	
+
 	// TODO: Implement actual denamespacing logic
 	// This would involve:
 	// 1. Opening the source database
 	// 2. Iterating through all keys
 	// 3. Removing namespace prefixes
 	// 4. Writing to destination database
-	
+
 	return fmt.Errorf("denamespace conversion not yet implemented")
 }
 
 // ConvertGenesis converts genesis between different formats
 func (c *Converter) ConvertGenesis(inputPath, outputPath, fromFormat, toFormat string) error {
-	c.app.Log.Info("Converting genesis format", 
+	c.app.Log.Info("Converting genesis format",
 		"input", inputPath,
 		"output", outputPath,
 		"from", fromFormat,
@@ -82,7 +82,7 @@ func (c *Converter) ConvertGenesis(inputPath, outputPath, fromFormat, toFormat s
 func (c *Converter) convertSubnetToCChain(genesis map[string]interface{}) map[string]interface{} {
 	// C-Chain genesis has some specific requirements
 	result := make(map[string]interface{})
-	
+
 	// Copy most fields directly
 	for k, v := range genesis {
 		result[k] = v
@@ -104,7 +104,7 @@ func (c *Converter) convertSubnetToCChain(genesis map[string]interface{}) map[st
 // convertCChainToSubnet converts C-Chain genesis to SubnetEVM format
 func (c *Converter) convertCChainToSubnet(genesis map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
-	
+
 	// Copy fields
 	for k, v := range genesis {
 		result[k] = v
@@ -117,7 +117,7 @@ func (c *Converter) convertCChainToSubnet(genesis map[string]interface{}) map[st
 		delete(config, "luxApricotPhase3BlockTimestamp")
 		delete(config, "luxApricotPhase4BlockTimestamp")
 		delete(config, "luxApricotPhase5BlockTimestamp")
-		
+
 		// Add SubnetEVM specific config
 		config["subnetEVMTimestamp"] = 0
 	}
@@ -128,7 +128,7 @@ func (c *Converter) convertCChainToSubnet(genesis map[string]interface{}) map[st
 // convertGethToLux converts standard Geth genesis to Lux format
 func (c *Converter) convertGethToLux(genesis map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
-	
+
 	// Copy standard fields
 	for k, v := range genesis {
 		result[k] = v
@@ -160,6 +160,6 @@ func (c *Converter) ConvertAddress(input string) (map[string]string, error) {
 	// - EVM hex format (0x...)
 	// - Bech32 format (C-lux1...)
 	// - X/P chain format
-	
+
 	return nil, fmt.Errorf("address conversion not yet implemented")
 }

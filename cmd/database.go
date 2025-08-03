@@ -35,7 +35,7 @@ func newDatabaseWriteHeightCmd(app *application.Genesis) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			
+
 			dbMgr := database.New(app)
 			return dbMgr.WriteHeight(args[0], height)
 		},
@@ -53,13 +53,13 @@ func newDatabaseGetCanonicalCmd(app *application.Genesis) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			
+
 			dbMgr := database.New(app)
 			hash, err := dbMgr.GetCanonicalHash(args[0], height)
 			if err != nil {
 				return err
 			}
-			
+
 			app.Log.Info("Canonical hash", "height", height, "hash", hash)
 			return nil
 		},
@@ -90,7 +90,7 @@ func newDatabasePrepareMigrationCmd(app *application.Genesis) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			
+
 			dbMgr := database.New(app)
 			return dbMgr.PrepareMigration(args[0], height)
 		},
@@ -108,7 +108,7 @@ func newDatabaseCompactCmd(app *application.Genesis) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			
+
 			dbMgr := database.New(app)
 			return dbMgr.CompactAncient(args[0], blockNum)
 		},

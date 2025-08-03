@@ -143,15 +143,15 @@ func (g *Generator) generateXChain(outputDir string) error {
 
 	// X-Chain genesis structure
 	xGenesis := map[string]interface{}{
-		"networkID":        g.config.NetworkID,
-		"allocations":      []interface{}{},
-		"startTime":        1607133600,
-		"initialStakeDuration": 31536000,
+		"networkID":                  g.config.NetworkID,
+		"allocations":                []interface{}{},
+		"startTime":                  1607133600,
+		"initialStakeDuration":       31536000,
 		"initialStakeDurationOffset": 5400,
-		"initialStakedFunds": []string{},
-		"initialStakers": []interface{}{},
-		"cChainGenesis": "",
-		"message": fmt.Sprintf("%s X-Chain genesis", g.config.Network),
+		"initialStakedFunds":         []string{},
+		"initialStakers":             []interface{}{},
+		"cChainGenesis":              "",
+		"message":                    fmt.Sprintf("%s X-Chain genesis", g.config.Network),
 	}
 
 	// Write X-Chain genesis
@@ -203,10 +203,10 @@ func (g *Generator) generateCombined(outputDir string) error {
 // MainnetConfig returns mainnet configuration
 func MainnetConfig() *Config {
 	return &Config{
-		Network:   "mainnet",
-		ChainID:   96369,
-		NetworkID: 96369,
-		ChainType: "l1",
+		Network:    "mainnet",
+		ChainID:    96369,
+		NetworkID:  96369,
+		ChainType:  "l1",
 		Validators: 21,
 		Allocations: map[string]string{
 			// Treasury
@@ -222,10 +222,10 @@ func MainnetConfig() *Config {
 // TestnetConfig returns testnet configuration
 func TestnetConfig() *Config {
 	return &Config{
-		Network:   "testnet",
-		ChainID:   96368,
-		NetworkID: 96368,
-		ChainType: "l1",
+		Network:    "testnet",
+		ChainID:    96368,
+		NetworkID:  96368,
+		ChainType:  "l1",
 		Validators: 11,
 		Allocations: map[string]string{
 			// Test treasury
@@ -241,12 +241,12 @@ func LocalConfig(validators int) *Config {
 	if validators == 0 {
 		validators = 5
 	}
-	
+
 	return &Config{
-		Network:   "local",
-		ChainID:   1337,
-		NetworkID: 1337,
-		ChainType: "l1",
+		Network:    "local",
+		ChainID:    1337,
+		NetworkID:  1337,
+		ChainType:  "l1",
 		Validators: validators,
 		Allocations: map[string]string{
 			// Local test account

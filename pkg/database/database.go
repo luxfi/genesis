@@ -28,10 +28,10 @@ func New(app *application.Genesis) *Manager {
 func (m *Manager) openDatabase(dbPath string, readOnly bool) (database.Database, error) {
 	// Try to detect database type by looking at the directory structure
 	dbType := m.detectDatabaseType(dbPath)
-	
+
 	// Create database manager
 	dbManager := manager.NewManager(filepath.Dir(dbPath), prometheus.NewRegistry())
-	
+
 	// Configure database
 	config := &manager.Config{
 		Type:      dbType,
@@ -41,12 +41,12 @@ func (m *Manager) openDatabase(dbPath string, readOnly bool) (database.Database,
 		HandleCap: 1024,
 		ReadOnly:  readOnly,
 	}
-	
+
 	db, err := dbManager.New(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
-	
+
 	return db, nil
 }
 
@@ -57,19 +57,19 @@ func (m *Manager) detectDatabaseType(dbPath string) string {
 		// Default to PebbleDB for new databases
 		return "pebbledb"
 	}
-	
+
 	// Check for PebbleDB markers (SST files)
 	matches, _ := filepath.Glob(filepath.Join(dbPath, "*.sst"))
 	if len(matches) > 0 {
 		return "pebbledb"
 	}
-	
+
 	// Check for LevelDB markers (LDB files)
 	matches, _ = filepath.Glob(filepath.Join(dbPath, "*.ldb"))
 	if len(matches) > 0 {
 		return "leveldb"
 	}
-	
+
 	// Check for MANIFEST files (could be either)
 	matches, _ = filepath.Glob(filepath.Join(dbPath, "MANIFEST-*"))
 	if len(matches) > 0 {
@@ -82,7 +82,7 @@ func (m *Manager) detectDatabaseType(dbPath string) string {
 		}
 		return "leveldb"
 	}
-	
+
 	// Default to PebbleDB
 	return "pebbledb"
 }
@@ -97,7 +97,7 @@ func (m *Manager) WriteHeight(dbPath string, height uint64) error {
 
 	// Create the height key: 0x01 + Height
 	key := append([]byte{0x01}, []byte("Height")...)
-	
+
 	// Encode height as big-endian
 	value := make([]byte, 8)
 	binary.BigEndian.PutUint64(value, height)
@@ -143,12 +143,12 @@ func (m *Manager) CheckStatus(dbPath string) error {
 	fmt.Printf("Database Status: %s\n", dbPath)
 	fmt.Printf("=================================\n")
 	fmt.Printf("Type: %s\n", m.detectDatabaseType(dbPath))
-	
+
 	// Count different key types
 	keyTypes := make(map[byte]int)
 	var totalKeys int
 	var highestBlock uint64
-	
+
 	iter := db.NewIterator()
 	defer iter.Release()
 
@@ -157,7 +157,7 @@ func (m *Manager) CheckStatus(dbPath string) error {
 		if len(key) > 0 {
 			keyTypes[key[0]]++
 			totalKeys++
-			
+
 			// Track highest block
 			if key[0] == 'H' && len(key) == 9 {
 				num := binary.BigEndian.Uint64(key[1:])
@@ -176,7 +176,7 @@ func (m *Manager) CheckStatus(dbPath string) error {
 	for prefix, count := range keyTypes {
 		fmt.Printf("  %c (%s): %d\n", prefix, getKeyTypeName(prefix), count)
 	}
-	
+
 	fmt.Printf("\nTotal Keys: %d\n", totalKeys)
 	fmt.Printf("Highest Block: %d\n", highestBlock)
 
@@ -197,7 +197,7 @@ func (m *Manager) PrepareMigration(dbPath string, height uint64) error {
 	heightKey := append([]byte{0x01}, []byte("Height")...)
 	heightValue := make([]byte, 8)
 	binary.BigEndian.PutUint64(heightValue, height)
-	
+
 	if err := db.Put(heightKey, heightValue); err != nil {
 		return fmt.Errorf("failed to write height: %w", err)
 	}
@@ -205,12 +205,12 @@ func (m *Manager) PrepareMigration(dbPath string, height uint64) error {
 	// Write migration marker
 	migrationKey := []byte("LUX_GENESIS_READY")
 	migrationValue := []byte(fmt.Sprintf("%d", time.Now().Unix()))
-	
+
 	if err := db.Put(migrationKey, migrationValue); err != nil {
 		return fmt.Errorf("failed to write migration marker: %w", err)
 	}
 
-	m.app.Log.Info("Database prepared for migration", 
+	m.app.Log.Info("Database prepared for migration",
 		"height", height,
 		"heightKey", hex.EncodeToString(heightKey),
 		"migrationKey", string(migrationKey))

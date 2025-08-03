@@ -78,11 +78,11 @@ func newL2ListCmd(app *application.Genesis) *cobra.Command {
 
 			fmt.Printf("%-15s %-10s %-10s %-20s\n", "NAME", "CHAIN ID", "SYMBOL", "CREATED")
 			fmt.Println(strings.Repeat("-", 60))
-			
+
 			for _, cfg := range configs {
-				fmt.Printf("%-15s %-10d %-10s %-20s\n", 
-					cfg.Name, 
-					cfg.ChainID, 
+				fmt.Printf("%-15s %-10d %-10s %-20s\n",
+					cfg.Name,
+					cfg.ChainID,
 					cfg.Symbol,
 					cfg.CreatedAt.Format("2006-01-02 15:04:05"))
 			}
@@ -135,7 +135,7 @@ func newL2DeleteCmd(app *application.Genesis) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			
+
 			if !force {
 				fmt.Printf("Are you sure you want to delete L2 network '%s'? (y/N): ", name)
 				var response string

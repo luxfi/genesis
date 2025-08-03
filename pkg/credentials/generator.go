@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/luxfi/crypto/bls"
-	"github.com/luxfi/genesis/pkg/core"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/staking"
 	"github.com/ava-labs/avalanchego/utils/perms"
+	"github.com/luxfi/crypto/bls"
+	"github.com/luxfi/genesis/pkg/core"
 )
 
 // Generator creates staking credentials

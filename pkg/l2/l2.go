@@ -17,15 +17,15 @@ type Manager struct {
 
 // L2Config represents an L2 network configuration
 type L2Config struct {
-	Name         string    `json:"name"`
-	ChainID      uint64    `json:"chainId"`
-	TestnetID    uint64    `json:"testnetId,omitempty"`
-	Symbol       string    `json:"symbol"`
-	DisplayName  string    `json:"displayName"`
-	BaseNetwork  string    `json:"baseNetwork"`
-	ChainDataPath string   `json:"chainDataPath,omitempty"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	Name          string    `json:"name"`
+	ChainID       uint64    `json:"chainId"`
+	TestnetID     uint64    `json:"testnetId,omitempty"`
+	Symbol        string    `json:"symbol"`
+	DisplayName   string    `json:"displayName"`
+	BaseNetwork   string    `json:"baseNetwork"`
+	ChainDataPath string    `json:"chainDataPath,omitempty"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 // New creates a new L2 Manager
@@ -79,7 +79,7 @@ func (m *Manager) Create(config L2Config) error {
 		return fmt.Errorf("failed to save genesis: %w", err)
 	}
 
-	m.app.Log.Info("L2 network created", 
+	m.app.Log.Info("L2 network created",
 		"name", config.Name,
 		"chainId", config.ChainID,
 		"symbol", config.Symbol,

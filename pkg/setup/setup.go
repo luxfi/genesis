@@ -8,8 +8,8 @@ import (
 
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/manager"
-	"github.com/luxfi/geth/common"
 	"github.com/luxfi/genesis/pkg/application"
+	"github.com/luxfi/geth/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -44,10 +44,10 @@ var (
 func (c *ChainStateManager) openDatabase(dbPath string) (database.Database, error) {
 	// Auto-detect database type
 	dbType := c.detectDatabaseType(dbPath)
-	
+
 	// Create database manager
 	dbManager := manager.NewManager(filepath.Dir(dbPath), prometheus.NewRegistry())
-	
+
 	// Configure database
 	config := &manager.Config{
 		Type:      dbType,
@@ -57,7 +57,7 @@ func (c *ChainStateManager) openDatabase(dbPath string) (database.Database, erro
 		HandleCap: 1024,
 		ReadOnly:  false,
 	}
-	
+
 	return dbManager.New(config)
 }
 
@@ -68,13 +68,13 @@ func (c *ChainStateManager) detectDatabaseType(dbPath string) string {
 	if len(matches) > 0 {
 		return "pebbledb"
 	}
-	
+
 	// Check for LevelDB markers (LDB files)
 	matches, _ = filepath.Glob(filepath.Join(dbPath, "*.ldb"))
 	if len(matches) > 0 {
 		return "leveldb"
 	}
-	
+
 	// Default to PebbleDB
 	return "pebbledb"
 }

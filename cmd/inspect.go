@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/luxfi/geth/common"
 	"github.com/luxfi/genesis/pkg/application"
 	"github.com/luxfi/genesis/pkg/inspect"
+	"github.com/luxfi/geth/common"
 	"github.com/spf13/cobra"
 )
 

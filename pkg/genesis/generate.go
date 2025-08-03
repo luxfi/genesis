@@ -97,26 +97,26 @@ func GeneratePChainWithValidators(network Network, outputPath string, configDir 
 		"networkID": network.ID,
 		"allocations": []map[string]interface{}{
 			{
-				"ethAddr": "0x2781BDC83A612F0FE382476556C0Cc12fE602294",
-				"avaxAddr": "P-lux1xlg6dzvzr9spzyutevhj5jgm9hhczfqptm9wq",
+				"ethAddr":       "0x2781BDC83A612F0FE382476556C0Cc12fE602294",
+				"avaxAddr":      "P-lux1xlg6dzvzr9spzyutevhj5jgm9hhczfqptm9wq",
 				"initialAmount": 300000000000000000,
 				"unlockSchedule": []map[string]interface{}{
 					{
-						"amount": 10000000000000000,
+						"amount":   10000000000000000,
 						"locktime": 1633824000,
 					},
 				},
 			},
 		},
-		"startTime": 1609459200,
-		"initialStakeDuration": 31536000,
+		"startTime":                  1609459200,
+		"initialStakeDuration":       31536000,
 		"initialStakeDurationOffset": 5400,
 		"initialStakedFunds": []string{
 			"P-lux1xlg6dzvzr9spzyutevhj5jgm9hhczfqptm9wq",
 		},
 		"initialStakers": []map[string]interface{}{},
-		"cChainGenesis": "{\"config\":{\"chainId\":96369}}",
-		"message": "Lux genesis block",
+		"cChainGenesis":  "{\"config\":{\"chainId\":96369}}",
+		"message":        "Lux genesis block",
 	}
 
 	// Add validators as initial stakers
@@ -194,7 +194,7 @@ func GenerateCChain(network Network, outputPath string) error {
 	// Also create config.json
 	configPath := filepath.Join(filepath.Dir(outputPath), "config.json")
 	config := map[string]interface{}{
-		"snowman-api-enabled": false,
+		"snowman-api-enabled":      false,
 		"coreth-admin-api-enabled": false,
 		"eth-apis": []string{
 			"eth",
@@ -205,28 +205,28 @@ func GenerateCChain(network Network, outputPath string) error {
 			"internal-blockchain",
 			"internal-transaction",
 		},
-		"rpc-gas-cap": 50000000,
-		"rpc-tx-fee-cap": 100,
-		"pruning-enabled": true,
-		"local-txs-enabled": true,
-		"api-max-duration": 30000000000,
-		"ws-cpu-refill-rate": 0,
-		"ws-cpu-max-stored": 0,
-		"api-max-blocks-per-request": 30,
-		"allow-unfinalized-queries": false,
-		"allow-unprotected-txs": false,
-		"keystore-directory": "",
-		"keystore-external-signer": "",
-		"keystore-insecure-unlock-allowed": false,
-		"remote-tx-gossip-only-enabled": false,
-		"tx-regossip-frequency": 60000000000,
-		"tx-regossip-max-size": 15,
-		"log-level": "info",
-		"offline-pruning-enabled": false,
+		"rpc-gas-cap":                       50000000,
+		"rpc-tx-fee-cap":                    100,
+		"pruning-enabled":                   true,
+		"local-txs-enabled":                 true,
+		"api-max-duration":                  30000000000,
+		"ws-cpu-refill-rate":                0,
+		"ws-cpu-max-stored":                 0,
+		"api-max-blocks-per-request":        30,
+		"allow-unfinalized-queries":         false,
+		"allow-unprotected-txs":             false,
+		"keystore-directory":                "",
+		"keystore-external-signer":          "",
+		"keystore-insecure-unlock-allowed":  false,
+		"remote-tx-gossip-only-enabled":     false,
+		"tx-regossip-frequency":             60000000000,
+		"tx-regossip-max-size":              15,
+		"log-level":                         "info",
+		"offline-pruning-enabled":           false,
 		"offline-pruning-bloom-filter-size": 512,
-		"offline-pruning-data-directory": "",
-		"max-outbound-active-requests": 16,
-		"state-sync-enabled": false,
+		"offline-pruning-data-directory":    "",
+		"max-outbound-active-requests":      16,
+		"state-sync-enabled":                false,
 	}
 
 	configData, err := json.MarshalIndent(config, "", "  ")
@@ -263,20 +263,20 @@ func GenerateXChainWithAllocations(network Network, outputPath string, configDir
 		"networkID": network.ID,
 		"allocations": []map[string]interface{}{
 			{
-				"ethAddr": "0x2781BDC83A612F0FE382476556C0Cc12fE602294",
-				"avaxAddr": "X-lux1xlg6dzvzr9spzyutevhj5jgm9hhczfqptm9wq",
+				"ethAddr":       "0x2781BDC83A612F0FE382476556C0Cc12fE602294",
+				"avaxAddr":      "X-lux1xlg6dzvzr9spzyutevhj5jgm9hhczfqptm9wq",
 				"initialAmount": 300000000000000000,
 				"unlockSchedule": []map[string]interface{}{
 					{
-						"amount": 10000000000000000,
+						"amount":   10000000000000000,
 						"locktime": 1633824000,
 					},
 				},
 			},
 		},
-		"startTime": 1609459200,
+		"startTime":       1609459200,
 		"initialBalances": initialBalances,
-		"message": "Lux X-Chain genesis",
+		"message":         "Lux X-Chain genesis",
 	}
 
 	// Write genesis file

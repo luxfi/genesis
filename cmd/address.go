@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/secp256k1"
@@ -12,7 +13,6 @@ import (
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
-	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/spf13/cobra"
 )
 

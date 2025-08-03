@@ -8,10 +8,10 @@ import (
 
 	"github.com/luxfi/database"
 	"github.com/luxfi/database/manager"
+	"github.com/luxfi/genesis/pkg/application"
 	"github.com/luxfi/geth/common"
 	"github.com/luxfi/geth/core/types"
 	"github.com/luxfi/geth/rlp"
-	"github.com/luxfi/genesis/pkg/application"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -29,10 +29,10 @@ func New(app *application.Genesis) *Inspector {
 func (i *Inspector) openDatabase(dbPath string) (database.Database, error) {
 	// Auto-detect database type
 	dbType := i.detectDatabaseType(dbPath)
-	
+
 	// Create database manager
 	dbManager := manager.NewManager(filepath.Dir(dbPath), prometheus.NewRegistry())
-	
+
 	// Configure database for read-only access
 	config := &manager.Config{
 		Type:      dbType,
@@ -42,7 +42,7 @@ func (i *Inspector) openDatabase(dbPath string) (database.Database, error) {
 		HandleCap: 1024,
 		ReadOnly:  true,
 	}
-	
+
 	return dbManager.New(config)
 }
 
@@ -53,13 +53,13 @@ func (i *Inspector) detectDatabaseType(dbPath string) string {
 	if len(matches) > 0 {
 		return "pebbledb"
 	}
-	
+
 	// Check for LevelDB markers (LDB files)
 	matches, _ = filepath.Glob(filepath.Join(dbPath, "*.ldb"))
 	if len(matches) > 0 {
 		return "leveldb"
 	}
-	
+
 	// Default to PebbleDB
 	return "pebbledb"
 }
@@ -197,12 +197,12 @@ func (i *Inspector) InspectKeys(dbPath string, limit int) error {
 		if len(key) > 0 {
 			prefix := string(key[0])
 			keyTypes[prefix]++
-			
+
 			if len(sampleKeys) < 10 {
 				sampleKeys = append(sampleKeys, fmt.Sprintf("%s: %s", prefix, hex.EncodeToString(key)))
 			}
 		}
-		
+
 		count++
 		if limit > 0 && count >= limit {
 			break
@@ -214,14 +214,14 @@ func (i *Inspector) InspectKeys(dbPath string, limit int) error {
 	for prefix, cnt := range keyTypes {
 		fmt.Printf("  %s: %d keys\n", getKeyDescription(prefix), cnt)
 	}
-	
+
 	fmt.Printf("\nSample Keys:\n")
 	for _, key := range sampleKeys {
 		fmt.Printf("  %s\n", key)
 	}
 
 	fmt.Printf("\nTotal keys examined: %d\n", count)
-	
+
 	return nil
 }
 

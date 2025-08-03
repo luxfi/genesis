@@ -20,7 +20,7 @@ func NewVersionCommand() *cobra.Command {
 			version := "1.0.0"
 			buildTime := "unknown"
 			gitCommit := "unknown"
-			
+
 			cmd.Printf("Genesis CLI v%s\n", version)
 			cmd.Printf("Build Time: %s\n", buildTime)
 			cmd.Printf("Git Commit: %s\n", gitCommit)
