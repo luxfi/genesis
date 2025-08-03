@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/luxfi/geth/common"
+	"github.com/luxfi/genesis/pkg/ancient"
+	"github.com/luxfi/genesis/pkg/consensus"
+	luxlog "github.com/luxfi/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

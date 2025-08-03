@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/luxfi/geth/common"
-	"github.com/luxfi/geth/ethdb"
+	"github.com/luxfi/database"
+	"github.com/luxfi/database/manager"
+	"github.com/luxfi/log"
 )
 
 // AncientStore represents the interface for ancient data storage
