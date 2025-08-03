@@ -31,7 +31,7 @@ all: build
 build:
 	@echo "Building genesis CLI..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/genesis
+	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) .
 
 install: build
 	@echo "Installing genesis CLI..."

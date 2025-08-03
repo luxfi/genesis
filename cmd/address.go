@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"strings"
 
@@ -17,12 +16,14 @@ import (
 )
 
 const (
-	// BIP44 path for Lux: m/44'/9000'/0'/0/{account}
-	// 9000 is the registered coin type for Lux/Avalanche
-	purposeIndex  = 44
-	coinTypeIndex = 9000
-	accountIndex  = 0
-	changeIndex   = 0
+	// BIP44 paths:
+	// For EVM addresses: m/44'/60'/0'/0/{account} (Ethereum standard)
+	// For P/X chains: m/44'/9000'/0'/0/{account} (Avalanche/Lux standard)
+	purposeIndex     = 44
+	ethCoinTypeIndex = 60    // Ethereum coin type for EVM addresses
+	luxCoinTypeIndex = 9000  // Avalanche/Lux coin type for P/X chains
+	accountIndex     = 0
+	changeIndex      = 0
 )
 
 var (
@@ -103,13 +104,14 @@ Input can be:
 
 // AddressSet contains all address formats
 type AddressSet struct {
-	AccountIndex int    `json:"accountIndex,omitempty"`
-	AddressID    string `json:"addressId,omitempty"`
-	EVMAddress   string `json:"evmAddress"`
-	CChain       string `json:"cChain"`
-	PChain       string `json:"pChain"`
-	XChain       string `json:"xChain"`
-	PrivateKey   string `json:"privateKey,omitempty"`
+	AccountIndex   int    `json:"accountIndex,omitempty"`
+	AddressID      string `json:"addressId,omitempty"`
+	EVMAddress     string `json:"evmAddress"`
+	CChain         string `json:"cChain"`
+	PChain         string `json:"pChain"`
+	XChain         string `json:"xChain"`
+	EVMPrivateKey  string `json:"evmPrivateKey,omitempty"`
+	LuxPrivateKey  string `json:"luxPrivateKey,omitempty"`
 	// Testnet addresses
 	CChainTest string `json:"cChainTest,omitempty"`
 	PChainTest string `json:"pChainTest,omitempty"`
@@ -135,21 +137,36 @@ func generateAddresses(app *application.Genesis, mnemonic string) error {
 
 	// Derive keys for each account
 	for i := 0; i < addrNumAccounts; i++ {
-		// Derive path: m/44'/9000'/0'/0/{i}
-		key, err := deriveKey(masterKey, i)
+		// Derive two keys: one for EVM (Ethereum standard) and one for P/X chains (Avalanche standard)
+		
+		// EVM key: m/44'/60'/0'/0/{i}
+		evmKey, err := deriveKey(masterKey, i, ethCoinTypeIndex)
 		if err != nil {
-			app.Log.Error("Error deriving key", "account", i, "error", err)
+			app.Log.Error("Error deriving EVM key", "account", i, "error", err)
 			continue
 		}
 
-		// Convert BIP32 key to secp256k1 private key
-		privKey, err := secp256k1.ToPrivateKey(key.Key)
+		// P/X key: m/44'/9000'/0'/0/{i}
+		luxKey, err := deriveKey(masterKey, i, luxCoinTypeIndex)
 		if err != nil {
-			app.Log.Error("Error converting key", "account", i, "error", err)
+			app.Log.Error("Error deriving Lux key", "account", i, "error", err)
 			continue
 		}
 
-		addrSet := generateAddressSet(privKey, i)
+		// Convert BIP32 keys to secp256k1 private keys
+		evmPrivKey, err := secp256k1.ToPrivateKey(evmKey.Key)
+		if err != nil {
+			app.Log.Error("Error converting EVM key", "account", i, "error", err)
+			continue
+		}
+
+		luxPrivKey, err := secp256k1.ToPrivateKey(luxKey.Key)
+		if err != nil {
+			app.Log.Error("Error converting Lux key", "account", i, "error", err)
+			continue
+		}
+
+		addrSet := generateAddressSet(evmPrivKey, luxPrivKey, i)
 		if addrSet != nil {
 			allAddresses = append(allAddresses, *addrSet)
 			if !addrOutputJSON {
@@ -175,44 +192,47 @@ func convertAddress(app *application.Genesis, input string) error {
 	return nil
 }
 
-func deriveKey(masterKey *bip32.Key, idx int) (*bip32.Key, error) {
+func deriveKey(masterKey *bip32.Key, idx int, coinType uint32) (*bip32.Key, error) {
 	// m/44'
 	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + purposeIndex)
 	if err != nil {
 		return nil, err
 	}
 
-	// m/44'/9000'
-	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + coinTypeIndex)
+	// m/44'/{coinType}'
+	coin, err := purpose.NewChildKey(bip32.FirstHardenedChild + coinType)
 	if err != nil {
 		return nil, err
 	}
 
-	// m/44'/9000'/0'
-	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + accountIndex)
+	// m/44'/{coinType}'/0'
+	account, err := coin.NewChildKey(bip32.FirstHardenedChild + accountIndex)
 	if err != nil {
 		return nil, err
 	}
 
-	// m/44'/9000'/0'/0
+	// m/44'/{coinType}'/0'/0
 	change, err := account.NewChildKey(changeIndex)
 	if err != nil {
 		return nil, err
 	}
 
-	// m/44'/9000'/0'/0/{idx}
+	// m/44'/{coinType}'/0'/0/{idx}
 	return change.NewChildKey(uint32(idx))
 }
 
-func generateAddressSet(privKey *secp256k1.PrivateKey, idx int) *AddressSet {
-	// Get public key
-	pubKey := privKey.PublicKey()
+func generateAddressSet(evmPrivKey, luxPrivKey *secp256k1.PrivateKey, idx int) *AddressSet {
+	// Get EVM address from Ethereum-derived key
+	evmPrivKeyBytes := evmPrivKey.Bytes()
+	ecdsaPrivKey, err := crypto.ToECDSA(evmPrivKeyBytes)
+	if err != nil {
+		return nil
+	}
+	evmAddressBytes := crypto.PubkeyToAddress(ecdsaPrivKey.PublicKey).Bytes()
 
-	// Get EVM address (Keccak256 based)
-	evmAddressBytes := generateEVMAddress(privKey.ToECDSA().Public().(*ecdsa.PublicKey))
-
-	// Get Lux native address bytes (for P/X chains)
-	luxAddressBytes := pubKey.Address().Bytes()
+	// Get Lux native address bytes (for P/X chains) from Avalanche-derived key
+	luxPubKey := luxPrivKey.PublicKey()
+	luxAddressBytes := luxPubKey.Address().Bytes()
 
 	// Generate mainnet addresses
 	mainnetHRP := constants.GetHRP(constants.MainnetID)
@@ -233,7 +253,8 @@ func generateAddressSet(privKey *secp256k1.PrivateKey, idx int) *AddressSet {
 	addrSet.AddressID = addrID.String()
 
 	if addrShowPrivKey {
-		addrSet.PrivateKey = fmt.Sprintf("0x%x", privKey.Bytes())
+		addrSet.EVMPrivateKey = fmt.Sprintf("0x%x", evmPrivKey.Bytes())
+		addrSet.LuxPrivateKey = fmt.Sprintf("0x%x", luxPrivKey.Bytes())
 	}
 
 	// Generate testnet addresses if requested
@@ -250,9 +271,6 @@ func generateAddressSet(privKey *secp256k1.PrivateKey, idx int) *AddressSet {
 	return addrSet
 }
 
-func generateEVMAddress(pubKey *ecdsa.PublicKey) []byte {
-	return crypto.PubkeyToAddress(*pubKey).Bytes()
-}
 
 func printAddressSet(addrSet AddressSet) {
 	if addrSet.AccountIndex >= 0 {
@@ -275,8 +293,11 @@ func printAddressSet(addrSet AddressSet) {
 		fmt.Printf("    X-Chain: %s\n", addrSet.XChainTest)
 	}
 
-	if addrSet.PrivateKey != "" {
-		fmt.Printf("  Private Key: %s\n", addrSet.PrivateKey)
+	if addrSet.EVMPrivateKey != "" {
+		fmt.Printf("  EVM Private Key: %s\n", addrSet.EVMPrivateKey)
+	}
+	if addrSet.LuxPrivateKey != "" {
+		fmt.Printf("  P/X Private Key: %s\n", addrSet.LuxPrivateKey)
 	}
 }
 
