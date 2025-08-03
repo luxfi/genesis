@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -8,11 +9,11 @@ import (
 	"github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/genesis/pkg/application"
+	"github.com/luxfi/go-bip32"
+	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/node/utils/constants"
 	"github.com/spf13/cobra"
-	"github.com/luxfi/go-bip32"
-	"github.com/luxfi/go-bip39"
 )
 
 const (
@@ -20,8 +21,8 @@ const (
 	// For EVM addresses: m/44'/60'/0'/0/{account} (Ethereum standard)
 	// For P/X chains: m/44'/9000'/0'/0/{account} (Avalanche/Lux standard)
 	purposeIndex     = 44
-	ethCoinTypeIndex = 60    // Ethereum coin type for EVM addresses
-	luxCoinTypeIndex = 9000  // Avalanche/Lux coin type for P/X chains
+	ethCoinTypeIndex = 60   // Ethereum coin type for EVM addresses
+	luxCoinTypeIndex = 9000 // Avalanche/Lux coin type for P/X chains
 	accountIndex     = 0
 	changeIndex      = 0
 )
@@ -104,14 +105,14 @@ Input can be:
 
 // AddressSet contains all address formats
 type AddressSet struct {
-	AccountIndex   int    `json:"accountIndex,omitempty"`
-	AddressID      string `json:"addressId,omitempty"`
-	EVMAddress     string `json:"evmAddress"`
-	CChain         string `json:"cChain"`
-	PChain         string `json:"pChain"`
-	XChain         string `json:"xChain"`
-	EVMPrivateKey  string `json:"evmPrivateKey,omitempty"`
-	LuxPrivateKey  string `json:"luxPrivateKey,omitempty"`
+	AccountIndex  int    `json:"accountIndex,omitempty"`
+	AddressID     string `json:"addressId,omitempty"`
+	EVMAddress    string `json:"evmAddress"`
+	CChain        string `json:"cChain"`
+	PChain        string `json:"pChain"`
+	XChain        string `json:"xChain"`
+	EVMPrivateKey string `json:"evmPrivateKey,omitempty"`
+	LuxPrivateKey string `json:"luxPrivateKey,omitempty"`
 	// Testnet addresses
 	CChainTest string `json:"cChainTest,omitempty"`
 	PChainTest string `json:"pChainTest,omitempty"`
@@ -138,7 +139,7 @@ func generateAddresses(app *application.Genesis, mnemonic string) error {
 	// Derive keys for each account
 	for i := 0; i < addrNumAccounts; i++ {
 		// Derive two keys: one for EVM (Ethereum standard) and one for P/X chains (Avalanche standard)
-		
+
 		// EVM key: m/44'/60'/0'/0/{i}
 		evmKey, err := deriveKey(masterKey, i, ethCoinTypeIndex)
 		if err != nil {
@@ -179,8 +180,20 @@ func generateAddresses(app *application.Genesis, mnemonic string) error {
 	}
 
 	if addrOutputJSON {
-		// TODO: Implement JSON output
-		fmt.Println("JSON output not yet implemented")
+		// Create output structure
+		output := struct {
+			Addresses []AddressSet `json:"addresses"`
+		}{
+			Addresses: allAddresses,
+		}
+
+		// Marshal to JSON with pretty printing
+		jsonBytes, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return fmt.Errorf("error marshaling to JSON: %w", err)
+		}
+
+		fmt.Println(string(jsonBytes))
 	}
 
 	return nil
@@ -270,7 +283,6 @@ func generateAddressSet(evmPrivKey, luxPrivKey *secp256k1.PrivateKey, idx int) *
 
 	return addrSet
 }
-
 
 func printAddressSet(addrSet AddressSet) {
 	if addrSet.AccountIndex >= 0 {
