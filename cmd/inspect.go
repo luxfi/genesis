@@ -19,6 +19,7 @@ func NewInspectCmd(app *application.Genesis) *cobra.Command {
 	cmd.AddCommand(newInspectBlocksCmd(app))
 	cmd.AddCommand(newInspectKeysCmd(app))
 	cmd.AddCommand(newInspectBalanceCmd(app))
+	cmd.AddCommand(newInspectDebugKeysCmd(app))
 
 	return cmd
 }
@@ -88,6 +89,26 @@ func newInspectBalanceCmd(app *application.Genesis) *cobra.Command {
 	}
 
 	cmd.Flags().Uint64Var(&blockNum, "block", 0, "Block number (0 = latest)")
+
+	return cmd
+}
+
+func newInspectDebugKeysCmd(app *application.Genesis) *cobra.Command {
+	var prefix string
+	var limit int
+
+	cmd := &cobra.Command{
+		Use:   "debug-keys [db-path]",
+		Short: "Debug database keys to understand structure",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			inspector := inspect.New(app)
+			return inspector.DebugKeys(args[0], prefix, limit)
+		},
+	}
+
+	cmd.Flags().StringVar(&prefix, "prefix", "", "Filter by key prefix")
+	cmd.Flags().IntVar(&limit, "limit", 100, "Limit number of keys to show")
 
 	return cmd
 }

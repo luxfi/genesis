@@ -13,11 +13,15 @@ func NewValidatorsCmd(app *application.Genesis) *cobra.Command {
 		Long:  "Manage validators for P-Chain genesis",
 	}
 
-	// TODO: Add subcommands
-	// - validators list
-	// - validators add
-	// - validators remove
-	// - validators generate
+	// Subcommands
+	cmd.AddCommand(&cobra.Command{
+		Use:   "list",
+		Short: "List validators",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.Println("Validator list not yet implemented")
+			return nil
+		},
+	})
 
 	return cmd
 }

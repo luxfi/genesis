@@ -8,13 +8,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"sort"
 
-	"github.com/cockroachdb/pebble"
+	"github.com/luxfi/database"
+	"github.com/luxfi/database/manager"
 	"github.com/luxfi/geth/common"
 	"github.com/luxfi/geth/core/types"
 	"github.com/luxfi/geth/rlp"
 	"github.com/luxfi/genesis/pkg/application"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Replayer handles blockchain replay operations
@@ -36,15 +39,51 @@ func New(app *application.Genesis) *Replayer {
 	return &Replayer{app: app}
 }
 
+// openDatabase opens a database for replay operations
+func (r *Replayer) openDatabase(dbPath string, readOnly bool) (database.Database, error) {
+	// Auto-detect database type
+	dbType := r.detectDatabaseType(dbPath)
+	
+	// Create database manager
+	dbManager := manager.NewManager(filepath.Dir(dbPath), prometheus.NewRegistry())
+	
+	// Configure database
+	config := &manager.Config{
+		Type:      dbType,
+		Path:      filepath.Base(dbPath),
+		Namespace: "replay",
+		CacheSize: 512, // MB
+		HandleCap: 1024,
+		ReadOnly:  readOnly,
+	}
+	
+	return dbManager.New(config)
+}
+
+// detectDatabaseType tries to determine the database type
+func (r *Replayer) detectDatabaseType(dbPath string) string {
+	// Check for PebbleDB markers (SST files)
+	matches, _ := filepath.Glob(filepath.Join(dbPath, "*.sst"))
+	if len(matches) > 0 {
+		return "pebbledb"
+	}
+	
+	// Check for LevelDB markers (LDB files)
+	matches, _ = filepath.Glob(filepath.Join(dbPath, "*.ldb"))
+	if len(matches) > 0 {
+		return "leveldb"
+	}
+	
+	// Default to PebbleDB
+	return "pebbledb"
+}
+
 // ReplayBlocks replays blockchain blocks from source to destination
 func (r *Replayer) ReplayBlocks(sourceDB string, opts Options) error {
 	r.app.Log.Info("Replaying blocks", "source", sourceDB, "rpc", opts.RPC)
 
 	// Open source database
-	srcOpts := &pebble.Options{
-		ReadOnly: true,
-	}
-	db, err := pebble.Open(sourceDB, srcOpts)
+	db, err := r.openDatabase(sourceDB, true)
 	if err != nil {
 		return fmt.Errorf("failed to open source database: %w", err)
 	}
@@ -57,7 +96,7 @@ func (r *Replayer) ReplayBlocks(sourceDB string, opts Options) error {
 	return r.replayViaRPC(db, opts)
 }
 
-func (r *Replayer) replayDirectToDB(db *pebble.DB, opts Options) error {
+func (r *Replayer) replayDirectToDB(db database.Database, opts Options) error {
 	if opts.Output == "" {
 		return fmt.Errorf("output path required for direct DB mode")
 	}
@@ -65,7 +104,7 @@ func (r *Replayer) replayDirectToDB(db *pebble.DB, opts Options) error {
 	r.app.Log.Info("Direct database replay", "output", opts.Output)
 
 	// Create output database
-	outDB, err := pebble.Open(opts.Output, &pebble.Options{})
+	outDB, err := r.openDatabase(opts.Output, false)
 	if err != nil {
 		return fmt.Errorf("failed to create output database: %w", err)
 	}
@@ -75,14 +114,11 @@ func (r *Replayer) replayDirectToDB(db *pebble.DB, opts Options) error {
 	canonicalBlocks := make(map[uint64]common.Hash)
 	blockNumbers := []uint64{}
 
-	iter, err := db.NewIter(nil)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator: %w", err)
-	}
-	defer iter.Close()
+	iter := db.NewIterator()
+	defer iter.Release()
 
 	// First pass: collect all canonical blocks
-	for iter.First(); iter.Valid(); iter.Next() {
+	for iter.Next() {
 		key := iter.Key()
 		if len(key) == 10 && key[0] == 'H' { // Canonical hash prefix
 			num := binary.BigEndian.Uint64(key[1:9])
@@ -106,51 +142,45 @@ func (r *Replayer) replayDirectToDB(db *pebble.DB, opts Options) error {
 
 		// Copy canonical hash entry
 		canonicalKey := append([]byte("H"), encodeBlockNumber(num)...)
-		if err := batch.Set(canonicalKey, hash.Bytes(), nil); err != nil {
+		if err := batch.Put(canonicalKey, hash.Bytes()); err != nil {
 			return fmt.Errorf("failed to set canonical hash: %w", err)
 		}
 
 		// Copy header
 		headerKey := append([]byte("h"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-		if headerData, closer, err := db.Get(headerKey); err == nil {
-			if err := batch.Set(headerKey, headerData, nil); err != nil {
-				closer.Close()
+		if headerData, err := db.Get(headerKey); err == nil {
+			if err := batch.Put(headerKey, headerData); err != nil {
 				return fmt.Errorf("failed to set header: %w", err)
 			}
-			closer.Close()
 		}
 
 		// Copy body
 		bodyKey := append([]byte("b"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-		if bodyData, closer, err := db.Get(bodyKey); err == nil {
-			if err := batch.Set(bodyKey, bodyData, nil); err != nil {
-				closer.Close()
+		if bodyData, err := db.Get(bodyKey); err == nil {
+			if err := batch.Put(bodyKey, bodyData); err != nil {
 				return fmt.Errorf("failed to set body: %w", err)
 			}
-			closer.Close()
 		}
 
 		// Copy receipts
 		receiptKey := append([]byte("r"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-		if receiptData, closer, err := db.Get(receiptKey); err == nil {
-			if err := batch.Set(receiptKey, receiptData, nil); err != nil {
-				closer.Close()
+		if receiptData, err := db.Get(receiptKey); err == nil {
+			if err := batch.Put(receiptKey, receiptData); err != nil {
 				return fmt.Errorf("failed to set receipt: %w", err)
 			}
-			closer.Close()
 		}
 
 		count++
 		if count%1000 == 0 {
-			if err := batch.Commit(nil); err != nil {
+			if err := batch.Write(); err != nil {
 				return fmt.Errorf("failed to commit batch: %w", err)
 			}
-			batch = outDB.NewBatch()
+			batch.Reset()
 			r.app.Log.Info("Replay progress", "blocks", count)
 		}
 	}
 
-	if err := batch.Commit(nil); err != nil {
+	if err := batch.Write(); err != nil {
 		return fmt.Errorf("failed to commit final batch: %w", err)
 	}
 
@@ -158,7 +188,7 @@ func (r *Replayer) replayDirectToDB(db *pebble.DB, opts Options) error {
 	return nil
 }
 
-func (r *Replayer) replayViaRPC(db *pebble.DB, opts Options) error {
+func (r *Replayer) replayViaRPC(db database.Database, opts Options) error {
 	// Check RPC connection
 	if err := r.checkRPCConnection(opts.RPC); err != nil {
 		return fmt.Errorf("RPC check failed: %w", err)
@@ -176,13 +206,10 @@ func (r *Replayer) replayViaRPC(db *pebble.DB, opts Options) error {
 	canonicalBlocks := make(map[uint64]common.Hash)
 	blockNumbers := []uint64{}
 
-	iter, err := db.NewIter(nil)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator: %w", err)
-	}
-	defer iter.Close()
+	iter := db.NewIterator()
+	defer iter.Release()
 
-	for iter.First(); iter.Valid(); iter.Next() {
+	for iter.Next() {
 		key := iter.Key()
 		if len(key) == 10 && key[0] == 'H' { // Canonical hash prefix
 			num := binary.BigEndian.Uint64(key[1:9])
@@ -272,14 +299,13 @@ func (r *Replayer) getChainHead(rpcURL string) (uint64, error) {
 	return blockNum, nil
 }
 
-func (r *Replayer) getBlock(db *pebble.DB, num uint64, hash common.Hash) (*types.Block, error) {
+func (r *Replayer) getBlock(db database.Database, num uint64, hash common.Hash) (*types.Block, error) {
 	// Get header
 	headerKey := append([]byte("h"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-	headerData, closer, err := db.Get(headerKey)
+	headerData, err := db.Get(headerKey)
 	if err != nil {
 		return nil, fmt.Errorf("header not found: %w", err)
 	}
-	closer.Close()
 
 	var header types.Header
 	if err := rlp.DecodeBytes(headerData, &header); err != nil {
@@ -288,11 +314,10 @@ func (r *Replayer) getBlock(db *pebble.DB, num uint64, hash common.Hash) (*types
 
 	// Get body
 	bodyKey := append([]byte("b"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-	bodyData, closer, err := db.Get(bodyKey)
+	bodyData, err := db.Get(bodyKey)
 	if err != nil {
 		return nil, fmt.Errorf("body not found: %w", err)
 	}
-	closer.Close()
 
 	var body types.Body
 	if err := rlp.DecodeBytes(bodyData, &body); err != nil {

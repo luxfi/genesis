@@ -13,11 +13,15 @@ func NewToolsCmd(app *application.Genesis) *cobra.Command {
 		Long:  "Collection of utility tools for blockchain operations",
 	}
 
-	// TODO: Add various utility commands
-	// - tools verify-genesis
-	// - tools calculate-hash
-	// - tools encode/decode
-	// - tools key-convert
+	// Subcommands
+	cmd.AddCommand(&cobra.Command{
+		Use:   "verify-genesis",
+		Short: "Verify genesis file format",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.Println("Genesis verification not yet implemented")
+			return nil
+		},
+	})
 
 	return cmd
 }

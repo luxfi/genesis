@@ -4,12 +4,15 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"path/filepath"
 
-	"github.com/cockroachdb/pebble"
+	"github.com/luxfi/database"
+	"github.com/luxfi/database/manager"
 	"github.com/luxfi/geth/common"
 	"github.com/luxfi/geth/core/types"
 	"github.com/luxfi/geth/rlp"
 	"github.com/luxfi/genesis/pkg/application"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Inspector handles blockchain inspection operations
@@ -22,9 +25,48 @@ func New(app *application.Genesis) *Inspector {
 	return &Inspector{app: app}
 }
 
+// openDatabase opens a database for inspection
+func (i *Inspector) openDatabase(dbPath string) (database.Database, error) {
+	// Auto-detect database type
+	dbType := i.detectDatabaseType(dbPath)
+	
+	// Create database manager
+	dbManager := manager.NewManager(filepath.Dir(dbPath), prometheus.NewRegistry())
+	
+	// Configure database for read-only access
+	config := &manager.Config{
+		Type:      dbType,
+		Path:      filepath.Base(dbPath),
+		Namespace: "inspect",
+		CacheSize: 512, // MB
+		HandleCap: 1024,
+		ReadOnly:  true,
+	}
+	
+	return dbManager.New(config)
+}
+
+// detectDatabaseType tries to determine the database type
+func (i *Inspector) detectDatabaseType(dbPath string) string {
+	// Check for PebbleDB markers (SST files)
+	matches, _ := filepath.Glob(filepath.Join(dbPath, "*.sst"))
+	if len(matches) > 0 {
+		return "pebbledb"
+	}
+	
+	// Check for LevelDB markers (LDB files)
+	matches, _ = filepath.Glob(filepath.Join(dbPath, "*.ldb"))
+	if len(matches) > 0 {
+		return "leveldb"
+	}
+	
+	// Default to PebbleDB
+	return "pebbledb"
+}
+
 // InspectTip finds and displays the chain tip
 func (i *Inspector) InspectTip(dbPath string) error {
-	db, err := pebble.Open(dbPath, &pebble.Options{ReadOnly: true})
+	db, err := i.openDatabase(dbPath)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
@@ -34,13 +76,10 @@ func (i *Inspector) InspectTip(dbPath string) error {
 	var highestNum uint64
 	var highestHash common.Hash
 
-	iter, err := db.NewIter(nil)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator: %w", err)
-	}
-	defer iter.Close()
+	iter := db.NewIterator()
+	defer iter.Release()
 
-	for iter.First(); iter.Valid(); iter.Next() {
+	for iter.Next() {
 		key := iter.Key()
 		if len(key) == 10 && key[0] == 'H' { // Canonical hash prefix
 			num := binary.BigEndian.Uint64(key[1:9])
@@ -58,11 +97,10 @@ func (i *Inspector) InspectTip(dbPath string) error {
 
 	// Get the header for more details
 	headerKey := append([]byte("h"), append(highestHash.Bytes(), encodeBlockNumber(highestNum)...)...)
-	headerData, closer, err := db.Get(headerKey)
+	headerData, err := db.Get(headerKey)
 	if err != nil {
 		return fmt.Errorf("failed to get header: %w", err)
 	}
-	defer closer.Close()
 
 	var header types.Header
 	if err := rlp.DecodeBytes(headerData, &header); err != nil {
@@ -83,7 +121,7 @@ func (i *Inspector) InspectTip(dbPath string) error {
 
 // InspectBlocks displays information about blocks in the database
 func (i *Inspector) InspectBlocks(dbPath string, start, count uint64) error {
-	db, err := pebble.Open(dbPath, &pebble.Options{ReadOnly: true})
+	db, err := i.openDatabase(dbPath)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
@@ -94,7 +132,7 @@ func (i *Inspector) InspectBlocks(dbPath string, start, count uint64) error {
 	for num := start; num < start+count; num++ {
 		// Get canonical hash
 		canonicalKey := append([]byte("H"), encodeBlockNumber(num)...)
-		hashData, closer, err := db.Get(canonicalKey)
+		hashData, err := db.Get(canonicalKey)
 		if err != nil {
 			if num == start {
 				return fmt.Errorf("block %d not found", num)
@@ -103,16 +141,14 @@ func (i *Inspector) InspectBlocks(dbPath string, start, count uint64) error {
 			break
 		}
 		hash := common.BytesToHash(hashData)
-		closer.Close()
 
 		// Get header
 		headerKey := append([]byte("h"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-		headerData, closer, err := db.Get(headerKey)
+		headerData, err := db.Get(headerKey)
 		if err != nil {
 			fmt.Printf("Block %d: header not found\n", num)
 			continue
 		}
-		closer.Close()
 
 		var header types.Header
 		if err := rlp.DecodeBytes(headerData, &header); err != nil {
@@ -122,7 +158,7 @@ func (i *Inspector) InspectBlocks(dbPath string, start, count uint64) error {
 
 		// Get body
 		bodyKey := append([]byte("b"), append(hash.Bytes(), encodeBlockNumber(num)...)...)
-		bodyData, closer, err := db.Get(bodyKey)
+		bodyData, err := db.Get(bodyKey)
 		if err == nil {
 			var body types.Body
 			if err := rlp.DecodeBytes(bodyData, &body); err == nil {
@@ -134,7 +170,6 @@ func (i *Inspector) InspectBlocks(dbPath string, start, count uint64) error {
 				fmt.Printf("  Gas Used:     %d / %d\n", header.GasUsed, header.GasLimit)
 				fmt.Printf("\n")
 			}
-			closer.Close()
 		}
 	}
 
@@ -143,7 +178,7 @@ func (i *Inspector) InspectBlocks(dbPath string, start, count uint64) error {
 
 // InspectKeys shows the different key types in the database
 func (i *Inspector) InspectKeys(dbPath string, limit int) error {
-	db, err := pebble.Open(dbPath, &pebble.Options{ReadOnly: true})
+	db, err := i.openDatabase(dbPath)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
@@ -153,14 +188,11 @@ func (i *Inspector) InspectKeys(dbPath string, limit int) error {
 	keyTypes := make(map[string]int)
 	var sampleKeys []string
 
-	iter, err := db.NewIter(nil)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator: %w", err)
-	}
-	defer iter.Close()
+	iter := db.NewIterator()
+	defer iter.Release()
 
 	count := 0
-	for iter.First(); iter.Valid(); iter.Next() {
+	for iter.Next() {
 		key := iter.Key()
 		if len(key) > 0 {
 			prefix := string(key[0])

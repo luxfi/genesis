@@ -61,6 +61,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewSubnetBlockReplayCmd(app))
 	rootCmd.AddCommand(NewValidatorsCmd(app))
 	rootCmd.AddCommand(NewToolsCmd(app))
+	rootCmd.AddCommand(NewSetupCmd(app))
 
 	return rootCmd
 }

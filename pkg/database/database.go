@@ -4,13 +4,14 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/luxfi/database"
-	"github.com/luxfi/database/leveldb"
-	"github.com/luxfi/database/pebbledb"
+	"github.com/luxfi/database/manager"
 	"github.com/luxfi/genesis/pkg/application"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Manager handles database operations
@@ -28,27 +29,20 @@ func (m *Manager) openDatabase(dbPath string, readOnly bool) (database.Database,
 	// Try to detect database type by looking at the directory structure
 	dbType := m.detectDatabaseType(dbPath)
 	
-	var db database.Database
-	var err error
+	// Create database manager
+	dbManager := manager.NewManager(filepath.Dir(dbPath), prometheus.NewRegistry())
 	
-	switch dbType {
-	case "pebbledb":
-		// Use PebbleDB (default for newer deployments)
-		if readOnly {
-			// For read-only, we need to handle differently
-			// PebbleDB doesn't have a direct read-only mode in the luxfi wrapper
-			db, err = pebbledb.New(dbPath, 0, 0, "", false)
-		} else {
-			db, err = pebbledb.New(dbPath, 0, 0, "", true)
-		}
-	case "leveldb":
-		// Use LevelDB (legacy)
-		db, err = leveldb.New(dbPath, 0, 0, "", false)
-	default:
-		// Default to PebbleDB
-		db, err = pebbledb.New(dbPath, 0, 0, "", !readOnly)
+	// Configure database
+	config := &manager.Config{
+		Type:      dbType,
+		Path:      filepath.Base(dbPath),
+		Namespace: "genesis",
+		CacheSize: 512, // MB
+		HandleCap: 1024,
+		ReadOnly:  readOnly,
 	}
 	
+	db, err := dbManager.New(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -58,13 +52,34 @@ func (m *Manager) openDatabase(dbPath string, readOnly bool) (database.Database,
 
 // detectDatabaseType tries to determine the database type
 func (m *Manager) detectDatabaseType(dbPath string) string {
-	// Check for PebbleDB markers
-	if _, err := filepath.Glob(filepath.Join(dbPath, "*.sst")); err == nil {
+	// Check if directory exists
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		// Default to PebbleDB for new databases
 		return "pebbledb"
 	}
 	
-	// Check for LevelDB markers
-	if _, err := filepath.Glob(filepath.Join(dbPath, "*.ldb")); err == nil {
+	// Check for PebbleDB markers (SST files)
+	matches, _ := filepath.Glob(filepath.Join(dbPath, "*.sst"))
+	if len(matches) > 0 {
+		return "pebbledb"
+	}
+	
+	// Check for LevelDB markers (LDB files)
+	matches, _ = filepath.Glob(filepath.Join(dbPath, "*.ldb"))
+	if len(matches) > 0 {
+		return "leveldb"
+	}
+	
+	// Check for MANIFEST files (could be either)
+	matches, _ = filepath.Glob(filepath.Join(dbPath, "MANIFEST-*"))
+	if len(matches) > 0 {
+		// Try to read OPTIONS file to determine type
+		if data, err := os.ReadFile(filepath.Join(dbPath, "OPTIONS-000001")); err == nil {
+			if len(data) > 0 {
+				// PebbleDB typically has different OPTIONS format
+				return "pebbledb"
+			}
+		}
 		return "leveldb"
 	}
 	
@@ -209,9 +224,9 @@ func (m *Manager) CompactAncient(dbPath string, blockNum uint64) error {
 	// 1. Removing old receipts
 	// 2. Compacting state tries
 	// 3. Removing transaction lookup indices
-	
+
 	m.app.Log.Info("Compacting ancient data", "path", dbPath, "before", blockNum)
-	
+
 	// TODO: Implement actual compaction logic
 	return fmt.Errorf("ancient data compaction not yet implemented")
 }

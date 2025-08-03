@@ -13,12 +13,15 @@ func NewLaunchCmd(app *application.Genesis) *cobra.Command {
 		Long:  "Launch various network configurations",
 	}
 
-	// TODO: Add subcommands for different launch scenarios
-	// - launch mainnet
-	// - launch testnet
-	// - launch local
-	// - launch l2
-	// - launch migrated
+	// Subcommands
+	cmd.AddCommand(&cobra.Command{
+		Use:   "local",
+		Short: "Launch local development network",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.Println("Local network launch not yet implemented")
+			return nil
+		},
+	})
 
 	return cmd
 }
