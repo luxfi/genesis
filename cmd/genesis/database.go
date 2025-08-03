@@ -70,13 +70,13 @@ func runWriteHeight(cmd *cobra.Command, args []string) {
 	// Write Height key
 	heightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(heightBytes, height)
-	
+
 	if err := db.Put([]byte("Height"), heightBytes); err != nil {
 		log.Fatalf("Failed to write Height key: %v", err)
 	}
-	
+
 	fmt.Printf("Successfully wrote Height=%d to database\n", height)
-	
+
 	// Verify it was written
 	if val, err := db.Get([]byte("Height")); err == nil {
 		verifiedHeight := binary.BigEndian.Uint64(val)
@@ -103,7 +103,7 @@ func runGetCanonical(cmd *cobra.Command, args []string) {
 	canonicalKey[0] = 'h'
 	binary.BigEndian.PutUint64(canonicalKey[1:9], height)
 	canonicalKey[9] = 'n'
-	
+
 	fmt.Printf("Looking for canonical key: %s\n", hex.EncodeToString(canonicalKey))
 	if hashBytes, err := db.Get(canonicalKey); err == nil {
 		hashHex := hex.EncodeToString(hashBytes)
@@ -113,12 +113,12 @@ func runGetCanonical(cmd *cobra.Command, args []string) {
 		fmt.Printf("export LUX_IMPORTED_BLOCK_ID=%s\n", hashHex)
 	} else {
 		fmt.Printf("Canonical hash at %d not found: %v\n", height, err)
-		
+
 		// Try 9-byte format
 		canonicalKey9 := make([]byte, 9)
 		canonicalKey9[0] = 'h'
 		binary.BigEndian.PutUint64(canonicalKey9[1:], height)
-		
+
 		fmt.Printf("\nTrying 9-byte format: %s\n", hex.EncodeToString(canonicalKey9))
 		if hashBytes, err := db.Get(canonicalKey9); err == nil {
 			hashHex := hex.EncodeToString(hashBytes)
@@ -158,7 +158,7 @@ func runCheckStatus(cmd *cobra.Command, args []string) {
 	canonicalCount := 0
 	minHeight := uint64(^uint64(0))
 	maxHeight := uint64(0)
-	
+
 	for iter.Next() {
 		key := iter.Key()
 		if len(key) == 10 && key[0] == 'h' && key[9] == 'n' {
@@ -176,7 +176,7 @@ func runCheckStatus(cmd *cobra.Command, args []string) {
 	fmt.Printf("\nCanonical blocks found: %d\n", canonicalCount)
 	if canonicalCount > 0 {
 		fmt.Printf("Block range: %d - %d\n", minHeight, maxHeight)
-		
+
 		// Show last few blocks
 		fmt.Println("\nLast 5 blocks:")
 		for i := maxHeight; i > maxHeight-5 && i >= minHeight; i-- {
@@ -184,7 +184,7 @@ func runCheckStatus(cmd *cobra.Command, args []string) {
 			canonicalKey[0] = 'h'
 			binary.BigEndian.PutUint64(canonicalKey[1:9], i)
 			canonicalKey[9] = 'n'
-			
+
 			if hashBytes, err := db.Get(canonicalKey); err == nil {
 				fmt.Printf("  Block %d: %s\n", i, hex.EncodeToString(hashBytes))
 			}
@@ -196,7 +196,7 @@ func runCheckStatus(cmd *cobra.Command, args []string) {
 	keyTypes := make(map[byte]int)
 	iter2 := db.NewIterator()
 	defer iter2.Release()
-	
+
 	totalKeys := 0
 	for iter2.Next() {
 		if totalKeys < 100000 { // Sample first 100k keys
@@ -233,7 +233,7 @@ func runPrepareMigration(cmd *cobra.Command, args []string) {
 	// Step 1: Write Height key
 	heightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(heightBytes, height)
-	
+
 	if err := db.Put([]byte("Height"), heightBytes); err != nil {
 		log.Fatalf("Failed to write Height key: %v", err)
 	}
@@ -244,7 +244,7 @@ func runPrepareMigration(cmd *cobra.Command, args []string) {
 	canonicalKey[0] = 'h'
 	binary.BigEndian.PutUint64(canonicalKey[1:9], height)
 	canonicalKey[9] = 'n'
-	
+
 	var blockHash string
 	if hashBytes, err := db.Get(canonicalKey); err == nil {
 		blockHash = hex.EncodeToString(hashBytes)
@@ -254,7 +254,7 @@ func runPrepareMigration(cmd *cobra.Command, args []string) {
 		canonicalKey9 := make([]byte, 9)
 		canonicalKey9[0] = 'h'
 		binary.BigEndian.PutUint64(canonicalKey9[1:], height)
-		
+
 		if hashBytes, err := db.Get(canonicalKey9); err == nil {
 			blockHash = hex.EncodeToString(hashBytes)
 			fmt.Printf("✓ Found canonical hash (9-byte format): %s\n", blockHash)

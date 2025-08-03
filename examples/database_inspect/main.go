@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -51,7 +52,7 @@ func main() {
 		// Show first 10 keys as examples
 		if totalKeys <= 10 {
 			fmt.Printf("Key %d: %x\n", totalKeys, key)
-			
+
 			// Try to decode value for known key types
 			value := it.Value()
 			if len(key) == 33 && key[0] == 'h' { // Block hash to number
@@ -73,11 +74,11 @@ func main() {
 	fmt.Printf("\nDatabase Summary:\n")
 	fmt.Printf("Total Keys: %d\n", totalKeys)
 	fmt.Printf("\nKey Types by Prefix:\n")
-	
+
 	// Common prefixes in blockchain databases
 	prefixes := map[string]string{
 		"48": "H - Block number to hash",
-		"68": "h - Block hash to number", 
+		"68": "h - Block hash to number",
 		"62": "b - Block body",
 		"74": "t - Transaction",
 		"72": "r - Receipt",
@@ -98,7 +99,7 @@ func main() {
 
 	// Try to find the latest block
 	fmt.Printf("\nSearching for latest block...\n")
-	
+
 	// LastBlock key
 	lastBlockKey := []byte("LastBlock")
 	value, closer, err := db.Get(lastBlockKey)

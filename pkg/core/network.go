@@ -13,7 +13,7 @@ type Network struct {
 
 // GenesisConfig specifies how genesis is created
 type GenesisConfig struct {
-	Source      string            `json:"source"`      // "fresh", "import", "extract"
+	Source      string            `json:"source"` // "fresh", "import", "extract"
 	ImportPath  string            `json:"import_path,omitempty"`
 	Allocations map[string]uint64 `json:"allocations,omitempty"`
 	Message     string            `json:"message,omitempty"`
@@ -64,7 +64,7 @@ func (n *Network) Normalize() {
 	if n.Nodes == 0 {
 		n.Nodes = 1
 	}
-	
+
 	// Default consensus for node count
 	if n.Consensus.K == 0 {
 		if n.Nodes == 1 {
@@ -74,7 +74,7 @@ func (n *Network) Normalize() {
 			n.Consensus = ConsensusConfig{K: k, Alpha: k, Beta: n.Nodes}
 		}
 	}
-	
+
 	// Default genesis message
 	if n.Genesis.Message == "" {
 		n.Genesis.Message = n.Name + " Network"

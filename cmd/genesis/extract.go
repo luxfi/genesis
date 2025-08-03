@@ -33,12 +33,12 @@ func getExtractBlockchainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "blockchain [db-path] [output-path]",
 		Short: "Extract blockchain data in various formats",
-		Long:  `Extract blockchain data from SubnetEVM format to different output formats.
+		Long: `Extract blockchain data from SubnetEVM format to different output formats.
 Use --format=bytes for raw chaindata suitable for replay.
 Use --format=json for human-readable blockchain data.
 Use --format=coreth for C-Chain compatible namespaced format.`,
-		Args:  cobra.ExactArgs(2),
-		RunE:  runExtractBlockchain,
+		Args: cobra.ExactArgs(2),
+		RunE: runExtractBlockchain,
 	}
 
 	cmd.Flags().String("format", "bytes", "Output format: bytes (raw chaindata), json (human readable), coreth (C-Chain compatible)")
@@ -92,11 +92,11 @@ func runExtractGenesis(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to open database: %w", err)
 		}
 		defer pdb.Close()
-		
+
 		// Use pebble directly for now
 		return extractGenesisFromPebble(pdb, outputFile, withState)
 	}
-	
+
 	// TODO: Add support for other database types
 	return fmt.Errorf("database type %s not yet supported", dbType)
 }
@@ -234,7 +234,7 @@ func runExtractBlockchain(cmd *cobra.Command, args []string) error {
 
 func extractRawChaindata(db *pebble.DB, outputPath string, startBlock, endBlock uint64) error {
 	fmt.Println("🔄 Extracting raw chaindata bytes...")
-	
+
 	// Create output directory
 	if err := os.MkdirAll(outputPath, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
@@ -256,16 +256,16 @@ func extractRawChaindata(db *pebble.DB, outputPath string, startBlock, endBlock 
 
 	count := 0
 	batch := outDB.NewBatch()
-	
+
 	for iter.First(); iter.Valid(); iter.Next() {
 		key := iter.Key()
 		value := iter.Value()
-		
+
 		// Copy key-value pairs
 		if err := batch.Set(key, value, nil); err != nil {
 			return fmt.Errorf("failed to set key: %w", err)
 		}
-		
+
 		count++
 		if count%10000 == 0 {
 			if err := batch.Commit(nil); err != nil {
@@ -286,7 +286,7 @@ func extractRawChaindata(db *pebble.DB, outputPath string, startBlock, endBlock 
 
 func extractAsJSON(db *pebble.DB, outputPath string, startBlock, endBlock uint64) error {
 	fmt.Println("📋 Extracting blockchain as JSON...")
-	
+
 	// Get canonical blocks
 	canonicalBlocks := make(map[uint64]common.Hash)
 	blockNumbers := []uint64{}
@@ -314,11 +314,11 @@ func extractAsJSON(db *pebble.DB, outputPath string, startBlock, endBlock uint64
 
 	// Create output structure
 	output := struct {
-		ChainID     uint64                 `json:"chainId"`
-		BlockCount  int                    `json:"blockCount"`
-		StartBlock  uint64                 `json:"startBlock"`
-		EndBlock    uint64                 `json:"endBlock"`
-		Blocks      []map[string]interface{} `json:"blocks"`
+		ChainID    uint64                   `json:"chainId"`
+		BlockCount int                      `json:"blockCount"`
+		StartBlock uint64                   `json:"startBlock"`
+		EndBlock   uint64                   `json:"endBlock"`
+		Blocks     []map[string]interface{} `json:"blocks"`
 	}{
 		ChainID:    96369, // TODO: Get from chain config
 		BlockCount: len(blockNumbers),
@@ -333,11 +333,11 @@ func extractAsJSON(db *pebble.DB, outputPath string, startBlock, endBlock uint64
 	// Extract block details
 	for i, num := range blockNumbers {
 		hash := canonicalBlocks[num]
-		
+
 		// Get header
 		headerKey := append([]byte{0x68}, append(make([]byte, 8), hash[:]...)...)
 		binary.BigEndian.PutUint64(headerKey[1:9], num)
-		
+
 		headerData, closer, err := db.Get(headerKey)
 		if err != nil {
 			fmt.Printf("Warning: header not found for block %d\n", num)
@@ -387,13 +387,13 @@ func extractAsJSON(db *pebble.DB, outputPath string, startBlock, endBlock uint64
 func extractForCoreth(db *pebble.DB, outputPath string, startBlock, endBlock uint64, network string) error {
 	fmt.Println("🔄 Extracting for Coreth (C-Chain) format...")
 	fmt.Printf("  Converting from SubnetEVM to Coreth namespaced format\n")
-	
+
 	// TODO: Implement Coreth-specific extraction with proper namespacing
 	// This would involve:
 	// 1. Converting SubnetEVM key prefixes to Coreth format
 	// 2. Adding proper namespace prefixes
 	// 3. Handling consensus-specific data
-	
+
 	return fmt.Errorf("coreth format extraction not yet implemented")
 }
 

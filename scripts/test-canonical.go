@@ -28,10 +28,10 @@ func main() {
 	canonicalKey[0] = 'h'
 	binary.BigEndian.PutUint64(canonicalKey[1:9], height)
 	canonicalKey[9] = 'n'
-	
+
 	fmt.Printf("Looking for canonical key at height %d\n", height)
 	fmt.Printf("Key: %s\n", hex.EncodeToString(canonicalKey))
-	
+
 	if hashBytes, err := db.Get(canonicalKey); err == nil {
 		hashHex := hex.EncodeToString(hashBytes)
 		fmt.Printf("\nFound canonical hash: %s\n", hashHex)

@@ -328,7 +328,7 @@ func runInspectKeys(cmd *cobra.Command, args []string) error {
 	count := uint64(0)
 	for iter.First(); iter.Valid() && count < limit; iter.Next() {
 		key := iter.Key()
-		
+
 		if prefix != "" {
 			if !hasPrefix(key, []byte(prefix)) {
 				continue
@@ -389,4 +389,3 @@ func isPrintable(s string) bool {
 	}
 	return true
 }
-

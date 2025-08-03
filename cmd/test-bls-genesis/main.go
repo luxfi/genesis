@@ -53,7 +53,7 @@ func main() {
 
 	pk := sk.PublicKey()
 	pkBytes := bls.PublicKeyToCompressedBytes(pk)
-	
+
 	// Sign proof of possession
 	sig := sk.SignProofOfPossession(pkBytes)
 	sigBytes := bls.SignatureToBytes(sig)
@@ -66,10 +66,10 @@ func main() {
 
 	// Node ID from ephemeral cert logs
 	nodeID := "NodeID-111111111111111111116DBWJs"
-	
+
 	// Staking address
 	stakingAddress := "P-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5ukulre5"
-	
+
 	// Create staker
 	staker := Staker{
 		NodeID:        nodeID,
@@ -81,7 +81,7 @@ func main() {
 	// Genesis parameters
 	startTime := int64(1667900400)
 	oneWeekLater := startTime + 7*24*60*60
-	
+
 	// Create allocations
 	allocations := []Allocation{
 		{
@@ -103,16 +103,16 @@ func main() {
 			InitialAmount: 0,
 			UnlockSchedule: []UnlockSchedule{
 				{
-					Amount:   2000000000000, // 2000 LUX (minimum stake) 
+					Amount:   2000000000000, // 2000 LUX (minimum stake)
 					Locktime: oneWeekLater,
 				},
 			},
 		},
 		{
 			// C-Chain funding
-			ETHAddr:       "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC",
-			AVAXAddr:      "X-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5ukulre5",
-			InitialAmount: 100000000000000000, // 100M LUX on C-Chain
+			ETHAddr:        "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC",
+			AVAXAddr:       "X-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5ukulre5",
+			InitialAmount:  100000000000000000, // 100M LUX on C-Chain
 			UnlockSchedule: []UnlockSchedule{},
 		},
 	}

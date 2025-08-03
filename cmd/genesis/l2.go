@@ -113,15 +113,15 @@ func getL2DeleteCmd() *cobra.Command {
 
 // L2Config represents a saved L2 network configuration
 type L2Config struct {
-	Name         string `json:"name"`
-	DisplayName  string `json:"display_name"`
-	ChainID      uint64 `json:"chain_id"`
-	TestnetID    uint64 `json:"testnet_id"`
-	Symbol       string `json:"symbol"`
-	BaseNetwork  string `json:"base_network"`
+	Name          string `json:"name"`
+	DisplayName   string `json:"display_name"`
+	ChainID       uint64 `json:"chain_id"`
+	TestnetID     uint64 `json:"testnet_id"`
+	Symbol        string `json:"symbol"`
+	BaseNetwork   string `json:"base_network"`
 	ChainDataPath string `json:"chaindata_path,omitempty"`
-	CreatedAt    string `json:"created_at"`
-	
+	CreatedAt     string `json:"created_at"`
+
 	// Subnet configuration
 	SubnetConfig map[string]interface{} `json:"subnet_config"`
 }
@@ -132,13 +132,13 @@ func createL2Config(name string, chainID uint64, testnetID uint64, symbol string
 	if name == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
-	
+
 	// Check if already exists
 	configPath := getL2ConfigPath(name)
 	if _, err := os.Stat(configPath); err == nil {
 		return fmt.Errorf("L2 network '%s' already exists. Use 'genesis l2 delete %s' first", name, name)
 	}
-	
+
 	// Set defaults
 	if displayName == "" {
 		displayName = strings.Title(name) + " Network"
@@ -146,7 +146,7 @@ func createL2Config(name string, chainID uint64, testnetID uint64, symbol string
 	if testnetID == 0 {
 		testnetID = chainID + 1
 	}
-	
+
 	// Validate chaindata if provided
 	if chainData != "" {
 		if _, err := os.Stat(chainData); err != nil {
@@ -155,7 +155,7 @@ func createL2Config(name string, chainID uint64, testnetID uint64, symbol string
 		// Convert to absolute path
 		chainData, _ = filepath.Abs(chainData)
 	}
-	
+
 	// Create subnet configuration
 	subnetConfig := map[string]interface{}{
 		"chainId": chainID,
@@ -182,11 +182,11 @@ func createL2Config(name string, chainID uint64, testnetID uint64, symbol string
 			"blockGasCostStep":         500000,
 		},
 		"warpConfig": map[string]interface{}{
-			"blockTimestamp": 0,
+			"blockTimestamp":  0,
 			"quorumNumerator": 67,
 		},
 	}
-	
+
 	// Create L2 configuration
 	config := L2Config{
 		Name:          name,
@@ -199,22 +199,22 @@ func createL2Config(name string, chainID uint64, testnetID uint64, symbol string
 		CreatedAt:     time.Now().Format(time.RFC3339),
 		SubnetConfig:  subnetConfig,
 	}
-	
+
 	// Save configuration
 	configDir := filepath.Dir(configPath)
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	
+
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	
+
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
-	
+
 	// Print success message
 	fmt.Printf("✅ Created L2 network configuration: %s\n", name)
 	fmt.Printf("\nNetwork Details:\n")
@@ -226,20 +226,20 @@ func createL2Config(name string, chainID uint64, testnetID uint64, symbol string
 	if chainData != "" {
 		fmt.Printf("  Chain Data:   %s\n", chainData)
 	}
-	
+
 	fmt.Printf("\nTo launch this network:\n")
 	fmt.Printf("  genesis launch %s      # Launch on %s\n", name+"net", baseNetwork)
 	fmt.Printf("  genesis launch %s     # Launch on %stest\n", name+"test", baseNetwork)
-	
+
 	// Also register in our predefined networks for easy launch
 	registerL2Network(name, config)
-	
+
 	return nil
 }
 
 func listL2Networks(cmd *cobra.Command, args []string) error {
 	configDir := getL2ConfigDir()
-	
+
 	// List predefined networks
 	fmt.Println("Predefined L2 Networks:")
 	fmt.Println("======================")
@@ -249,11 +249,11 @@ func listL2Networks(cmd *cobra.Command, args []string) error {
 	fmt.Println("  spctest   - SPC Testnet (36912)")
 	fmt.Println("  hanzonet  - Hanzo Network (36963)")
 	fmt.Println("  hanzotest - Hanzo Testnet (36962)")
-	
+
 	// List custom networks
 	fmt.Println("\nCustom L2 Networks:")
 	fmt.Println("===================")
-	
+
 	files, err := os.ReadDir(configDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -262,27 +262,27 @@ func listL2Networks(cmd *cobra.Command, args []string) error {
 		}
 		return err
 	}
-	
+
 	found := false
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".json") {
 			name := strings.TrimSuffix(file.Name(), ".json")
-			
+
 			// Load config to show details
 			config, err := loadL2Config(name)
 			if err != nil {
 				continue
 			}
-			
+
 			fmt.Printf("  %-12s - %s (%d)\n", name, config.DisplayName, config.ChainID)
 			found = true
 		}
 	}
-	
+
 	if !found {
 		fmt.Println("  None")
 	}
-	
+
 	return nil
 }
 
@@ -300,52 +300,52 @@ func showL2Info(name string) error {
 		}
 		return nil
 	}
-	
+
 	// Load custom config
 	config, err := loadL2Config(name)
 	if err != nil {
 		return fmt.Errorf("L2 network '%s' not found", name)
 	}
-	
+
 	fmt.Printf("Network: %s\n", config.Name)
 	fmt.Printf("Display: %s\n", config.DisplayName)
 	fmt.Printf("Chain ID: %d (mainnet) / %d (testnet)\n", config.ChainID, config.TestnetID)
 	fmt.Printf("Symbol: %s\n", config.Symbol)
 	fmt.Printf("Base: %s\n", config.BaseNetwork)
 	fmt.Printf("Created: %s\n", config.CreatedAt)
-	
+
 	if config.ChainDataPath != "" {
 		fmt.Printf("Chain Data: %s\n", config.ChainDataPath)
 	}
-	
+
 	fmt.Printf("\nSubnet Configuration:\n")
 	configJSON, _ := json.MarshalIndent(config.SubnetConfig, "  ", "  ")
 	fmt.Printf("%s\n", configJSON)
-	
+
 	return nil
 }
 
 func deleteL2Config(name string) error {
 	configPath := getL2ConfigPath(name)
-	
+
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return fmt.Errorf("L2 network '%s' not found", name)
 	}
-	
+
 	// Confirm deletion
 	fmt.Printf("Are you sure you want to delete L2 network '%s'? [y/N]: ", name)
 	var response string
 	fmt.Scanln(&response)
-	
+
 	if strings.ToLower(response) != "y" {
 		fmt.Println("Deletion cancelled")
 		return nil
 	}
-	
+
 	if err := os.Remove(configPath); err != nil {
 		return fmt.Errorf("failed to delete config: %w", err)
 	}
-	
+
 	fmt.Printf("✅ Deleted L2 network configuration: %s\n", name)
 	return nil
 }
@@ -363,17 +363,17 @@ func getL2ConfigPath(name string) string {
 
 func loadL2Config(name string) (*L2Config, error) {
 	configPath := getL2ConfigPath(name)
-	
+
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var config L2Config
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}
-	
+
 	return &config, nil
 }
 
@@ -392,7 +392,7 @@ func registerL2Network(name string, config L2Config) {
 			"display-name":  config.DisplayName,
 		},
 	}
-	
+
 	// Create testnet preset
 	testnetNetwork := core.Network{
 		Name:      name + "test",
@@ -408,7 +408,7 @@ func registerL2Network(name string, config L2Config) {
 			"is-testnet":    true,
 		},
 	}
-	
+
 	// TODO: Add to presets dynamically
 	_ = mainnetNetwork
 	_ = testnetNetwork

@@ -17,16 +17,16 @@ import (
 type AncientStore interface {
 	// HasAncient returns whether ancient data exists
 	HasAncient(kind string, number uint64) (bool, error)
-	
+
 	// Ancient retrieves ancient data
 	Ancient(kind string, number uint64) ([]byte, error)
-	
+
 	// Ancients returns the ancient data size
 	Ancients() (uint64, error)
-	
+
 	// AncientSize returns the size of ancient data
 	AncientSize(kind string) (uint64, error)
-	
+
 	// AppendAncient appends ancient data
 	AppendAncient(number uint64, hash, header, body, receipt, td []byte) error
 }
@@ -43,9 +43,9 @@ type CChainAncientData struct {
 
 // Builder builds ancient store data for C-Chain genesis
 type Builder struct {
-	config       *CChainAncientData
-	ancientDb    ethdb.AncientStore
-	compactedDb  ethdb.Database
+	config      *CChainAncientData
+	ancientDb   ethdb.AncientStore
+	compactedDb ethdb.Database
 }
 
 // NewBuilder creates a new ancient store builder
@@ -70,7 +70,7 @@ func (b *Builder) Close() error {
 
 // CompactAncientData compacts ancient data for efficient storage
 func (b *Builder) CompactAncientData() error {
-	fmt.Printf("Compacting ancient data from block %d to %d...\n", 
+	fmt.Printf("Compacting ancient data from block %d to %d...\n",
 		b.config.StartBlock, b.config.EndBlock)
 
 	// Get total ancients count

@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -53,7 +54,7 @@ func main() {
 	gen := credentials.NewGenerator()
 	for i := 0; i < network.Nodes; i++ {
 		nodeDir := fmt.Sprintf("./nodes/node%d", i)
-		
+
 		creds, err := gen.Generate()
 		if err != nil {
 			log.Fatalf("Failed to generate credentials for node %d: %v", i, err)

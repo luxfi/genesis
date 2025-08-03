@@ -24,13 +24,13 @@ func TestVersionCommand(t *testing.T) {
 func TestCommandRegistration(t *testing.T) {
 	// Test that all expected commands are registered
 	commands := rootCmd.Commands()
-	
+
 	// Create a map of command names for easy checking
 	cmdMap := make(map[string]bool)
 	for _, cmd := range commands {
 		cmdMap[cmd.Use] = true
 	}
-	
+
 	// Check that expected commands exist
 	expectedCommands := []string{
 		"version",
@@ -45,7 +45,7 @@ func TestCommandRegistration(t *testing.T) {
 		"l2",
 		"setup-chain-state",
 	}
-	
+
 	for _, expected := range expectedCommands {
 		// Commands might have arguments in their Use field, so we check if it starts with the command name
 		found := false

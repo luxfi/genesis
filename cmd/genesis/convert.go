@@ -28,10 +28,10 @@ func getConvertToCorethCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "coreth [source-db] [output-db]",
 		Short: "Convert SubnetEVM data to Coreth (C-Chain) format",
-		Long:  `Convert SubnetEVM blockchain data to Coreth format with proper namespacing.
+		Long: `Convert SubnetEVM blockchain data to Coreth format with proper namespacing.
 This is used for migrating subnet data to C-Chain for replay.`,
-		Args:  cobra.ExactArgs(2),
-		RunE:  runConvertToCoreth,
+		Args: cobra.ExactArgs(2),
+		RunE: runConvertToCoreth,
 	}
 
 	cmd.Flags().String("network", "lux", "Network name (lux, zoo, spc)")
@@ -45,10 +45,10 @@ func getConvertToL2Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "l2 [source-db] [output-db]",
 		Short: "Convert SubnetEVM data for L2 deployment",
-		Long:  `Prepare SubnetEVM blockchain data for deployment as an L2.
+		Long: `Prepare SubnetEVM blockchain data for deployment as an L2.
 This preserves all existing state and history while updating configuration for L2 operation.`,
-		Args:  cobra.ExactArgs(2),
-		RunE:  runConvertToL2,
+		Args: cobra.ExactArgs(2),
+		RunE: runConvertToL2,
 	}
 
 	cmd.Flags().String("network", "zoo", "Network name (zoo, spc)")
@@ -91,9 +91,9 @@ func runConvertToCoreth(cmd *cobra.Command, args []string) error {
 
 	// Convert key prefixes from SubnetEVM to Coreth format
 	// SubnetEVM uses simple prefixes, Coreth uses namespaced keys
-	
+
 	fmt.Println("📊 Analyzing source database...")
-	
+
 	// First, find the highest block
 	highestBlock := uint64(0)
 	iter, err := src.NewIter(nil)
@@ -119,10 +119,10 @@ func runConvertToCoreth(cmd *cobra.Command, args []string) error {
 
 	// Convert blocks and headers
 	fmt.Println("🔄 Converting blockchain data...")
-	
+
 	batch := dst.NewBatch()
 	converted := 0
-	
+
 	// Reset iterator
 	iter, err = src.NewIter(nil)
 	if err != nil {
@@ -132,40 +132,40 @@ func runConvertToCoreth(cmd *cobra.Command, args []string) error {
 	for iter.First(); iter.Valid(); iter.Next() {
 		key := iter.Key()
 		value := iter.Value()
-		
+
 		// Convert key based on prefix
 		var newKey []byte
-		
+
 		switch {
 		case len(key) == 10 && key[0] == 0x68 && key[9] == 0x6e: // Canonical hash
 			// h + num(8) + n -> eth/db/hashToNumber/ namespace
 			newKey = convertCanonicalKey(key)
-			
+
 		case len(key) >= 41 && key[0] == 0x68: // Header
 			// h + num(8) + hash(32) -> eth/db/header/ namespace
 			newKey = convertHeaderKey(key)
-			
+
 		case len(key) >= 41 && key[0] == 0x62: // Body
 			// b + num(8) + hash(32) -> eth/db/body/ namespace
 			newKey = convertBodyKey(key)
-			
+
 		case len(key) >= 41 && key[0] == 0x72: // Receipts
 			// r + num(8) + hash(32) -> eth/db/receipts/ namespace
 			newKey = convertReceiptsKey(key)
-			
+
 		case len(key) >= 41 && key[0] == 0x74: // TD (total difficulty)
 			// t + num(8) + hash(32) -> eth/db/td/ namespace
 			newKey = convertTDKey(key)
-			
+
 		default:
 			// For other keys, copy as-is with a prefix
 			newKey = append([]byte("eth/db/misc/"), key...)
 		}
-		
+
 		if err := batch.Set(newKey, value, nil); err != nil {
 			return fmt.Errorf("failed to set key: %w", err)
 		}
-		
+
 		converted++
 		if converted%10000 == 0 {
 			if err := batch.Commit(nil); err != nil {
@@ -183,18 +183,18 @@ func runConvertToCoreth(cmd *cobra.Command, args []string) error {
 		canonicalKey[0] = 0x68 // 'h'
 		binary.BigEndian.PutUint64(canonicalKey[1:9], highestBlock)
 		canonicalKey[9] = 0x6e // 'n'
-		
+
 		hashBytes, closer, err := src.Get(canonicalKey)
 		if err == nil {
 			closer.Close()
 			hash := common.BytesToHash(hashBytes)
-			
+
 			// Set Coreth head references
 			batch.Set([]byte("eth/db/LastHeader"), hash[:], nil)
 			batch.Set([]byte("eth/db/LastBlock"), hash[:], nil)
 			batch.Set([]byte("eth/db/LastFast"), hash[:], nil)
 			batch.Set([]byte("snowman_lastAccepted"), hash[:], nil)
-			
+
 			fmt.Printf("  Set head block: %d (hash: %s)\n", highestBlock, hash.Hex())
 		}
 	}
@@ -239,16 +239,16 @@ func runConvertToL2(cmd *cobra.Command, args []string) error {
 
 	// For L2, we can mostly copy the data as-is
 	fmt.Println("📋 Copying blockchain data for L2...")
-	
+
 	// Use cp command for efficiency
 	// cpCmd := fmt.Sprintf("cp -r %s %s", sourceDB, outputDB)
 	if err := os.RemoveAll(outputDB); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove existing output: %w", err)
 	}
-	
+
 	// TODO: Use proper file copying instead of shell command
 	fmt.Printf("  Copying database files...\n")
-	
+
 	// For now, do a key-by-key copy
 	dst, err := pebble.Open(outputDB, &pebble.Options{})
 	if err != nil {
@@ -264,12 +264,12 @@ func runConvertToL2(cmd *cobra.Command, args []string) error {
 
 	batch := dst.NewBatch()
 	count := 0
-	
+
 	for iter.First(); iter.Valid(); iter.Next() {
 		if err := batch.Set(iter.Key(), iter.Value(), nil); err != nil {
 			return fmt.Errorf("failed to copy key: %w", err)
 		}
-		
+
 		count++
 		if count%10000 == 0 {
 			if err := batch.Commit(nil); err != nil {

@@ -36,35 +36,35 @@ func (g *Generator) Generate() (*core.StakingCredentials, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate TLS cert: %w", err)
 	}
-	
+
 	// Parse certificate to get NodeID
 	tlsCert, err := x509.ParseCertificate(cert)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse certificate: %w", err)
 	}
-	
+
 	// Create staking certificate
 	stakingCert := &staking.Certificate{
 		Raw:       cert,
 		PublicKey: tlsCert.PublicKey,
 	}
-	
+
 	nodeID := ids.NodeIDFromCert(stakingCert)
-	
+
 	// Generate BLS key
 	blsKey, err := bls.NewSecretKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate BLS key: %w", err)
 	}
-	
+
 	blsPubKey := bls.PublicFromSecretKey(blsKey)
 	blsPubKeyBytes := bls.PublicKeyToCompressedBytes(blsPubKey)
 	blsSecretKey := bls.SecretKeyToBytes(blsKey)
-	
+
 	// Create proof of possession - sign the compressed public key bytes
 	pop := bls.Sign(blsKey, blsPubKeyBytes)
 	popBytes := bls.SignatureToBytes(pop)
-	
+
 	return &core.StakingCredentials{
 		NodeID:            nodeID.String(),
 		Certificate:       cert,
@@ -81,7 +81,7 @@ func (g *Generator) Save(creds *core.StakingCredentials, baseDir string) error {
 	if err := os.MkdirAll(stakingDir, perms.ReadWriteExecute); err != nil {
 		return fmt.Errorf("failed to create staking directory: %w", err)
 	}
-	
+
 	// Save TLS certificate
 	certPath := filepath.Join(stakingDir, "staker.crt")
 	certPEM := pem.EncodeToMemory(&pem.Block{
@@ -91,7 +91,7 @@ func (g *Generator) Save(creds *core.StakingCredentials, baseDir string) error {
 	if err := os.WriteFile(certPath, certPEM, perms.ReadOnly); err != nil {
 		return fmt.Errorf("failed to write certificate: %w", err)
 	}
-	
+
 	// Save TLS private key
 	keyPath := filepath.Join(stakingDir, "staker.key")
 	keyPEM := pem.EncodeToMemory(&pem.Block{
@@ -101,13 +101,13 @@ func (g *Generator) Save(creds *core.StakingCredentials, baseDir string) error {
 	if err := os.WriteFile(keyPath, keyPEM, perms.ReadOnly); err != nil {
 		return fmt.Errorf("failed to write private key: %w", err)
 	}
-	
+
 	// Save BLS key
 	signerPath := filepath.Join(stakingDir, "signer.key")
 	if err := os.WriteFile(signerPath, creds.BLSSecretKey, perms.ReadOnly); err != nil {
 		return fmt.Errorf("failed to write BLS key: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -117,7 +117,7 @@ func (g *Generator) generateTLSCert() (cert, key []byte, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// Create certificate template
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
@@ -130,18 +130,18 @@ func (g *Generator) generateTLSCert() (cert, key []byte, err error) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 	}
-	
+
 	// Generate certificate
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// Encode private key
 	keyDER, err := x509.MarshalPKCS8PrivateKey(priv)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	return certDER, keyDER, nil
 }
