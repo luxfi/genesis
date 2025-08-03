@@ -10,7 +10,7 @@ import (
 	"github.com/luxfi/geth/core/types"
 	"github.com/luxfi/geth/rlp"
 	"github.com/spf13/cobra"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os/exec"
 	"sort"
@@ -199,7 +199,7 @@ func replayDirectToDB(src *pebble.DB, blockNumbers []uint64, canonicalBlocks map
 	fmt.Printf("Direct replay to database at %s\n", dbPath)
 
 	// Remove old database
-	exec.Command("rm", "-rf", dbPath).Run()
+	_ = exec.Command("rm", "-rf", dbPath).Run()
 
 	// Open new database
 	dst, err := pebble.Open(dbPath, &pebble.Options{})
@@ -218,40 +218,40 @@ func replayDirectToDB(src *pebble.DB, blockNumbers []uint64, canonicalBlocks map
 		// Copy header
 		headerKey := makeHeaderKey(blockNum, hash)
 		if headerData, closer, err := src.Get(headerKey); err == nil {
-			batch.Set(headerKey, headerData, nil)
+			_ = batch.Set(headerKey, headerData, nil)
 			closer.Close()
 		}
 
 		// Copy body
 		bodyKey := makeBodyKey(blockNum, hash)
 		if bodyData, closer, err := src.Get(bodyKey); err == nil {
-			batch.Set(bodyKey, bodyData, nil)
+			_ = batch.Set(bodyKey, bodyData, nil)
 			closer.Close()
 		}
 
 		// Copy receipts
 		receiptsKey := makeReceiptsKey(blockNum, hash)
 		if receiptsData, closer, err := src.Get(receiptsKey); err == nil {
-			batch.Set(receiptsKey, receiptsData, nil)
+			_ = batch.Set(receiptsKey, receiptsData, nil)
 			closer.Close()
 		}
 
 		// Copy TD (total difficulty)
 		tdKey := makeTDKey(blockNum, hash)
 		if tdData, closer, err := src.Get(tdKey); err == nil {
-			batch.Set(tdKey, tdData, nil)
+			_ = batch.Set(tdKey, tdData, nil)
 			closer.Close()
 		}
 
 		// Copy canonical hash mapping
 		canonicalKey := makeCanonicalKey(blockNum)
-		batch.Set(canonicalKey, hash[:], nil)
+		_ = batch.Set(canonicalKey, hash[:], nil)
 
 		// Also set the reverse mapping (hash -> number)
 		numberKey := append([]byte("H"), hash[:]...)
 		numBytes := make([]byte, 8)
 		binary.BigEndian.PutUint64(numBytes, blockNum)
-		batch.Set(numberKey, numBytes, nil)
+		_ = batch.Set(numberKey, numBytes, nil)
 
 		count++
 		if count%10000 == 0 {
@@ -270,13 +270,13 @@ func replayDirectToDB(src *pebble.DB, blockNumbers []uint64, canonicalBlocks map
 	fmt.Printf("Setting head to block %d (hash: %s)\n", highestNum, highestHash.Hex())
 
 	// Set all head references
-	batch.Set([]byte("LastHeader"), highestHash[:], nil)
-	batch.Set([]byte("LastBlock"), highestHash[:], nil)
-	batch.Set([]byte("LastFast"), highestHash[:], nil)
-	batch.Set([]byte("HeadHeaderHash"), highestHash[:], nil)
-	batch.Set([]byte("HeadBlockHash"), highestHash[:], nil)
-	batch.Set([]byte("HeadFastBlockHash"), highestHash[:], nil)
-	batch.Set([]byte("snowman_lastAccepted"), highestHash[:], nil)
+	_ = batch.Set([]byte("LastHeader"), highestHash[:], nil)
+	_ = batch.Set([]byte("LastBlock"), highestHash[:], nil)
+	_ = batch.Set([]byte("LastFast"), highestHash[:], nil)
+	_ = batch.Set([]byte("HeadHeaderHash"), highestHash[:], nil)
+	_ = batch.Set([]byte("HeadBlockHash"), highestHash[:], nil)
+	_ = batch.Set([]byte("HeadFastBlockHash"), highestHash[:], nil)
+	_ = batch.Set([]byte("snowman_lastAccepted"), highestHash[:], nil)
 
 	// Commit final batch
 	if err := batch.Commit(nil); err != nil {
@@ -334,7 +334,7 @@ func callRPC(url string, method string, params interface{}) (json.RawMessage, er
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +429,7 @@ func getCurrentBlockHeight(rpcURL string) (uint64, error) {
 	}
 
 	var height uint64
-	fmt.Sscanf(hexStr, "%x", &height)
+	_, _ = fmt.Sscanf(hexStr, "%x", &height)
 	return height, nil
 }
 

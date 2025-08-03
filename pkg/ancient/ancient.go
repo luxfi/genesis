@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -95,12 +94,6 @@ func (b *Builder) CompactAncientData() error {
 	return nil
 }
 
-// storeCompacted stores data in compacted format
-func (b *Builder) storeCompacted(number uint64, hash, header, body, receipts, td []byte) error {
-	// TODO: Implement actual storage
-	return nil
-}
-
 // ExportToGenesis exports compacted data for genesis import
 func (b *Builder) ExportToGenesis(outputPath string) error {
 	fmt.Println("Exporting compacted data for genesis...")
@@ -154,26 +147,16 @@ func ImportFromGenesis(genesisPath string, targetDataDir string) error {
 
 // Helper functions
 
-func encodeBlockNumber(number uint64) []byte {
-	enc := make([]byte, 8)
-	binary.BigEndian.PutUint64(enc, number)
-	return enc
-}
-
-func decodeBlockNumber(enc []byte) uint64 {
-	return binary.BigEndian.Uint64(enc)
-}
-
 func writeJSON(path string, data interface{}) error {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, jsonData, 0644)
+	return os.WriteFile(path, jsonData, 0644)
 }
 
 func readJSON(path string, data interface{}) error {
-	jsonData, err := ioutil.ReadFile(path)
+	jsonData, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}

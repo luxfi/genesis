@@ -335,7 +335,7 @@ func deleteL2Config(name string) error {
 	// Confirm deletion
 	fmt.Printf("Are you sure you want to delete L2 network '%s'? [y/N]: ", name)
 	var response string
-	fmt.Scanln(&response)
+	_, _ = fmt.Scanln(&response)
 
 	if strings.ToLower(response) != "y" {
 		fmt.Println("Deletion cancelled")
