@@ -1,7 +1,6 @@
 package ancient
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,9 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/luxfi/geth/common"
-	"github.com/luxfi/database"
-	"github.com/luxfi/database/manager"
-	"github.com/luxfi/log"
+	"github.com/luxfi/geth/ethdb"
 )
 
 // AncientStore represents the interface for ancient data storage
