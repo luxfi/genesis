@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/luxfi/crypto/secp256k1"
-	"github.com/luxfi/node/ids"
-	"github.com/luxfi/node/utils/formatting/address"
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/formatting/address"
 )
 
 type AddressInfo struct {

@@ -14,9 +14,9 @@ import (
 
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/genesis/pkg/core"
-	"github.com/luxfi/node/ids"
-	"github.com/luxfi/node/staking"
-	"github.com/luxfi/node/utils/perms"
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/staking"
+	"github.com/ava-labs/avalanchego/utils/perms"
 )
 
 // Generator creates staking credentials

@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
-	"github.com/luxfi/node/utils/constants"
+	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/spf13/cobra"
 )
 
