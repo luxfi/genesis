@@ -10,10 +10,10 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
-	"net"
 )
 
 // GenerateStakingKeys generates TLS and BLS keys for a validator
@@ -39,11 +39,11 @@ func GenerateStakingKeys(outputDir, nodeID string) error {
 			Organization: []string{"Luxfi"},
 			CommonName:   "lux",
 		},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(365 * 24 * time.Hour * 100), // 100 years
-		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1)},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().Add(365 * 24 * time.Hour * 100), // 100 years
+		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1)},
 	}
 
 	// Generate certificate
@@ -91,7 +91,7 @@ func GenerateStakingKeys(outputDir, nodeID string) error {
 	fmt.Printf("Generated staking keys in %s\n", outputDir)
 	fmt.Printf("NodeID: %s\n", nodeID)
 	fmt.Printf("BLS Key: %x\n", blsKey)
-	
+
 	return nil
 }
 
@@ -106,7 +106,7 @@ func ComputeProofOfPossession(blsKeyHex string) (string, string, error) {
 	// For a simple implementation, we'll compute:
 	// publicKey = SHA256(blsKey || "public")
 	// proofOfPossession = SHA256(blsKey || "proof")
-	
+
 	// Compute public key
 	pubKeyData := append(blsKey, []byte("public")...)
 	pubKeyHash := sha256.Sum256(pubKeyData)
@@ -147,10 +147,10 @@ func GenerateNodeIDFromCert(certPath string) (string, error) {
 	}
 
 	hash := sha256.Sum256(pubKeyDER)
-	
+
 	// Convert to node ID format
 	// This is a simplified version - the actual implementation would use proper base58 encoding
 	nodeID := fmt.Sprintf("NodeID-%x", hash[:6])
-	
+
 	return nodeID, nil
 }

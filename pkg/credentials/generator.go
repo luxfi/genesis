@@ -60,7 +60,7 @@ func (g *Generator) Generate() (*core.StakingCredentials, error) {
 	// In a real implementation, these would be computed using proper BLS cryptography
 	blsPubKeyBytes := make([]byte, 48)
 	popBytes := make([]byte, 96)
-	
+
 	// Fill with deterministic but unique values for testing
 	copy(blsPubKeyBytes, []byte("placeholder_public_key"))
 	copy(popBytes, []byte("placeholder_proof_of_possession"))
