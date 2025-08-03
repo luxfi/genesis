@@ -1,3 +1,5 @@
+// +build ignore
+
 package main
 
 import (
@@ -6,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/luxfi/database"
+	"github.com/cockroachdb/pebble"
 	"github.com/luxfi/geth/rlp"
 )
 
@@ -20,7 +22,7 @@ func main() {
 	dbPath := os.Args[1]
 
 	// Open database
-	db, err := database.Open(dbPath, 0, 0, "pebbledb", true)
+	db, err := pebble.Open(dbPath, &pebble.Options{ReadOnly: true})
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
@@ -33,10 +35,10 @@ func main() {
 	keyTypes := make(map[string]int)
 
 	// Iterate through all keys
-	it := db.NewIterator()
-	defer it.Release()
+	it := db.NewIter(nil)
+	defer it.Close()
 
-	for it.Next() {
+	for it.First(); it.Valid(); it.Next() {
 		key := it.Key()
 		totalKeys++
 
@@ -99,8 +101,9 @@ func main() {
 	
 	// LastBlock key
 	lastBlockKey := []byte("LastBlock")
-	if has, err := db.Has(lastBlockKey); err == nil && has {
-		value, _ := db.Get(lastBlockKey)
+	value, closer, err := db.Get(lastBlockKey)
+	if err == nil && closer != nil {
+		defer closer.Close()
 		var blockNum uint64
 		if err := rlp.DecodeBytes(value, &blockNum); err == nil {
 			fmt.Printf("Latest Block: %d\n", blockNum)
@@ -109,10 +112,10 @@ func main() {
 
 	// Alternative: scan for highest block number
 	var highestBlock uint64
-	it2 := db.NewIterator()
-	defer it2.Release()
+	it2 := db.NewIter(nil)
+	defer it2.Close()
 
-	for it2.Next() {
+	for it2.First(); it2.Valid(); it2.Next() {
 		key := it2.Key()
 		// Block number to hash keys (prefix 'H')
 		if len(key) == 9 && key[0] == 'H' {

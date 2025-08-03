@@ -1,0 +1,3 @@
+# Ignore example binaries
+network_launch/network_launch
+database_inspect/database_inspect

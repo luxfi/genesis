@@ -1,9 +1,10 @@
+// +build ignore
+
 package main
 
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/luxfi/genesis/pkg/core"
 	"github.com/luxfi/genesis/pkg/credentials"
@@ -68,15 +69,12 @@ func main() {
 	}
 
 	// Create launcher
-	launcher := launch.NewLauncher()
-
-	// Set up launch options
-	launcher.SetDataDir("./nodes")
-	launcher.SetLogLevel("info")
+	launcher := launch.New(*network)
+	launcher.WithBaseDir("./nodes")
 
 	// Launch the network
 	fmt.Println("\nLaunching network...")
-	if err := launcher.LaunchNetwork(network); err != nil {
+	if err := launcher.Launch(); err != nil {
 		log.Fatalf("Failed to launch network: %v", err)
 	}
 

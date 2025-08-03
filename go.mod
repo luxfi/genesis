@@ -6,7 +6,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/luxfi/crypto v1.2.0
 	github.com/luxfi/database v1.1.4
-	github.com/luxfi/geth v1.16.13
+	github.com/luxfi/geth v1.16.23
 	github.com/luxfi/node v1.16.14
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.18.1
@@ -30,6 +30,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.1 // indirect
+	github.com/ethereum/go-ethereum v1.16.1 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
