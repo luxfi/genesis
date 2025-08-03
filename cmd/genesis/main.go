@@ -1,14 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/luxfi/genesis/pkg/commands"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
+	// Version information
+	Version   = "1.0.0"
+	BuildTime = "unknown"
+	GitCommit = "unknown"
+
 	// Flags
 	configFile string
 
@@ -17,9 +22,17 @@ var (
 		Use:   "genesis",
 		Short: "Genesis configuration tool for Lux ecosystem",
 		Long: `A unified CLI tool for managing genesis configurations 
-and launching networks in the Lux ecosystem.
+and launching networks in the Lux ecosystem.`,
+	}
 
-Everything is composable and configuration-driven.`,
+	versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Genesis CLI v%s\n", Version)
+			fmt.Printf("Build Time: %s\n", BuildTime)
+			fmt.Printf("Git Commit: %s\n", GitCommit)
+		},
 	}
 )
 
@@ -29,8 +42,18 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is ./genesis.yaml)")
 
-	// Register all commands using the unified registry
-	commands.RegisterAllCommands(rootCmd)
+	// Add commands
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(getReplayerCmd())
+	rootCmd.AddCommand(getCompactAncientCmd())
+	rootCmd.AddCommand(getConvertCmd())
+	rootCmd.AddCommand(getDatabaseCmd())
+	rootCmd.AddCommand(getExtractCmd())
+	rootCmd.AddCommand(getImportBlockchainCmd())
+	rootCmd.AddCommand(getInspectCmd())
+	rootCmd.AddCommand(getDebugKeysCmd())
+	rootCmd.AddCommand(getL2Cmd())
+	rootCmd.AddCommand(getSetupChainStateCmd())
 }
 
 func initConfig() {
@@ -51,6 +74,7 @@ func initConfig() {
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }

@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, genesis ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.24.x']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+    
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Download dependencies
+      run: go mod download
+    
+    - name: Run tests
+      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.txt
+        flags: unittests
+        name: codecov-umbrella
+    
+    - name: Run go vet
+      run: go vet ./...
+    
+    - name: Run gofmt
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+    
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        arch: [amd64, arm64]
+        exclude:
+          - os: ubuntu-latest
+            arch: arm64
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.x'
+    
+    - name: Build genesis binary
+      env:
+        GOOS: ${{ matrix.os == 'ubuntu-latest' && 'linux' || 'darwin' }}
+        GOARCH: ${{ matrix.arch }}
+      run: |
+        go build -v -o genesis-${{ env.GOOS }}-${{ env.GOARCH }} ./cmd/genesis
+        chmod +x genesis-${{ env.GOOS }}-${{ env.GOARCH }}
+    
+    - name: Test binary
+      if: matrix.arch == 'amd64'
+      run: ./genesis-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'darwin' }}-${{ matrix.arch }} version
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: genesis-${{ matrix.os }}-${{ matrix.arch }}
+        path: genesis-*
+        retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    
+    - name: Set up release version
+      id: version
+      run: |
+        VERSION=$(git describe --tags --always --dirty)
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Release version: $VERSION"
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.VERSION }}
+        release_name: Genesis ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Genesis CLI Tool
+          
+          This release includes the genesis binary for multiple platforms.
+          
+          ### Changes
+          - Consolidated block replayer functionality
+          - Fixed all import dependencies
+          - Added comprehensive tests
+          - Cleaned up command structure
+          
+          ### Installation
+          
+          Download the appropriate binary for your platform and make it executable:
+          
+          ```bash
+          chmod +x genesis-linux-amd64
+          ./genesis-linux-amd64 version
+          ```
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Assets
+      run: |
+        for file in artifacts/*/genesis-*; do
+          asset_name=$(basename "$file")
+          echo "Uploading $asset_name"
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$file" \
+            "${{ steps.create_release.outputs.upload_url }}?name=$asset_name&label=$asset_name"
+        done

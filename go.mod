@@ -4,9 +4,9 @@ go 1.24.5
 
 require (
 	github.com/cockroachdb/pebble v1.1.5
-	github.com/ethereum/go-ethereum v1.16.1
 	github.com/luxfi/crypto v1.2.0
 	github.com/luxfi/database v1.1.4
+	github.com/luxfi/geth v1.16.13
 	github.com/luxfi/node v1.16.14
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.18.1
