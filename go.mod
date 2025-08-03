@@ -8,8 +8,8 @@ require (
 	github.com/luxfi/crypto v1.2.1
 	github.com/luxfi/database v1.1.7
 	github.com/luxfi/geth v1.16.23
-	github.com/luxfi/go-bip32 v1.0.0
-	github.com/luxfi/go-bip39 v1.1.0
+	github.com/luxfi/go-bip32 v1.0.1
+	github.com/luxfi/go-bip39 v1.1.1
 	github.com/luxfi/ids v1.0.2
 	github.com/luxfi/log v0.1.1
 	github.com/luxfi/node v1.13.16
@@ -62,7 +62,6 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
@@ -82,7 +81,6 @@ require (
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
-	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
@@ -97,3 +95,5 @@ require (
 )
 
 replace launchpad.net/gocheck => gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
+
+replace github.com/gojuukaze/go-bip39 => github.com/luxfi/go-bip39 v1.1.0
