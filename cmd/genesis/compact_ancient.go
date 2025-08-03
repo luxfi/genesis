@@ -152,6 +152,6 @@ func updateChainInfo(dbPath string, headNum, ancientCutoff uint64) {
   }
 }`, headNum, headNum, ancientCutoff)
 
-	os.MkdirAll(filepath.Dir(chainInfoPath), 0755)
-	os.WriteFile(chainInfoPath, []byte(info), 0644)
+	_ = os.MkdirAll(filepath.Dir(chainInfoPath), 0755)
+	_ = os.WriteFile(chainInfoPath, []byte(info), 0644)
 }

@@ -157,10 +157,10 @@ func (l *Launcher) prepareGenesis() error {
 			blsPubKey := []byte{}
 			blsPOP := []byte{}
 			if blsPubKeyHex != "" && len(blsPubKeyHex) > 2 {
-				fmt.Sscanf(blsPubKeyHex[2:], "%x", &blsPubKey)
+				_, _ = fmt.Sscanf(blsPubKeyHex[2:], "%x", &blsPubKey)
 			}
 			if blsPOPHex != "" && len(blsPOPHex) > 2 {
-				fmt.Sscanf(blsPOPHex[2:], "%x", &blsPOP)
+				_, _ = fmt.Sscanf(blsPOPHex[2:], "%x", &blsPOP)
 			}
 
 			// Generate all genesis files using pchain package
@@ -229,7 +229,7 @@ func (l *Launcher) configureNodes() error {
 		infoPath := filepath.Join(l.getNodeDir(i), "validator-info.json")
 		data, _ := os.ReadFile(infoPath)
 		var info map[string]interface{}
-		json.Unmarshal(data, &info)
+		_ = json.Unmarshal(data, &info)
 		if nodeID, ok := info["nodeID"].(string); ok {
 			nodeIDs[i] = nodeID
 		}

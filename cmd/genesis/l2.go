@@ -68,9 +68,9 @@ Examples:
 	cmd.Flags().StringVar(&baseNetwork, "base", "lux", "Base network: lux or luxtest")
 	cmd.Flags().StringVar(&chainData, "chaindata", "", "Path to existing chaindata to import")
 
-	cmd.MarkFlagRequired("name")
-	cmd.MarkFlagRequired("chain-id")
-	cmd.MarkFlagRequired("symbol")
+	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("chain-id")
+	_ = cmd.MarkFlagRequired("symbol")
 
 	return cmd
 }

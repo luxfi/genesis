@@ -190,10 +190,10 @@ func runConvertToCoreth(cmd *cobra.Command, args []string) error {
 			hash := common.BytesToHash(hashBytes)
 
 			// Set Coreth head references
-			batch.Set([]byte("eth/db/LastHeader"), hash[:], nil)
-			batch.Set([]byte("eth/db/LastBlock"), hash[:], nil)
-			batch.Set([]byte("eth/db/LastFast"), hash[:], nil)
-			batch.Set([]byte("snowman_lastAccepted"), hash[:], nil)
+			_ = batch.Set([]byte("eth/db/LastHeader"), hash[:], nil)
+			_ = batch.Set([]byte("eth/db/LastBlock"), hash[:], nil)
+			_ = batch.Set([]byte("eth/db/LastFast"), hash[:], nil)
+			_ = batch.Set([]byte("snowman_lastAccepted"), hash[:], nil)
 
 			fmt.Printf("  Set head block: %d (hash: %s)\n", highestBlock, hash.Hex())
 		}
