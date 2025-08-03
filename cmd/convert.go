@@ -59,8 +59,8 @@ func newConvertGenesisCmd(app *application.Genesis) *cobra.Command {
 
 	cmd.Flags().StringVar(&fromFormat, "from", "", "Source format (subnet, cchain, geth)")
 	cmd.Flags().StringVar(&toFormat, "to", "", "Target format (subnet, cchain, lux)")
-	cmd.MarkFlagRequired("from")
-	cmd.MarkFlagRequired("to")
+	_ = cmd.MarkFlagRequired("from")
+	_ = cmd.MarkFlagRequired("to")
 
 	return cmd
 }

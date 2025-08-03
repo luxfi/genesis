@@ -53,9 +53,9 @@ Examples:
 	cmd.Flags().StringVar(&config.BaseNetwork, "base", "lux", "Base network (lux, zoo, spc)")
 	cmd.Flags().StringVar(&config.ChainDataPath, "chain-data", "", "Path to existing chain data")
 
-	cmd.MarkFlagRequired("name")
-	cmd.MarkFlagRequired("chain-id")
-	cmd.MarkFlagRequired("symbol")
+	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("chain-id")
+	_ = cmd.MarkFlagRequired("symbol")
 
 	return cmd
 }
@@ -139,7 +139,7 @@ func newL2DeleteCmd(app *application.Genesis) *cobra.Command {
 			if !force {
 				fmt.Printf("Are you sure you want to delete L2 network '%s'? (y/N): ", name)
 				var response string
-				fmt.Scanln(&response)
+				_, _ = fmt.Scanln(&response)
 				if response != "y" && response != "Y" {
 					fmt.Println("Deletion cancelled")
 					return nil

@@ -295,7 +295,7 @@ func (r *Replayer) getChainHead(rpcURL string) (uint64, error) {
 
 	// Convert hex string to uint64
 	var blockNum uint64
-	fmt.Sscanf(result, "0x%x", &blockNum)
+	_, _ = fmt.Sscanf(result, "0x%x", &blockNum)
 	return blockNum, nil
 }
 

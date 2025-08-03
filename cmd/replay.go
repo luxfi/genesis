@@ -50,7 +50,7 @@ func NewSubnetBlockReplayCmd(app *application.Genesis) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&output, "output", "", "Output database path (required)")
-	cmd.MarkFlagRequired("output")
+	_ = cmd.MarkFlagRequired("output")
 
 	return cmd
 }

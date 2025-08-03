@@ -30,10 +30,6 @@ var (
 	lastBlockKey     = []byte("LastBlock")
 	lastFastBlockKey = []byte("LastFast")
 
-	// Head tracking
-	headHeaderKey = []byte("LastHeader")
-	headBlockKey  = []byte("LastBlock")
-	headFastKey   = []byte("LastFast")
 
 	// Chain state keys
 	acceptedKey = []byte("snowman_lastAccepted")
