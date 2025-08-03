@@ -1,0 +1,8 @@
+{
+  "snowman-api-enabled": false,
+  "coreth-admin-api-enabled": false,
+  "eth-apis": ["public-eth", "public-eth-filter", "net", "web3", "internal-public-eth", "internal-public-blockchain", "internal-public-transaction-pool", "internal-public-account"],
+  "precompile-upgrade": {},
+  "state-upgrade": {},
+  "feeRecipient": "0x0000000000000000000000000000000000000000"
+}

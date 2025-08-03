@@ -132,17 +132,60 @@ hanzo-testnet:
 gen-all: lux-mainnet lux-testnet zoo-mainnet zoo-testnet spc-mainnet spc-testnet hanzo-mainnet hanzo-testnet
 
 # Launch commands
-launch-l1:
-	@echo "Launching new L1 network..."
-	$(BUILD_DIR)/$(BINARY_NAME) launch --type l1 --config $(CONFIG_DIR)/l1-genesis.json
+launch: pipeline-lux node
+	@echo "✅ Full pipeline complete! Node is running."
 
-launch-l2:
-	@echo "Launching new L2 on Lux..."
-	$(BUILD_DIR)/$(BINARY_NAME) launch --type l2 --config $(CONFIG_DIR)/l2-genesis.json
+node: check-processed-data
+	@echo "🚀 Starting Lux Network node..."
+	@echo ""
+	@echo "Network: LUX Mainnet (96369)"
+	@echo "Blocks: 1,082,781"  
+	@echo "Data: state/processed/lux-mainnet-96369/C/db"
+	@echo "RPC: http://localhost:9630/ext/bc/C/rpc"
+	@echo ""
+	@$(BUILD_DIR)/$(BINARY_NAME) launch migrated --data-dir state/processed/lux-mainnet-96369/C/db --network-id 96369
 
-launch-l3:
-	@echo "Launching new L3 app chain..."
-	$(BUILD_DIR)/$(BINARY_NAME) launch --type l3 --config $(CONFIG_DIR)/l3-genesis.json
+pipeline-lux: build extract-blockchain migrate-blockchain
+	@echo "✅ Pipeline complete for LUX mainnet"
+
+check-processed-data:
+	@if [ ! -d "state/processed/lux-mainnet-96369/C/db" ]; then \
+		echo "❌ Error: Processed blockchain data not found!"; \
+		echo ""; \
+		echo "Run this command first:"; \
+		echo "  make pipeline-lux"; \
+		echo ""; \
+		exit 1; \
+	fi
+
+extract-blockchain:
+	@if [ ! -d "extracted-blockchain/pebbledb" ]; then \
+		echo "📦 Extracting blockchain data from state repo..."; \
+		mkdir -p extracted-blockchain; \
+		$(BUILD_DIR)/$(BINARY_NAME) extract-blockchain \
+			state/chaindata/lux-mainnet-96369/db/pebbledb \
+			extracted-blockchain/pebbledb; \
+	else \
+		echo "✓ Blockchain data already extracted"; \
+	fi
+
+migrate-blockchain: extract-blockchain
+	@if [ ! -d "state/processed/lux-mainnet-96369/C/db" ]; then \
+		echo "🔄 Migrating blockchain data to C-Chain format..."; \
+		mkdir -p state/processed/lux-mainnet-96369/C; \
+		$(BUILD_DIR)/$(BINARY_NAME) subnet-block-replay \
+			extracted-blockchain/pebbledb \
+			--output state/processed/lux-mainnet-96369/C/db \
+			--direct-db; \
+	else \
+		echo "✓ Blockchain data already migrated"; \
+	fi
+
+# Legacy launch targets (deprecated - use 'make launch' instead)
+launch-mainnet: launch
+launch-l1: launch
+launch-l2: pipeline-zoo node
+launch-l3: pipeline-spc node
 
 # Quantum chain specific targets
 quantum-genesis:
@@ -153,18 +196,17 @@ quantum-launch:
 	@echo "Launching quantum chain..."
 	$(BUILD_DIR)/$(BINARY_NAME) launch --type quantum --config $(CONFIG_DIR)/quantum-genesis.json
 
-# Pipeline commands
-pipeline-lux:
-	$(BUILD_DIR)/$(BINARY_NAME) pipeline full lux-mainnet
-
-pipeline-zoo:
+# Pipeline commands for other networks
+pipeline-zoo: build
+	@echo "🦓 Running pipeline for ZOO network..."
 	$(BUILD_DIR)/$(BINARY_NAME) pipeline full zoo-mainnet
 
-pipeline-all: build
-	@for network in lux-mainnet zoo-mainnet spc-mainnet hanzo-mainnet; do \
-		echo "Running pipeline for $$network..."; \
-		$(BUILD_DIR)/$(BINARY_NAME) pipeline full $$network || exit 1; \
-	done
+pipeline-spc: build  
+	@echo "🦄 Running pipeline for SPC network..."
+	$(BUILD_DIR)/$(BINARY_NAME) pipeline full spc-mainnet
+
+pipeline-all: pipeline-lux pipeline-zoo pipeline-spc
+	@echo "✅ All pipelines complete"
 
 # Consensus management
 consensus-list:
@@ -184,26 +226,28 @@ help:
 	@echo "Usage:"
 	@echo "  make build          - Build the genesis CLI tool"
 	@echo "  make install        - Install genesis CLI to /usr/local/bin"
-	@echo "  make clone-state    - Clone historic chaindata from state repo (on-demand)"
+	@echo "  make clone-state    - Clone historic chaindata from state repo"
 	@echo "  make update-state   - Update existing cloned state data"
 	@echo "  make clean          - Clean build artifacts"
 	@echo "  make deep-clean     - Clean everything including state data"
 	@echo "  make test           - Run tests"
 	@echo ""
+	@echo "Quick Start:"
+	@echo "  make build          - Build the genesis tools"
+	@echo "  make launch         - Run full pipeline and launch node (build → extract → migrate → node)"
+	@echo ""
+	@echo "Individual Steps:"
+	@echo "  make pipeline-lux   - Run full data pipeline (extract + migrate)"
+	@echo "  make node           - Launch node with existing processed data"
+	@echo ""
 	@echo "Genesis Generation:"
-	@echo "  make gen-l1         - Generate L1 genesis configuration"
-	@echo "  make gen-l2         - Generate L2 genesis configuration"
-	@echo "  make gen-l3         - Generate L3 genesis configuration"
 	@echo "  make lux-mainnet    - Generate Lux mainnet genesis"
 	@echo "  make lux-testnet    - Generate Lux testnet genesis"
 	@echo "  make zoo-mainnet    - Generate Zoo mainnet genesis"
 	@echo "  make zoo-testnet    - Generate Zoo testnet genesis"
+	@echo "  make gen-all        - Generate all network configs"
 	@echo ""
-	@echo "Launch Commands:"
-	@echo "  make launch-l1      - Launch new L1 network"
-	@echo "  make launch-l2      - Launch new L2 on Lux"
-	@echo "  make launch-l3      - Launch new L3 app chain"
-	@echo ""
-	@echo "Quantum Chain:"
-	@echo "  make quantum-genesis - Generate quantum chain genesis"
-	@echo "  make quantum-launch  - Launch quantum chain"
+	@echo "Pipeline Commands:"
+	@echo "  make pipeline-lux   - Run full pipeline for Lux"
+	@echo "  make pipeline-zoo   - Run full pipeline for Zoo"
+	@echo "  make pipeline-all   - Run pipeline for all networks"

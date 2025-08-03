@@ -49,5 +49,6 @@ configs/*.json
 output/
 dist/
 
-# Go build cache
-go.sum.backup
+state
+extracted-blockchain/
+runs/

@@ -1,16 +1,41 @@
 # Genesis Configuration Tool
 
-A lightweight CLI tool for managing genesis configurations for L1, L2, L3, and Quantum chains in the Lux ecosystem.
+A lightweight CLI tool for managing genesis configurations and blockchain data migration for L1, L2, L3, and Quantum chains in the Lux ecosystem.
 
 ## Overview
 
 This tool provides a clean interface for:
-- Generating genesis configurations for different chain types
+- Migrating SubnetEVM blockchain data to C-Chain format
+- Generating genesis configurations for different chain types  
 - Managing validators and allocations
-- Launching new chains with proper genesis state
+- Launching chains with migrated blockchain data
 - Validating genesis configurations
 
-The repository is kept small by design - historic chaindata is cloned on-demand from the state repository.
+## Quick Start
+
+```bash
+# Run full pipeline and launch node
+make launch
+```
+
+This single command will:
+1. Build the genesis tools
+2. Extract blockchain data from state repository
+3. Migrate SubnetEVM data to C-Chain format
+4. Launch the node with 1,082,781 blocks
+
+### Individual Commands
+
+```bash
+make build          # Build tools only
+make pipeline-lux   # Run data pipeline (extract + migrate)
+make node           # Launch node with existing data
+```
+
+## Documentation
+
+- [Blockchain Migration Guide](BLOCKCHAIN_MIGRATION.md) - Complete guide for migrating SubnetEVM data to C-Chain
+- [Storage Structure](BLOCKCHAIN_MIGRATION.md#storage-structure) - How blockchain data is organized
 
 ## Installation
 

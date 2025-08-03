@@ -47,12 +47,6 @@ for L1, L2, L3, and Quantum chains in the Lux ecosystem.`,
 		Run:   runGenerate,
 	}
 
-	launchCmd = &cobra.Command{
-		Use:   "launch",
-		Short: "Launch a new chain with genesis configuration",
-		Long:  `Launch a new L1, L2, L3, or Quantum chain using the specified genesis configuration`,
-		Run:   runLaunch,
-	}
 
 	validateCmd = &cobra.Command{
 		Use:   "validate",
@@ -85,13 +79,10 @@ func init() {
 	generateCmd.Flags().Uint64Var(&chainID, "chain-id", 0, "chain ID")
 	generateCmd.Flags().StringVar(&baseChain, "base-chain", "", "base chain for L2/L3 (e.g., lux, zoo)")
 
-	// Launch command flags
-	launchCmd.Flags().StringVar(&chainType, "type", "l1", "chain type: l1, l2, l3, or quantum")
-	launchCmd.Flags().StringVar(&configFile, "genesis", "", "genesis configuration file")
 
 	// Add commands
 	rootCmd.AddCommand(generateCmd)
-	rootCmd.AddCommand(launchCmd)
+	rootCmd.AddCommand(getLaunchCmd())
 	rootCmd.AddCommand(validateCmd)
 	rootCmd.AddCommand(versionCmd)
 	
@@ -99,6 +90,14 @@ func init() {
 	rootCmd.AddCommand(getConsensusCmd())
 	rootCmd.AddCommand(getPipelineCmd())
 	rootCmd.AddCommand(getStateCmd())
+	rootCmd.AddCommand(getExtractCmd())
+	rootCmd.AddCommand(getConvertCmd())
+	rootCmd.AddCommand(getImportBlockchainCmd())
+	rootCmd.AddCommand(getSetupChainStateCmd())
+	rootCmd.AddCommand(getSubnetBlockReplayerCmd())
+	rootCmd.AddCommand(getDebugKeysCmd())
+	rootCmd.AddCommand(getCompactAncientCmd())
+	rootCmd.AddCommand(getInspectCmd())
 }
 
 func initConfig() {
@@ -409,73 +408,6 @@ func saveConfig(config *GenesisConfig) {
 	fmt.Printf("Genesis configuration saved to: %s\n", filepath)
 }
 
-func runLaunch(cmd *cobra.Command, args []string) {
-	fmt.Printf("Launching %s chain with configuration: %s\n", chainType, configFile)
-	
-	// Read genesis configuration
-	data, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		log.Fatalf("Failed to read genesis file: %v", err)
-	}
-	
-	var config GenesisConfig
-	if err := json.Unmarshal(data, &config); err != nil {
-		log.Fatalf("Failed to parse genesis file: %v", err)
-	}
-	
-	// Launch based on chain type
-	switch config.Type {
-	case "l1":
-		launchL1(&config)
-	case "l2":
-		launchL2(&config)
-	case "l3":
-		launchL3(&config)
-	case "quantum":
-		launchQuantum(&config)
-	default:
-		log.Fatalf("Unknown chain type: %s", config.Type)
-	}
-}
-
-func launchL1(config *GenesisConfig) {
-	fmt.Println("Launching L1 chain...")
-	fmt.Printf("Chain ID: %d\n", config.ChainID)
-	fmt.Printf("Network: %s\n", config.Network)
-	fmt.Printf("Validators: %d\n", len(config.Validators))
-	
-	// TODO: Integrate with actual L1 launch process
-	fmt.Println("L1 launch process initiated. Run 'lux network start' to complete.")
-}
-
-func launchL2(config *GenesisConfig) {
-	fmt.Println("Launching L2 chain...")
-	fmt.Printf("Chain ID: %d\n", config.ChainID)
-	fmt.Printf("Base Chain: %s\n", config.L2Config.BaseChain)
-	fmt.Printf("Sequencer: %s\n", config.L2Config.SequencerURL)
-	
-	// TODO: Integrate with L2 deployment process
-	fmt.Println("L2 launch process initiated. Deploy rollup contracts to complete.")
-}
-
-func launchL3(config *GenesisConfig) {
-	fmt.Println("Launching L3 app chain...")
-	fmt.Printf("Chain ID: %d\n", config.ChainID)
-	fmt.Printf("Base Chain: %s\n", config.L2Config.BaseChain)
-	
-	// TODO: Integrate with L3 deployment process
-	fmt.Println("L3 launch process initiated. Deploy app chain contracts to complete.")
-}
-
-func launchQuantum(config *GenesisConfig) {
-	fmt.Println("Launching Quantum chain...")
-	fmt.Printf("Chain ID: %d\n", config.ChainID)
-	fmt.Printf("Consensus Mode: %s\n", config.QuantumConfig.ConsensusMode)
-	fmt.Printf("Validators: %d\n", len(config.Validators))
-	
-	// TODO: Integrate with quantum chain launch process
-	fmt.Println("Quantum chain launch process initiated.")
-}
 
 func runValidate(cmd *cobra.Command, args []string) {
 	if len(args) < 1 {
