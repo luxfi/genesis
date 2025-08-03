@@ -5,6 +5,7 @@ go 1.24.5
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/cockroachdb/pebble v1.1.5
+	github.com/ethereum/go-ethereum v1.16.1
 	github.com/luxfi/crypto v1.2.1
 	github.com/luxfi/database v1.1.7
 	github.com/luxfi/geth v1.16.23
@@ -81,6 +82,7 @@ require (
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect

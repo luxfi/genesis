@@ -10,12 +10,13 @@ import (
 
 var (
 	// Generate command flags
-	genNetwork   string
-	genChainType string
-	genOutputDir string
-	genChainID   uint64
-	genNetworkID uint64
+	genNetwork    string
+	genChainType  string
+	genOutputDir  string
+	genChainID    uint64
+	genNetworkID  uint64
 	genValidators int
+	genMnemonic   string
 )
 
 // NewGenerateCmd creates the generate command
@@ -53,26 +54,33 @@ func newGenerateMainnetCmd(app *application.Genesis) *cobra.Command {
 
 			app.Log.Info("Generating mainnet genesis configuration")
 
-			// Use the genesis package for business logic
-			cfg := genesis.MainnetConfig()
-			generator := genesis.NewGenerator(cfg)
-			
-			outputDir := genOutputDir
-			if outputDir == "" {
-				outputDir = app.GetOutputDir()
+			// Use default mnemonic if not provided
+			mnemonic := genMnemonic
+			if mnemonic == "" {
+				mnemonic = "light light light light light light light light light light light world"
 			}
 
-			if err := generator.Generate(outputDir); err != nil {
+			// Get network configuration
+			network := genesis.GetNetwork("mainnet")
+
+			outputDir := genOutputDir
+			if outputDir == "" {
+				outputDir = "configs"
+			}
+
+			// Generate all genesis files with staking config
+			if err := genesis.GenerateAll(network, outputDir, mnemonic); err != nil {
 				return fmt.Errorf("failed to generate mainnet genesis: %w", err)
 			}
 
-			app.Log.Info("Mainnet genesis generated successfully", 
+			app.Log.Info("Mainnet genesis generated successfully",
 				"output", outputDir)
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&genOutputDir, "output", "", "Output directory for genesis files")
+	cmd.Flags().StringVar(&genMnemonic, "mnemonic", "", "Mnemonic for generating addresses")
 
 	return cmd
 }
@@ -90,7 +98,7 @@ func newGenerateTestnetCmd(app *application.Genesis) *cobra.Command {
 
 			cfg := genesis.TestnetConfig()
 			generator := genesis.NewGenerator(cfg)
-			
+
 			outputDir := genOutputDir
 			if outputDir == "" {
 				outputDir = app.GetOutputDir()
@@ -100,7 +108,7 @@ func newGenerateTestnetCmd(app *application.Genesis) *cobra.Command {
 				return fmt.Errorf("failed to generate testnet genesis: %w", err)
 			}
 
-			app.Log.Info("Testnet genesis generated successfully", 
+			app.Log.Info("Testnet genesis generated successfully",
 				"output", outputDir)
 			return nil
 		},
@@ -125,7 +133,7 @@ func newGenerateLocalCmd(app *application.Genesis) *cobra.Command {
 
 			cfg := genesis.LocalConfig(genValidators)
 			generator := genesis.NewGenerator(cfg)
-			
+
 			outputDir := genOutputDir
 			if outputDir == "" {
 				outputDir = app.GetOutputDir()
@@ -135,7 +143,7 @@ func newGenerateLocalCmd(app *application.Genesis) *cobra.Command {
 				return fmt.Errorf("failed to generate local genesis: %w", err)
 			}
 
-			app.Log.Info("Local genesis generated successfully", 
+			app.Log.Info("Local genesis generated successfully",
 				"output", outputDir,
 				"validators", genValidators)
 			return nil
@@ -171,7 +179,7 @@ func newGenerateCustomCmd(app *application.Genesis) *cobra.Command {
 			}
 
 			generator := genesis.NewGenerator(cfg)
-			
+
 			outputDir := genOutputDir
 			if outputDir == "" {
 				outputDir = app.GetOutputDir()
@@ -181,7 +189,7 @@ func newGenerateCustomCmd(app *application.Genesis) *cobra.Command {
 				return fmt.Errorf("failed to generate custom genesis: %w", err)
 			}
 
-			app.Log.Info("Custom genesis generated successfully", 
+			app.Log.Info("Custom genesis generated successfully",
 				"output", outputDir)
 			return nil
 		},
