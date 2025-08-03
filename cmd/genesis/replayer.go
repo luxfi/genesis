@@ -17,10 +17,10 @@ import (
 	"time"
 )
 
-func getSubnetBlockReplayerCmd() *cobra.Command {
+func getReplayerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "subnet-block-replay [source-db]",
-		Short: "Replay SubnetEVM blocks into C-Chain",
+		Use:   "replay [source-db]",
+		Short: "Replay blockchain blocks",
 		Long:  "Read finalized blocks from SubnetEVM database and replay them into C-Chain with proper state setup",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runSubnetBlockReplay,

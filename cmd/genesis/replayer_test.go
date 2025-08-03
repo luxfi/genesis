@@ -5,13 +5,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSubnetBlockReplayerCommand(t *testing.T) {
+func TestReplayerCommand(t *testing.T) {
 	// Test that the command is properly registered
-	cmd := getSubnetBlockReplayerCmd()
+	cmd := getReplayerCmd()
 	
 	assert.NotNil(t, cmd)
-	assert.Equal(t, "subnet-block-replay [source-db]", cmd.Use)
-	assert.Contains(t, cmd.Short, "Replay SubnetEVM blocks")
+	assert.Equal(t, "replay [source-db]", cmd.Use)
+	assert.Contains(t, cmd.Short, "Replay blockchain blocks")
 	
 	// Test flags
 	flags := cmd.Flags()
