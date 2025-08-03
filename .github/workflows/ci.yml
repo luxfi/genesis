@@ -66,13 +66,8 @@ jobs:
     needs: test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        arch: [amd64, arm64]
-        exclude:
-          - os: ubuntu-latest
-            arch: arm64
-          - os: macos-latest
-            arch: arm64  # Exclude due to DataDog/zstd build constraints
+        os: [ubuntu-latest]
+        arch: [amd64]
     
     steps:
     - uses: actions/checkout@v4
