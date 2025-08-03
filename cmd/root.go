@@ -78,9 +78,8 @@ func initConfig() {
 	viper.SetEnvPrefix("GENESIS")
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err == nil {
-		// Config file found and loaded
-	}
+	// Try to read config file
+	_ = viper.ReadInConfig()
 }
 
 func initializeApp() error {
