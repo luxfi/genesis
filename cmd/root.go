@@ -62,6 +62,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewValidatorsCmd(app))
 	rootCmd.AddCommand(NewToolsCmd(app))
 	rootCmd.AddCommand(NewSetupCmd(app))
+	rootCmd.AddCommand(NewStakingCmd(app))
 
 	return rootCmd
 }
