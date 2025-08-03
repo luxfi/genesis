@@ -8,7 +8,7 @@ import (
 
 	"github.com/luxfi/genesis/pkg/ancient"
 	"github.com/luxfi/genesis/pkg/consensus"
-	"github.com/luxfi/geth/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
 
