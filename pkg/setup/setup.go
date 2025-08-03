@@ -30,7 +30,6 @@ var (
 	lastBlockKey     = []byte("LastBlock")
 	lastFastBlockKey = []byte("LastFast")
 
-
 	// Chain state keys
 	acceptedKey = []byte("snowman_lastAccepted")
 	heightKey   = []byte("height")
