@@ -87,6 +87,37 @@ test:
 	@echo "Running tests..."
 	$(GOTEST) -v ./...
 
+# Ginkgo test targets
+install-test-deps:
+	@echo "Installing test dependencies..."
+	go install github.com/onsi/ginkgo/v2/ginkgo@latest
+
+test-ginkgo: install-test-deps
+	@echo "Running Ginkgo tests..."
+	ginkgo -r --race --cover --trace --progress test/
+
+test-unit: install-test-deps
+	@echo "Running unit tests..."
+	ginkgo -r --race --cover --trace --progress --label-filter="!integration" test/
+
+test-integration: install-test-deps
+	@echo "Running integration tests..."
+	ginkgo -r --race --cover --trace --progress --label-filter="integration" test/
+
+test-migration: install-test-deps
+	@echo "Running migration tests..."
+	ginkgo --race --cover --trace --progress test/migration/
+
+test-validators: install-test-deps
+	@echo "Running validator tests..."
+	ginkgo --race --cover --trace --progress test/validators/
+
+test-genesis: install-test-deps
+	@echo "Running genesis tests..."
+	ginkgo --race --cover --trace --progress test/genesis/
+
+test-all: test test-ginkgo
+
 # Generate genesis configurations
 gen-l1:
 	@echo "Generating L1 genesis configuration..."

@@ -12,10 +12,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/staking"
-	"github.com/ava-labs/avalanchego/utils/perms"
 	"github.com/luxfi/genesis/pkg/core"
+	"github.com/luxfi/ids"
 )
 
 // Generator creates staking credentials
@@ -42,13 +40,11 @@ func (g *Generator) Generate() (*core.StakingCredentials, error) {
 		return nil, fmt.Errorf("failed to parse certificate: %w", err)
 	}
 
-	// Create staking certificate
-	stakingCert := &staking.Certificate{
-		Raw:       cert,
-		PublicKey: tlsCert.PublicKey,
+	// Compute node ID from certificate
+	nodeID, err := ids.ToNodeID(tlsCert.Raw)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute node ID: %w", err)
 	}
-
-	nodeID := ids.NodeIDFromCert(stakingCert)
 
 	// Generate BLS key (32 random bytes)
 	blsSecretKey := make([]byte, 32)
@@ -78,7 +74,7 @@ func (g *Generator) Generate() (*core.StakingCredentials, error) {
 // Save writes credentials to disk
 func (g *Generator) Save(creds *core.StakingCredentials, baseDir string) error {
 	stakingDir := filepath.Join(baseDir, "staking")
-	if err := os.MkdirAll(stakingDir, perms.ReadWriteExecute); err != nil {
+	if err := os.MkdirAll(stakingDir, 0755); err != nil {
 		return fmt.Errorf("failed to create staking directory: %w", err)
 	}
 
@@ -88,7 +84,7 @@ func (g *Generator) Save(creds *core.StakingCredentials, baseDir string) error {
 		Type:  "CERTIFICATE",
 		Bytes: creds.Certificate,
 	})
-	if err := os.WriteFile(certPath, certPEM, perms.ReadOnly); err != nil {
+	if err := os.WriteFile(certPath, certPEM, 0400); err != nil {
 		return fmt.Errorf("failed to write certificate: %w", err)
 	}
 
@@ -98,13 +94,13 @@ func (g *Generator) Save(creds *core.StakingCredentials, baseDir string) error {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: creds.PrivateKey,
 	})
-	if err := os.WriteFile(keyPath, keyPEM, perms.ReadOnly); err != nil {
+	if err := os.WriteFile(keyPath, keyPEM, 0400); err != nil {
 		return fmt.Errorf("failed to write private key: %w", err)
 	}
 
 	// Save BLS key
 	signerPath := filepath.Join(stakingDir, "signer.key")
-	if err := os.WriteFile(signerPath, creds.BLSSecretKey, perms.ReadOnly); err != nil {
+	if err := os.WriteFile(signerPath, creds.BLSSecretKey, 0400); err != nil {
 		return fmt.Errorf("failed to write BLS key: %w", err)
 	}
 

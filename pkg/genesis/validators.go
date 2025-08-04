@@ -9,9 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/formatting/address"
+	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/luxfi/crypto/secp256k1"
+	"github.com/luxfi/ids"
 )
 
 type AddressInfo struct {
@@ -131,11 +131,13 @@ func generateStakingAddresses(mnemonic string, count int) (*StakingConfig, error
 		if err != nil {
 			return nil, err
 		}
-		pAddr, err := address.Format("P", "lux", sk.PublicKey().Address().Bytes())
+		// Format addresses with bech32
+		addressBytes := sk.PublicKey().Address().Bytes()
+		pAddr, err := formatAddress("P", "lux", addressBytes)
 		if err != nil {
 			return nil, err
 		}
-		xAddr, err := address.Format("X", "lux", sk.PublicKey().Address().Bytes())
+		xAddr, err := formatAddress("X", "lux", addressBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -173,6 +175,24 @@ func generateStakingAddresses(mnemonic string, count int) (*StakingConfig, error
 	}
 
 	return config, nil
+}
+
+// formatAddress formats an address with chain prefix and bech32 encoding
+func formatAddress(chainID, hrp string, addressBytes []byte) (string, error) {
+	// Convert 8-bit to 5-bit for bech32 encoding
+	fiveBits, err := bech32.ConvertBits(addressBytes, 8, 5, true)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert bits: %w", err)
+	}
+
+	// Encode to bech32
+	bech32Addr, err := bech32.Encode(hrp, fiveBits)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode bech32: %w", err)
+	}
+
+	// Format with chain prefix
+	return fmt.Sprintf("%s-%s", chainID, bech32Addr), nil
 }
 
 func generateFibonacciStakes(count int, base uint64) []uint64 {

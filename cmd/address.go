@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ava-labs/avalanchego/utils/constants"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/secp256k1"
@@ -25,6 +24,10 @@ const (
 	luxCoinTypeIndex = 9000 // Avalanche/Lux coin type for P/X chains
 	accountIndex     = 0
 	changeIndex      = 0
+
+	// Network HRPs
+	mainnetHRP = "lux"
+	testnetHRP = "test"
 )
 
 var (
@@ -248,7 +251,6 @@ func generateAddressSet(evmPrivKey, luxPrivKey *secp256k1.PrivateKey, idx int) *
 	luxAddressBytes := luxPubKey.Address().Bytes()
 
 	// Generate mainnet addresses
-	mainnetHRP := constants.GetHRP(constants.MainnetID)
 	bech32AddrMainnet, err := formatBech32(mainnetHRP, luxAddressBytes)
 	if err != nil {
 		return nil
@@ -272,7 +274,6 @@ func generateAddressSet(evmPrivKey, luxPrivKey *secp256k1.PrivateKey, idx int) *
 
 	// Generate testnet addresses if requested
 	if addrShowTestnet {
-		testnetHRP := constants.GetHRP(constants.TestnetID)
 		bech32AddrTestnet, err := formatBech32(testnetHRP, luxAddressBytes)
 		if err == nil {
 			addrSet.CChainTest = fmt.Sprintf("C-%s", bech32AddrTestnet)
