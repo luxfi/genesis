@@ -65,7 +65,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewStakingCmd(app))
 	rootCmd.AddCommand(NewNetrunCmd(app))
 	rootCmd.AddCommand(NewLaunchNodeCmd(app))
-	rootCmd.AddCommand(NewTxCmd(app))
+	rootCmd.AddCommand(NewSendCmd(app))
 
 	return rootCmd
 }

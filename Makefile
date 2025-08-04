@@ -27,11 +27,11 @@ STATE_LOCAL ?= ../state
 
 all: build
 
-# Build the genesis CLI tool
+# Build the genesis CLI tool with all database support
 build:
-	@echo "Building genesis CLI..."
+	@echo "Building genesis CLI with all database support..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) .
+	$(GOBUILD) -tags "pebbledb rocksdb" -o $(BUILD_DIR)/$(BINARY_NAME) .
 
 install: build
 	@echo "Installing genesis CLI..."
