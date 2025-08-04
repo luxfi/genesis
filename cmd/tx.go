@@ -176,7 +176,6 @@ func newStatusCmd(app *application.Genesis) *cobra.Command {
 	return cmd
 }
 
-
 func weiToEther(wei *big.Int) string {
 	ether := new(big.Float).SetInt(wei)
 	ether.Quo(ether, big.NewFloat(1e18))

@@ -107,9 +107,6 @@ func newNetrunStartCmd(app *application.Genesis) *cobra.Command {
 	return cmd
 }
 
-
-
-
 func newNetrunCreateCmd(app *application.Genesis) *cobra.Command {
 	var (
 		networkID   uint32
