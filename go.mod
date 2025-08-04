@@ -21,6 +21,16 @@ require (
 
 require go.uber.org/zap v1.27.0 // indirect
 
+replace github.com/luxfi/geth => ../geth
+
+replace github.com/luxfi/crypto => ../crypto
+
+replace github.com/luxfi/database => ../database
+
+replace github.com/luxfi/ids => ../ids
+
+replace github.com/luxfi/log => ../log
+
 require (
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
@@ -63,6 +73,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/luxfi/metrics v1.1.1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect

@@ -27,11 +27,11 @@ STATE_LOCAL ?= ../state
 
 all: build
 
-# Build the genesis CLI tool
+# Build the genesis CLI tool with all database support
 build:
-	@echo "Building genesis CLI..."
+	@echo "Building genesis CLI with all database support..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) .
+	$(GOBUILD) -tags "pebbledb" -o $(BUILD_DIR)/$(BINARY_NAME) .
 
 install: build
 	@echo "Installing genesis CLI..."
@@ -170,11 +170,33 @@ node: check-processed-data
 	@echo "🚀 Starting Lux Network node..."
 	@echo ""
 	@echo "Network: LUX Mainnet (96369)"
-	@echo "Blocks: 1,082,781"  
+	@echo "Blocks: 1,082,781"
 	@echo "Data: state/processed/lux-mainnet-96369/C/db"
 	@echo "RPC: http://localhost:9630/ext/bc/C/rpc"
 	@echo ""
 	@$(BUILD_DIR)/$(BINARY_NAME) launch migrated --data-dir state/processed/lux-mainnet-96369/C/db --network-id 96369
+
+# Single validator launch
+single-validator: build
+	@echo "🚀 Launching single validator network..."
+	@echo ""
+	@echo "Network: LUX Mainnet (96369)"
+	@echo "Mode: Single Validator (k=1)"
+	@echo "RPC: http://localhost:9630/ext/bc/C/rpc"
+	@echo ""
+	@$(BUILD_DIR)/$(BINARY_NAME) launch single \
+		--network-id 96369 \
+		--data-dir runs/lux-mainnet-single \
+		--chaindata state/chaindata \
+		--mnemonic "$(MNEMONIC)"
+
+# Launch with custom genesis database
+launch-replay: build
+	@echo "🚀 Launching with genesis database replay..."
+	@$(BUILD_DIR)/$(BINARY_NAME) launch replay \
+		--network-id 96369 \
+		--genesis-db state/chaindata \
+		--data-dir runs/lux-mainnet-replay
 
 pipeline-lux: build extract-blockchain migrate-blockchain
 	@echo "✅ Pipeline complete for LUX mainnet"
@@ -232,7 +254,7 @@ pipeline-zoo: build
 	@echo "🦓 Running pipeline for ZOO network..."
 	$(BUILD_DIR)/$(BINARY_NAME) pipeline full zoo-mainnet
 
-pipeline-spc: build  
+pipeline-spc: build
 	@echo "🦄 Running pipeline for SPC network..."
 	$(BUILD_DIR)/$(BINARY_NAME) pipeline full spc-mainnet
 
@@ -266,6 +288,8 @@ help:
 	@echo "Quick Start:"
 	@echo "  make build          - Build the genesis tools"
 	@echo "  make launch         - Run full pipeline and launch node (build → extract → migrate → node)"
+	@echo "  make single-validator - Launch single validator network (k=1 consensus)"
+	@echo "  make launch-replay  - Launch with genesis database replay"
 	@echo ""
 	@echo "Individual Steps:"
 	@echo "  make pipeline-lux   - Run full data pipeline (extract + migrate)"
