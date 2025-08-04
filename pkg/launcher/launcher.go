@@ -12,16 +12,16 @@ import (
 
 // Config represents the configuration for launching a Lux node
 type Config struct {
-	BinaryPath        string
-	DataDir           string
-	NetworkID         uint32
-	HTTPPort          uint16
-	StakingPort       uint16
-	SingleNode        bool
-	GenesisPath       string
-	ChainDataPath     string
-	LogLevel          string
-	PublicIP          string
+	BinaryPath    string
+	DataDir       string
+	NetworkID     uint32
+	HTTPPort      uint16
+	StakingPort   uint16
+	SingleNode    bool
+	GenesisPath   string
+	ChainDataPath string
+	LogLevel      string
+	PublicIP      string
 }
 
 // NodeLauncher manages the lifecycle of a Lux node
@@ -103,7 +103,7 @@ func (nl *NodeLauncher) Start() error {
 
 	fmt.Printf("Node started with PID %d\n", nl.process.Process.Pid)
 	fmt.Printf("Logs: %s\n", logPath)
-	
+
 	return nil
 }
 
@@ -234,16 +234,16 @@ func GenerateMinimalGenesis(networkID uint32, address string) (string, error) {
 func createCChainGenesis(chainID uint32, address string) string {
 	cGenesis := map[string]interface{}{
 		"config": map[string]interface{}{
-			"chainId":             chainID,
-			"homesteadBlock":      0,
-			"eip150Block":         0,
-			"eip155Block":         0,
-			"eip158Block":         0,
-			"byzantiumBlock":      0,
-			"constantinopleBlock": 0,
-			"petersburgBlock":     0,
-			"istanbulBlock":       0,
-			"muirGlacierBlock":    0,
+			"chainId":                     chainID,
+			"homesteadBlock":              0,
+			"eip150Block":                 0,
+			"eip155Block":                 0,
+			"eip158Block":                 0,
+			"byzantiumBlock":              0,
+			"constantinopleBlock":         0,
+			"petersburgBlock":             0,
+			"istanbulBlock":               0,
+			"muirGlacierBlock":            0,
 			"apricotPhase1BlockTimestamp": 0,
 			"apricotPhase2BlockTimestamp": 0,
 			"apricotPhase3BlockTimestamp": 0,

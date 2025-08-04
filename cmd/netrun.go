@@ -27,7 +27,7 @@ You can create, start, stop, and monitor multiple networks with different config
 	cmd.AddCommand(newNetrunListCmd(app))
 	cmd.AddCommand(newNetrunStatusCmd(app))
 	cmd.AddCommand(newNetrunServerCmd(app))
-	
+
 	return cmd
 }
 
@@ -46,12 +46,12 @@ func newNetrunServerCmd(app *application.Genesis) *cobra.Command {
 			fmt.Printf("Port: %s\n", port)
 			fmt.Printf("gRPC Gateway: %s\n", grpcGateway)
 			fmt.Printf("Log Level: %s\n", logLevel)
-			
+
 			// Note: This would normally launch the netrunner server binary
 			// For now, we'll just print instructions
 			fmt.Println("\nTo start the server manually, run:")
 			fmt.Printf("netrunner server --log-level %s --port=%s --grpc-gateway-port=%s\n", logLevel, port, grpcGateway)
-			
+
 			return nil
 		},
 	}
@@ -70,7 +70,7 @@ func newNetrunStartCmd(app *application.Genesis) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			
+
 			// Create network manager
 			homeDir, _ := os.UserHomeDir()
 			baseDir := filepath.Join(homeDir, ".lux-networks")
@@ -140,9 +140,9 @@ func createGenesisFile(networkID uint32, singleNode bool) (string, error) {
 				},
 			},
 		},
-		"startTime":              uint64(time.Date(2022, 4, 15, 0, 0, 0, 0, time.UTC).Unix()),
-		"initialStakeDuration":   365 * 24 * 60 * 60, // 1 year in seconds
-		"initialStakeDurationOffset": 90 * 60,        // 90 minutes
+		"startTime":                  uint64(time.Date(2022, 4, 15, 0, 0, 0, 0, time.UTC).Unix()),
+		"initialStakeDuration":       365 * 24 * 60 * 60, // 1 year in seconds
+		"initialStakeDurationOffset": 90 * 60,            // 90 minutes
 		"initialStakedFunds": []string{
 			"P-lux1qsrd262r5w9dswv2wwzj0un79ncpwvdgkpqzqu",
 		},
@@ -182,16 +182,16 @@ func createGenesisFile(networkID uint32, singleNode bool) (string, error) {
 func createCChainGenesis(chainID uint32) string {
 	cGenesis := map[string]interface{}{
 		"config": map[string]interface{}{
-			"chainId":             chainID,
-			"homesteadBlock":      0,
-			"eip150Block":         0,
-			"eip155Block":         0,
-			"eip158Block":         0,
-			"byzantiumBlock":      0,
-			"constantinopleBlock": 0,
-			"petersburgBlock":     0,
-			"istanbulBlock":       0,
-			"muirGlacierBlock":    0,
+			"chainId":                     chainID,
+			"homesteadBlock":              0,
+			"eip150Block":                 0,
+			"eip155Block":                 0,
+			"eip158Block":                 0,
+			"byzantiumBlock":              0,
+			"constantinopleBlock":         0,
+			"petersburgBlock":             0,
+			"istanbulBlock":               0,
+			"muirGlacierBlock":            0,
 			"apricotPhase1BlockTimestamp": 0,
 			"apricotPhase2BlockTimestamp": 0,
 			"apricotPhase3BlockTimestamp": 0,
@@ -233,7 +233,7 @@ func newNetrunCreateCmd(app *application.Genesis) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			
+
 			// Create network manager
 			homeDir, _ := os.UserHomeDir()
 			baseDir := filepath.Join(homeDir, ".lux-networks")
@@ -282,7 +282,7 @@ func newNetrunStopCmd(app *application.Genesis) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			
+
 			// Create network manager
 			homeDir, _ := os.UserHomeDir()
 			baseDir := filepath.Join(homeDir, ".lux-networks")
@@ -317,7 +317,7 @@ func newNetrunListCmd(app *application.Genesis) *cobra.Command {
 
 			// List networks
 			networks := manager.ListNetworks()
-			
+
 			if len(networks) == 0 {
 				fmt.Println("No networks found.")
 				return nil
@@ -325,13 +325,13 @@ func newNetrunListCmd(app *application.Genesis) *cobra.Command {
 
 			fmt.Println("NETWORK NAME    NETWORK ID    NODES    STATUS    UPTIME")
 			fmt.Println("────────────────────────────────────────────────────────")
-			
+
 			for _, net := range networks {
 				uptime := ""
 				if net.Status == "running" && !net.StartTime.IsZero() {
 					uptime = time.Since(net.StartTime).Round(time.Second).String()
 				}
-				
+
 				fmt.Printf("%-15s %-13d %-8d %-9s %s\n",
 					net.Name,
 					net.NetworkID,
@@ -355,7 +355,7 @@ func newNetrunStatusCmd(app *application.Genesis) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			
+
 			// Create network manager
 			homeDir, _ := os.UserHomeDir()
 			baseDir := filepath.Join(homeDir, ".lux-networks")
@@ -376,7 +376,7 @@ func newNetrunStatusCmd(app *application.Genesis) *cobra.Command {
 			}
 			fmt.Printf("\nNodes (%d):\n", len(info.Nodes))
 			fmt.Println("────────────────────────────────────────────────────")
-			
+
 			for _, node := range info.Nodes {
 				fmt.Printf("  %s:\n", node.Name)
 				fmt.Printf("    Status: %s\n", node.Status)
@@ -392,4 +392,3 @@ func newNetrunStatusCmd(app *application.Genesis) *cobra.Command {
 
 	return cmd
 }
-

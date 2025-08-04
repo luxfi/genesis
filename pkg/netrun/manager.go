@@ -38,11 +38,11 @@ type Node struct {
 
 // NetworkConfig defines the configuration for a network
 type NetworkConfig struct {
-	NetworkID    uint32
-	NumNodes     int
-	SingleNode   bool
-	GenesisPath  string
-	NodeConfigs  []NodeConfig
+	NetworkID   uint32
+	NumNodes    int
+	SingleNode  bool
+	GenesisPath string
+	NodeConfigs []NodeConfig
 }
 
 // NodeConfig defines per-node configuration
@@ -108,7 +108,7 @@ func (nm *NetworkManager) StartNetwork(name string) error {
 	}
 
 	fmt.Printf("Starting network %s with %d nodes...\n", name, len(network.Nodes))
-	
+
 	// Start nodes in parallel
 	var wg sync.WaitGroup
 	errChan := make(chan error, len(network.Nodes))
@@ -117,7 +117,7 @@ func (nm *NetworkManager) StartNetwork(name string) error {
 		wg.Add(1)
 		go func(idx int, n *Node) {
 			defer wg.Done()
-			
+
 			// Create node data directory
 			if err := os.MkdirAll(n.DataDir, 0755); err != nil {
 				errChan <- fmt.Errorf("node %s: failed to create data dir: %w", n.Name, err)
@@ -158,7 +158,7 @@ func (nm *NetworkManager) StartNetwork(name string) error {
 
 	network.Status = "running"
 	network.StartTime = time.Now()
-	
+
 	fmt.Printf("Network %s started successfully!\n", name)
 	return nil
 }
@@ -174,24 +174,24 @@ func (nm *NetworkManager) StopNetwork(name string) error {
 	}
 
 	fmt.Printf("Stopping network %s...\n", name)
-	
+
 	// Stop nodes in parallel
 	var wg sync.WaitGroup
 	for _, node := range network.Nodes {
 		if node.Process == nil {
 			continue
 		}
-		
+
 		wg.Add(1)
 		go func(n *Node) {
 			defer wg.Done()
-			
+
 			// Send interrupt signal
 			if err := n.Process.Process.Signal(os.Interrupt); err != nil {
 				fmt.Printf("Failed to stop node %s gracefully: %v\n", n.Name, err)
 				n.Process.Process.Kill()
 			}
-			
+
 			// Wait for process to exit
 			n.Process.Wait()
 			n.Status = "stopped"
@@ -201,7 +201,7 @@ func (nm *NetworkManager) StopNetwork(name string) error {
 
 	wg.Wait()
 	network.Status = "stopped"
-	
+
 	fmt.Printf("Network %s stopped\n", name)
 	return nil
 }

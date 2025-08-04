@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/luxfi/genesis/pkg/application"
 	"github.com/luxfi/geth/common"
 	"github.com/luxfi/geth/core/types"
 	"github.com/luxfi/geth/ethclient"
-	"github.com/luxfi/genesis/pkg/application"
 	"github.com/spf13/cobra"
 )
 
@@ -24,14 +24,14 @@ func NewTxCmd(app *application.Genesis) *cobra.Command {
 
 	cmd.AddCommand(newSendCmd(app))
 	cmd.AddCommand(newStatusCmd(app))
-	
+
 	return cmd
 }
 
 func newSendCmd(app *application.Genesis) *cobra.Command {
 	var (
-		rpc string
-		to  string
+		rpc   string
+		to    string
 		value string
 	)
 
@@ -95,32 +95,32 @@ func newSendCmd(app *application.Genesis) *cobra.Command {
 			}
 
 			_ = types.NewTransaction(nonce, toAddress, valueWei, gasLimit, gasPrice, nil)
-			
+
 			// For now, let's check if personal API is enabled
 			// We'll sign the transaction using personal_sendTransaction
 			fmt.Printf("\nTransaction prepared. To send it, we need to unlock the account.\n")
 			fmt.Printf("\nTrying to send via personal API...\n")
-			
+
 			// Create personal_sendTransaction request
 			curlCmd := exec.Command("curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
-				"-d", fmt.Sprintf(`{"jsonrpc":"2.0","id":1,"method":"personal_sendTransaction","params":[{"from":"%s","to":"%s","value":"%s","gas":"0x5208","gasPrice":"%s"},"password"]}`, 
+				"-d", fmt.Sprintf(`{"jsonrpc":"2.0","id":1,"method":"personal_sendTransaction","params":[{"from":"%s","to":"%s","value":"%s","gas":"0x5208","gasPrice":"%s"},"password"]}`,
 					fromAddress.Hex(), toAddress.Hex(), fmt.Sprintf("0x%x", valueWei), fmt.Sprintf("0x%x", gasPrice)),
 				rpc)
-			
+
 			output, err := curlCmd.CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to send transaction: %w\nOutput: %s", err, output)
 			}
-			
+
 			fmt.Printf("Response: %s\n", output)
-			
+
 			// Check if it contains an error
 			if strings.Contains(string(output), "error") {
 				fmt.Printf("\nNote: Personal API might not be enabled or account not unlocked.\n")
 				fmt.Printf("To enable it, start luxd with --api-personal-enabled flag\n")
 				return fmt.Errorf("transaction failed")
 			}
-			
+
 			return nil
 		},
 	}

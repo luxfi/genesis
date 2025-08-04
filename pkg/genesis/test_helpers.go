@@ -39,7 +39,7 @@ func GenerateValidator() (Validator, error) {
 	if err != nil {
 		return Validator{}, err
 	}
-	
+
 	bech32Addr, err := bech32.Encode("lux", converted)
 	if err != nil {
 		return Validator{}, err
@@ -108,17 +108,17 @@ func CreateCChainGenesis(allocations map[string]string, network string) map[stri
 
 	return map[string]interface{}{
 		"config": map[string]interface{}{
-			"chainId":                chainID,
-			"homesteadBlock":         0,
-			"eip150Block":            0,
-			"eip150Hash":             "0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0",
-			"eip155Block":            0,
-			"byzantiumBlock":         0,
-			"constantinopleBlock":    0,
-			"petersburgBlock":        0,
-			"istanbulBlock":          0,
-			"muirGlacierBlock":       0,
-			"subnetEVMTimestamp":     0,
+			"chainId":             chainID,
+			"homesteadBlock":      0,
+			"eip150Block":         0,
+			"eip150Hash":          "0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0",
+			"eip155Block":         0,
+			"byzantiumBlock":      0,
+			"constantinopleBlock": 0,
+			"petersburgBlock":     0,
+			"istanbulBlock":       0,
+			"muirGlacierBlock":    0,
+			"subnetEVMTimestamp":  0,
 			"feeConfig": map[string]interface{}{
 				"gasLimit":                 20000000,
 				"minBaseFee":               25000000000,
@@ -154,7 +154,7 @@ func CreateXChainGenesis(network string) map[string]interface{} {
 				"unlockSchedule": []map[string]interface{}{},
 			},
 		},
-		"startTime":       1630368000,
+		"startTime":            1630368000,
 		"initialStakeDuration": 31536000,
 		"initialStakedFunds":   []string{},
 		"initialStakers":       []map[string]interface{}{},

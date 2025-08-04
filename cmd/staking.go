@@ -28,7 +28,7 @@ func NewStakingCmd(app *application.Genesis) *cobra.Command {
 	}
 
 	cmd.AddCommand(newGenerateStakingCmd(app))
-	
+
 	return cmd
 }
 
@@ -53,7 +53,7 @@ func newGenerateStakingCmd(app *application.Genesis) *cobra.Command {
 						// Parse MNEMONIC='...'
 						mnemonicLine := string(envData)
 						if len(mnemonicLine) > 10 {
-							start := 10 // After "MNEMONIC='"
+							start := 10                  // After "MNEMONIC='"
 							end := len(mnemonicLine) - 2 // Before "'\n"
 							if end > start {
 								mnemonic = mnemonicLine[start:end]
@@ -185,7 +185,7 @@ func newGenerateStakingCmd(app *application.Genesis) *cobra.Command {
     "proofOfPossession": "0x%x"
   }
 }`, nodeID, publicKeyBytes, popBytes)
-			
+
 			genesisPath := filepath.Join(outputDir, "genesis-staker.json")
 			if err := os.WriteFile(genesisPath, []byte(genesisEntry), 0644); err != nil {
 				return fmt.Errorf("failed to write genesis entry: %w", err)
