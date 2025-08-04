@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/luxfi/genesis/pkg/application"
 	"github.com/luxfi/geth/common"
