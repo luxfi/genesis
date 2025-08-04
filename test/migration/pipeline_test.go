@@ -63,7 +63,7 @@ var _ = Describe("Migration Pipeline", func() {
 			It("should create valid subnet data", func() {
 				subnetDBPath := filepath.Join(tempDir, "subnet-db")
 				createTestSubnetData(subnetDBPath)
-				
+
 				// Verify data was created
 				db, err := pebble.Open(subnetDBPath, &pebble.Options{})
 				Expect(err).NotTo(HaveOccurred())
@@ -73,7 +73,7 @@ var _ = Describe("Migration Pipeline", func() {
 				iter, err := db.NewIter(nil)
 				Expect(err).NotTo(HaveOccurred())
 				defer iter.Close()
-				
+
 				keyCount := 0
 				for iter.First(); iter.Valid(); iter.Next() {
 					keyCount++
@@ -86,10 +86,10 @@ var _ = Describe("Migration Pipeline", func() {
 			It("should migrate EVM prefixes correctly", func() {
 				subnetDBPath := filepath.Join(tempDir, "subnet-db")
 				createTestSubnetData(subnetDBPath)
-				
+
 				migratedDBPath := filepath.Join(tempDir, "migrated-db")
 				migrateEVMPrefixes(subnetDBPath, migratedDBPath)
-				
+
 				// Verify migration
 				db, err := pebble.Open(migratedDBPath, &pebble.Options{})
 				Expect(err).NotTo(HaveOccurred())
@@ -99,7 +99,7 @@ var _ = Describe("Migration Pipeline", func() {
 				iter, err := db.NewIter(nil)
 				Expect(err).NotTo(HaveOccurred())
 				defer iter.Close()
-				
+
 				hasEVMKeys := false
 				for iter.First(); iter.Valid(); iter.Next() {
 					key := iter.Key()
@@ -116,13 +116,13 @@ var _ = Describe("Migration Pipeline", func() {
 			It("should create synthetic blockchain entries", func() {
 				subnetDBPath := filepath.Join(tempDir, "subnet-db")
 				createTestSubnetData(subnetDBPath)
-				
+
 				migratedDBPath := filepath.Join(tempDir, "migrated-db")
 				migrateEVMPrefixes(subnetDBPath, migratedDBPath)
-				
+
 				syntheticDBPath := filepath.Join(tempDir, "synthetic-db")
 				createSyntheticBlockchain(migratedDBPath, syntheticDBPath)
-				
+
 				// Verify synthetic blockchain
 				db, err := pebble.Open(syntheticDBPath, &pebble.Options{})
 				Expect(err).NotTo(HaveOccurred())
@@ -142,16 +142,16 @@ var _ = Describe("Migration Pipeline", func() {
 				// Create full pipeline up to consensus generation
 				subnetDBPath := filepath.Join(tempDir, "subnet-db")
 				createTestSubnetData(subnetDBPath)
-				
+
 				migratedDBPath := filepath.Join(tempDir, "migrated-db")
 				migrateEVMPrefixes(subnetDBPath, migratedDBPath)
-				
+
 				syntheticDBPath := filepath.Join(tempDir, "synthetic-db")
 				createSyntheticBlockchain(migratedDBPath, syntheticDBPath)
-				
+
 				consensusStatePath := filepath.Join(tempDir, "consensus-state")
 				generateConsensusState(syntheticDBPath, consensusStatePath)
-				
+
 				// Verify consensus state files exist
 				Expect(filepath.Join(consensusStatePath, "genesis.json")).To(BeAnExistingFile())
 			})
@@ -162,16 +162,16 @@ var _ = Describe("Migration Pipeline", func() {
 				// Run full pipeline
 				subnetDBPath := filepath.Join(tempDir, "subnet-db")
 				createTestSubnetData(subnetDBPath)
-				
+
 				migratedDBPath := filepath.Join(tempDir, "migrated-db")
 				migrateEVMPrefixes(subnetDBPath, migratedDBPath)
-				
+
 				syntheticDBPath := filepath.Join(tempDir, "synthetic-db")
 				createSyntheticBlockchain(migratedDBPath, syntheticDBPath)
-				
+
 				consensusStatePath := filepath.Join(tempDir, "consensus-state")
 				generateConsensusState(syntheticDBPath, consensusStatePath)
-				
+
 				// Run verification
 				verifyMigration(consensusStatePath)
 			})
@@ -182,7 +182,7 @@ var _ = Describe("Migration Pipeline", func() {
 		It("should handle missing source database", func() {
 			nonExistentPath := filepath.Join(tempDir, "non-existent")
 			migratedDBPath := filepath.Join(tempDir, "migrated-db")
-			
+
 			err := migrateEVMPrefixesWithError(nonExistentPath, migratedDBPath)
 			Expect(err).To(HaveOccurred())
 		})
@@ -192,12 +192,12 @@ var _ = Describe("Migration Pipeline", func() {
 			corruptedDBPath := filepath.Join(tempDir, "corrupted-db")
 			db, err := pebble.Open(corruptedDBPath, &pebble.Options{})
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			// Write invalid data
 			err = db.Set([]byte("invalid-key"), []byte("invalid-rlp-data"), pebble.Sync)
 			Expect(err).NotTo(HaveOccurred())
 			db.Close()
-			
+
 			// Try to migrate
 			migratedDBPath := filepath.Join(tempDir, "migrated-db")
 			err = migrateEVMPrefixesWithError(corruptedDBPath, migratedDBPath)
@@ -214,13 +214,13 @@ var _ = Describe("Migration Pipeline", func() {
 
 			largeDBPath := filepath.Join(tempDir, "large-db")
 			createLargeTestData(largeDBPath, 10000) // 10k entries
-			
+
 			migratedDBPath := filepath.Join(tempDir, "migrated-db")
-			
+
 			start := time.Now()
 			migrateEVMPrefixes(largeDBPath, migratedDBPath)
 			duration := time.Since(start)
-			
+
 			// Should complete within reasonable time
 			Expect(duration.Seconds()).To(BeNumerically("<", 10))
 		})
@@ -240,10 +240,10 @@ func createTestSubnetData(dbPath string) {
 			Number: new(big.Int).SetUint64(i),
 			Time:   uint64(time.Now().Unix()),
 		}
-		
+
 		headerBytes, err := rlp.EncodeToBytes(header)
 		Expect(err).NotTo(HaveOccurred())
-		
+
 		// Store with subnet prefix
 		key := append([]byte("subnet:"), common.BigToHash(header.Number).Bytes()...)
 		err = db.Set(key, headerBytes, pebble.Sync)
@@ -280,19 +280,19 @@ func migrateEVMPrefixesWithError(srcPath, dstPath string) error {
 	for iter.First(); iter.Valid(); iter.Next() {
 		key := iter.Key()
 		val := iter.Value()
-		
+
 		// Transform key (example: subnet: -> e)
 		newKey := key
 		if len(key) > 7 && string(key[:7]) == "subnet:" {
 			newKey = append([]byte("e"), key[7:]...)
 		}
-		
+
 		err = batch.Set(newKey, val, nil)
 		if err != nil {
 			return err
 		}
 	}
-	
+
 	return batch.Commit(pebble.Sync)
 }
 
@@ -321,14 +321,14 @@ func createSyntheticBlockchain(srcPath, dstPath string) {
 		Number: big.NewInt(0),
 		Time:   uint64(time.Now().Unix()),
 	}
-	
+
 	headerBytes, err := rlp.EncodeToBytes(genesisHeader)
 	Expect(err).NotTo(HaveOccurred())
-	
+
 	headerKey := append([]byte("h"), common.Hash{}.Bytes()...)
 	err = batch.Set(headerKey, headerBytes, nil)
 	Expect(err).NotTo(HaveOccurred())
-	
+
 	err = batch.Commit(pebble.Sync)
 	Expect(err).NotTo(HaveOccurred())
 }
@@ -388,14 +388,14 @@ func createLargeTestData(dbPath string, count int) {
 		val := fmt.Sprintf("value-%06d", i)
 		err = batch.Set([]byte(key), []byte(val), nil)
 		Expect(err).NotTo(HaveOccurred())
-		
+
 		if i%1000 == 0 {
 			err = batch.Commit(pebble.Sync)
 			Expect(err).NotTo(HaveOccurred())
 			batch = db.NewBatch()
 		}
 	}
-	
+
 	err = batch.Commit(pebble.Sync)
 	Expect(err).NotTo(HaveOccurred())
 }

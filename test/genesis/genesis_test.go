@@ -102,7 +102,7 @@ var _ = Describe("Genesis Generation", func() {
 		It("should include fee manager addresses", func() {
 			allocations := map[string]string{}
 			cGenesis := genesis.CreateCChainGenesis(allocations, "mainnet")
-			
+
 			genesisData, err := json.Marshal(cGenesis)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -134,7 +134,7 @@ var _ = Describe("Genesis Generation", func() {
 	Context("Combined Genesis", func() {
 		It("should generate all three genesis files", func() {
 			outputDir := filepath.Join(tempDir, "lux-mainnet-96369")
-			
+
 			// Create validators
 			validators := []genesis.Validator{
 				{
@@ -161,7 +161,7 @@ var _ = Describe("Genesis Generation", func() {
 
 		It("should handle testnet configuration", func() {
 			outputDir := filepath.Join(tempDir, "lux-testnet-96368")
-			
+
 			validators := []genesis.Validator{}
 			allocations := map[string]string{}
 
