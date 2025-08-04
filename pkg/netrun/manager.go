@@ -189,11 +189,11 @@ func (nm *NetworkManager) StopNetwork(name string) error {
 			// Send interrupt signal
 			if err := n.Process.Process.Signal(os.Interrupt); err != nil {
 				fmt.Printf("Failed to stop node %s gracefully: %v\n", n.Name, err)
-				n.Process.Process.Kill()
+				_ = n.Process.Process.Kill()
 			}
 
 			// Wait for process to exit
-			n.Process.Wait()
+			_ = n.Process.Wait()
 			n.Status = "stopped"
 			fmt.Printf("Node %s stopped\n", n.Name)
 		}(node)

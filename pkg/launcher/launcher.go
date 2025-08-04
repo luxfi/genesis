@@ -127,7 +127,7 @@ func (nl *NodeLauncher) Stop() error {
 	select {
 	case <-time.After(30 * time.Second):
 		// Force kill if doesn't exit gracefully
-		nl.process.Process.Kill()
+		_ = nl.process.Process.Kill()
 		return fmt.Errorf("node did not exit gracefully, killed")
 	case err := <-done:
 		if nl.logFile != nil {

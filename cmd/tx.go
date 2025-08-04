@@ -177,23 +177,6 @@ func newStatusCmd(app *application.Genesis) *cobra.Command {
 	return cmd
 }
 
-func waitForReceipt(client *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
-	ctx := context.Background()
-	for i := 0; i < 60; i++ { // Wait up to 60 seconds
-		receipt, err := client.TransactionReceipt(ctx, txHash)
-		if err == nil {
-			return receipt, nil
-		}
-		// Wait a bit before trying again
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(1 * time.Second):
-			// Continue
-		}
-	}
-	return nil, fmt.Errorf("transaction not mined after 60 seconds")
-}
 
 func weiToEther(wei *big.Int) string {
 	ether := new(big.Float).SetInt(wei)
