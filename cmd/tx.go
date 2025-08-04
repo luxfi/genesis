@@ -69,7 +69,7 @@ func newSendCmd(app *application.Genesis) *cobra.Command {
 			}
 
 			// Parse value
-			valueWei := new(big.Int)
+			var valueWei *big.Int
 			if value != "" {
 				ethValue, ok := new(big.Float).SetString(value)
 				if !ok {
