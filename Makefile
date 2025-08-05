@@ -198,6 +198,57 @@ launch-replay: build
 		--genesis-db state/chaindata \
 		--data-dir runs/lux-mainnet-replay
 
+# Automated mainnet replay with single-node consensus
+mainnet-replay: build
+	@echo "=== Lux Mainnet Replay with Single-Node Consensus ==="
+	@echo "This will:"
+	@echo "1. Generate staking keys with BLS"
+	@echo "2. Configure single-node consensus"
+	@echo "3. Replay blocks from genesis database"
+	@echo "4. Use BadgerDB for runtime, PebbleDB for replay"
+	@echo ""
+	@cd .. && ./genesis/launch-mainnet-replay.sh
+
+# Direct luxd launch with genesis replay using CLI
+luxd-replay: build
+	@$(BUILD_DIR)/$(BINARY_NAME) launch-replay \
+		--network-id=96369 \
+		--data-dir=luxd-replay \
+		--single-node
+
+# Launch with specific network replay
+replay-lux: build
+	@$(BUILD_DIR)/$(BINARY_NAME) launch-replay --network-id=96369 --single-node
+
+replay-zoo: build
+	@$(BUILD_DIR)/$(BINARY_NAME) launch-replay --network-id=200200 --single-node
+
+replay-spc: build
+	@$(BUILD_DIR)/$(BINARY_NAME) launch-replay --network-id=36911 --single-node
+
+# BFT Consensus targets
+bft: build
+	@echo "🔐 Launching BFT consensus with k=1..."
+	@$(BUILD_DIR)/$(BINARY_NAME) launch-bft
+
+bft-simple: build
+	@echo "🔐 Launching simplified BFT consensus (no BLS)..."
+	@$(BUILD_DIR)/$(BINARY_NAME) launch-bft-simple
+
+bft-test: build install-test-deps
+	@echo "🧪 Running BFT consensus tests..."
+	@ginkgo -r --race --cover --trace --progress --label-filter="BFT" test/
+
+validate-consensus: build
+	@echo "✅ Validating k=1 consensus parameters..."
+	@$(BUILD_DIR)/$(BINARY_NAME) consensus validate --k 1 --alpha-preference 1 --alpha-confidence 1 --beta 20
+
+check-luxd:
+	@if [ ! -f "../node/build/luxd" ]; then \
+		echo "Building luxd..."; \
+		cd ../node && make build; \
+	fi
+
 pipeline-lux: build extract-blockchain migrate-blockchain
 	@echo "✅ Pipeline complete for LUX mainnet"
 
@@ -290,6 +341,9 @@ help:
 	@echo "  make launch         - Run full pipeline and launch node (build → extract → migrate → node)"
 	@echo "  make single-validator - Launch single validator network (k=1 consensus)"
 	@echo "  make launch-replay  - Launch with genesis database replay"
+	@echo "  make bft            - Launch BFT consensus with k=1 and BLS"
+	@echo "  make bft-test       - Run BFT consensus tests"
+	@echo "  make validate-consensus - Validate k=1 consensus parameters"
 	@echo ""
 	@echo "Individual Steps:"
 	@echo "  make pipeline-lux   - Run full data pipeline (extract + migrate)"

@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/luxfi/genesis/cmd/staking"
 	"github.com/luxfi/genesis/pkg/application"
 	"github.com/spf13/cobra"
 )
@@ -28,6 +29,8 @@ func NewStakingCmd(app *application.Genesis) *cobra.Command {
 	}
 
 	cmd.AddCommand(newGenerateStakingCmd(app))
+	// Import the staking package commands
+	cmd.AddCommand(staking.NewKeygenCmd())
 
 	return cmd
 }
@@ -111,10 +114,10 @@ func newGenerateStakingCmd(app *application.Genesis) *cobra.Command {
 				SerialNumber: big.NewInt(1),
 				Subject: pkix.Name{
 					Country:      []string{"US"},
-					Province:     []string{"NY"},
-					Locality:     []string{"Ithaca"},
-					Organization: []string{"Lux"},
-					CommonName:   "lux",
+					Province:     []string{"CA"},
+					Locality:     []string{"Los Angeles"},
+					Organization: []string{"Lux Industries Inc"},
+					CommonName:   "lux.network",
 				},
 				NotBefore:   time.Now(),
 				NotAfter:    time.Now().Add(365 * 24 * time.Hour * 100), // 100 years

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"os"
+	"log"
 
 	"github.com/luxfi/genesis/cmd"
 )
@@ -9,6 +9,6 @@ import (
 func main() {
 	rootCmd := cmd.NewRootCmd()
 	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }

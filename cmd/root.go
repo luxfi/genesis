@@ -66,6 +66,11 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewNetrunCmd(app))
 	rootCmd.AddCommand(NewLaunchNodeCmd(app))
 	rootCmd.AddCommand(NewSendCmd(app))
+	rootCmd.AddCommand(NewMainnetReplayCmd(app))
+	rootCmd.AddCommand(NewLaunchReplayCmd(app))
+	rootCmd.AddCommand(NewConsensusCmd(app))
+	rootCmd.AddCommand(NewLaunchBFTCmd(app))
+	rootCmd.AddCommand(NewLaunchBFTSimpleCmd(app))
 
 	return rootCmd
 }

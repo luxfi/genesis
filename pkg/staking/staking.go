@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
@@ -35,10 +34,10 @@ func GenerateStakingKeys(outputDir, nodeID string) error {
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
 			Country:      []string{"US"},
-			Province:     []string{"NY"},
-			Locality:     []string{"Ithaca"},
-			Organization: []string{"Luxfi"},
-			CommonName:   "lux",
+			Province:     []string{"CA"},
+			Locality:     []string{"Los Angeles"},
+			Organization: []string{"Lux Industries Inc"},
+			CommonName:   "lux.network",
 		},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().Add(365 * 24 * time.Hour * 100), // 100 years
@@ -77,23 +76,19 @@ func GenerateStakingKeys(outputDir, nodeID string) error {
 		return fmt.Errorf("failed to write private key: %w", err)
 	}
 
-	// Use the known working test key that luxd accepts
-	// This is "AvalancheLocalNetworkValidator01" in base64
-	testSignerKey := "QXZhbGFuY2hlTG9jYWxOZXR3b3JrVmFsaWRhdG9yMDE="
-	blsKey, err := base64.StdEncoding.DecodeString(testSignerKey)
-	if err != nil {
-		return fmt.Errorf("failed to decode test signer key: %w", err)
-	}
-
-	// Write BLS key
+	// For test networks, use the standard test key format
+	// This is what the current luxd binary expects
+	testSignerKey := "LuxLocalNetworkValidator01"
+	
+	// Write test signer key
 	blsPath := filepath.Join(outputDir, "signer.key")
-	if err := os.WriteFile(blsPath, blsKey, 0600); err != nil {
+	if err := os.WriteFile(blsPath, []byte(testSignerKey), 0600); err != nil {
 		return fmt.Errorf("failed to write BLS key: %w", err)
 	}
 
 	fmt.Printf("Generated staking keys in %s\n", outputDir)
 	fmt.Printf("NodeID: %s\n", nodeID)
-	fmt.Printf("BLS Key: %x\n", blsKey)
+	fmt.Printf("BLS Key: %s\n", testSignerKey)
 
 	return nil
 }
