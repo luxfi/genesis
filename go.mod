@@ -6,7 +6,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/luxfi/crypto v1.2.2
-	github.com/luxfi/database v1.1.7
+	github.com/luxfi/database v1.1.9
 	github.com/luxfi/geth v1.16.25
 	github.com/luxfi/go-bip32 v1.0.1
 	github.com/luxfi/go-bip39 v1.1.1
@@ -31,8 +31,6 @@ replace github.com/luxfi/database => ../database
 replace github.com/luxfi/ids => ../ids
 
 replace github.com/luxfi/log => ../log
-
-replace github.com/luxfi/node => ../node
 
 require (
 	github.com/DataDog/zstd v1.5.7 // indirect

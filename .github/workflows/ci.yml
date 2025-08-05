@@ -34,8 +34,13 @@ jobs:
     - name: Download dependencies
       run: go mod download
     
+    - name: Build genesis binary for tests
+      run: go build -o bin/genesis ./cmd/genesis
+    
     - name: Run tests
-      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      run: |
+        export PATH=$PATH:$(pwd)/bin
+        go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
