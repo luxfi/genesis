@@ -32,6 +32,8 @@ replace github.com/luxfi/ids => ../ids
 
 replace github.com/luxfi/log => ../log
 
+replace github.com/luxfi/node => ../node
+
 require (
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
