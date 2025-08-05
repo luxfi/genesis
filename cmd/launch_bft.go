@@ -139,7 +139,8 @@ This command:
 			luxdArgs := []string{
 				fmt.Sprintf("--network-id=%s", networkID),
 				fmt.Sprintf("--data-dir=%s", dataDir),
-				fmt.Sprintf("--genesis-file=%s", genesisPath),
+				// Don't override built-in genesis
+				// fmt.Sprintf("--genesis-file=%s", genesisPath),
 				fmt.Sprintf("--staking-tls-cert-file=%s", filepath.Join(stakingDir, "staker.crt")),
 				fmt.Sprintf("--staking-tls-key-file=%s", filepath.Join(stakingDir, "staker.key")),
 				fmt.Sprintf("--staking-signer-key-file=%s", filepath.Join(stakingDir, "signer.key")),
