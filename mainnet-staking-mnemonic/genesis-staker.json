@@ -1,9 +1,0 @@
-{
-  "nodeID": "NodeID-7Xhw2mDxuDS44j42TCB6U5579esbSt3Lg",
-  "rewardAddress": "P-lux1qsrd262r5w9dswv2wwzj0un79ncpwvdgkpqzqu",
-  "delegationFee": 20000,
-  "signer": {
-    "publicKey": "0x900c9b119b5c82d781d4b49be78c3fc7ae65f2b435b7ed9e3a8b9a03e475edff86d8a64827fec8db23a6f236afbf127d",
-    "proofOfPossession": "0x9239f365a639849730078382d2f060c4d98cb02ad24fe8aad573ac10d317c6be004846ac11080569b12dbb2f34044dcf17c8d1c4bb3494fc62929bcb87e476a19bb51cdfe7882c899762100180e0122c64ca962816f6cbf67f852162295c19ed"
-  }
-}

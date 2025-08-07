@@ -1,0 +1,42 @@
+network:
+  name: "Lux Mainnet"
+  id: 96369
+  
+validators:
+  count: 21
+  stake: 2000000000000000  # 2M LUX per validator
+  
+initial_supply: 410000000000000000  # 410M LUX total supply
+
+allocations:
+  # Team allocation
+  - address: "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC"
+    balance: "50000000000000000"  # 50M LUX
+  
+  # Development fund
+  - address: "0x572f4D80f10f663B5049F789546f25f70Bb62a7F"
+    balance: "30000000000000000"  # 30M LUX
+    
+  # Community fund
+  - address: "0x4Cf2eD3665F6bFA95cE6A11CFDb7A2EF5FC1C7E4"
+    balance: "20000000000000000"  # 20M LUX
+
+consensus:
+  k: 1  # BFT consensus
+  alpha: 1
+  beta_virtuous: 1
+  beta_rogue: 1
+  concurrent_repolls: 1
+  optimal_processing: 1
+  
+staking:
+  min_stake_duration: 1209600  # 14 days in seconds
+  max_stake_duration: 31536000  # 365 days in seconds
+  min_delegation_fee: 20000  # 2%
+  min_delegator_stake: 25000000000  # 25 LUX
+  max_validator_stake: 3000000000000000  # 3M LUX
+  reward_config:
+    max_consumption_rate: 120000  # 12%
+    min_consumption_rate: 100000  # 10%
+    minting_period: 31536000  # 1 year
+    supply_cap: 720000000000000000  # 720M LUX cap

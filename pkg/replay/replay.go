@@ -39,6 +39,31 @@ func New(app *application.Genesis) *Replayer {
 	return &Replayer{app: app}
 }
 
+// log handles logging with nil app gracefully
+func (r *Replayer) log(level, msg string, args ...interface{}) {
+	if r.app != nil && r.app.Log != nil {
+		switch level {
+		case "info":
+			r.app.Log.Info(msg, args...)
+		case "error":
+			r.app.Log.Error(msg, args...)
+		case "debug":
+			r.app.Log.Debug(msg, args...)
+		default:
+			r.app.Log.Info(msg, args...)
+		}
+	} else {
+		// Fallback to fmt.Printf
+		output := msg
+		for i := 0; i < len(args); i += 2 {
+			if i+1 < len(args) {
+				output += fmt.Sprintf(" %v=%v", args[i], args[i+1])
+			}
+		}
+		fmt.Printf("[%s] %s\n", level, output)
+	}
+}
+
 // openDatabase opens a database for replay operations
 func (r *Replayer) openDatabase(dbPath string, readOnly bool) (database.Database, error) {
 	// Auto-detect database type
@@ -80,7 +105,7 @@ func (r *Replayer) detectDatabaseType(dbPath string) string {
 
 // ReplayBlocks replays blockchain blocks from source to destination
 func (r *Replayer) ReplayBlocks(sourceDB string, opts Options) error {
-	r.app.Log.Info("Replaying blocks", "source", sourceDB, "rpc", opts.RPC)
+	r.log("info", "Replaying blocks", "source", sourceDB, "rpc", opts.RPC)
 
 	// Open source database
 	db, err := r.openDatabase(sourceDB, true)
@@ -101,7 +126,7 @@ func (r *Replayer) replayDirectToDB(db database.Database, opts Options) error {
 		return fmt.Errorf("output path required for direct DB mode")
 	}
 
-	r.app.Log.Info("Direct database replay", "output", opts.Output)
+	r.log("info", "Direct database replay", "output", opts.Output)
 
 	// Create output database
 	outDB, err := r.openDatabase(opts.Output, false)
@@ -131,7 +156,7 @@ func (r *Replayer) replayDirectToDB(db database.Database, opts Options) error {
 	}
 
 	sort.Slice(blockNumbers, func(i, j int) bool { return blockNumbers[i] < blockNumbers[j] })
-	r.app.Log.Info("Found blocks to replay", "count", len(blockNumbers))
+	r.log("info", "Found blocks to replay", "count", len(blockNumbers))
 
 	// Second pass: copy block data
 	batch := outDB.NewBatch()
@@ -176,7 +201,7 @@ func (r *Replayer) replayDirectToDB(db database.Database, opts Options) error {
 				return fmt.Errorf("failed to commit batch: %w", err)
 			}
 			batch.Reset()
-			r.app.Log.Info("Replay progress", "blocks", count)
+			r.log("info", "Replay progress", "blocks", count)
 		}
 	}
 
@@ -184,7 +209,7 @@ func (r *Replayer) replayDirectToDB(db database.Database, opts Options) error {
 		return fmt.Errorf("failed to commit final batch: %w", err)
 	}
 
-	r.app.Log.Info("Replay complete", "blocks", count)
+	r.log("info", "Replay complete", "blocks", count)
 	return nil
 }
 
@@ -200,7 +225,7 @@ func (r *Replayer) replayViaRPC(db database.Database, opts Options) error {
 		return fmt.Errorf("failed to get chain head: %w", err)
 	}
 
-	r.app.Log.Info("Current chain head", "block", chainHead)
+	r.log("info", "Current chain head", "block", chainHead)
 
 	// Find blocks to replay
 	canonicalBlocks := make(map[uint64]common.Hash)
@@ -222,7 +247,7 @@ func (r *Replayer) replayViaRPC(db database.Database, opts Options) error {
 	}
 
 	sort.Slice(blockNumbers, func(i, j int) bool { return blockNumbers[i] < blockNumbers[j] })
-	r.app.Log.Info("Blocks to replay", "count", len(blockNumbers))
+	r.log("info", "Blocks to replay", "count", len(blockNumbers))
 
 	// Replay blocks
 	for i, num := range blockNumbers {
@@ -231,22 +256,22 @@ func (r *Replayer) replayViaRPC(db database.Database, opts Options) error {
 		// Get block data
 		block, err := r.getBlock(db, num, hash)
 		if err != nil {
-			r.app.Log.Error("Failed to get block", "number", num, "error", err)
+			r.log("error", "Failed to get block", "number", num, "error", err)
 			continue
 		}
 
 		// Submit block via RPC
 		if err := r.submitBlock(opts.RPC, block); err != nil {
-			r.app.Log.Error("Failed to submit block", "number", num, "error", err)
+			r.log("error", "Failed to submit block", "number", num, "error", err)
 			return err
 		}
 
 		if i%100 == 0 {
-			r.app.Log.Info("Replay progress", "block", num, "progress", fmt.Sprintf("%d/%d", i+1, len(blockNumbers)))
+			r.log("info", "Replay progress", "block", num, "progress", fmt.Sprintf("%d/%d", i+1, len(blockNumbers)))
 		}
 	}
 
-	r.app.Log.Info("Replay complete")
+	r.log("info", "Replay complete")
 	return nil
 }
 

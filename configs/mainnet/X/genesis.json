@@ -1,0 +1,20 @@
+{
+  "networkID": 96369,
+  "allocations": [
+    {
+      "luxAddr": "X-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u",
+      "initialAmount": 300000000000000,
+      "unlockSchedule": [
+        {
+          "amount": 10000000000000
+        }
+      ]
+    }
+  ],
+  "startTime": 1754362800,
+  "initialStakeDuration": 31536000,
+  "initialStakeDurationOffset": 5400,
+  "initialStakedFunds": [],
+  "initialStakers": [],
+  "message": "Lux Exchange Chain Genesis"
+}

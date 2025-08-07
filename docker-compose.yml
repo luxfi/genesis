@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  luxd:
+    image: ubuntu:22.04
+    container_name: luxd-mainnet
+    hostname: luxd-mainnet
+    restart: unless-stopped
+    ports:
+      - "9630:9630"  # HTTP API
+      - "9631:9631"  # Staking
+    volumes:
+      # Mount the luxd binary file directly
+      - /home/z/work/lux/node/build/luxd:/app/luxd:ro
+      # Mount the C-chain database
+      - /home/z/work/lux/state/cchain:/data/cchain:ro
+      # Data directory for luxd
+      - luxd-data:/root/.luxd
+      # Logs
+      - ./logs:/logs
+    environment:
+      - NETWORK_ID=96369
+    working_dir: /app
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      echo '🚀 Starting LUXD in Docker with 1,082,781 blocks...' &&
+      echo '📊 Setting up C-chain database...' &&
+      mkdir -p /root/.luxd/chains/C &&
+      rm -rf /root/.luxd/chains/C/chaindata &&
+      cp -r /data/cchain /root/.luxd/chains/C/chaindata &&
+      echo '✅ Database copied (1,082,781 blocks)' &&
+      echo '🔧 Starting luxd...' &&
+      exec /app/luxd \
+        --network-id=96369 \
+        --http-host=0.0.0.0 \
+        --http-port=9630 \
+        --staking-port=9631 \
+        --staking-ephemeral-cert-enabled \
+        --public-ip=127.0.0.1 \
+        --db-dir=/root/.luxd/db \
+        --chain-data-dir=/root/.luxd/chains \
+        --log-level=info
+    networks:
+      - lux-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+volumes:
+  luxd-data:
+
+networks:
+  lux-network:
+    driver: bridge

@@ -1,0 +1,30 @@
+{
+  "networkID": 96369,
+  "allocations": [
+    {
+      "ethAddr": "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC",
+      "luxAddr": "P-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u",
+      "initialAmount": 1000000000000000000,
+      "unlockSchedule": [
+        {
+          "amount": 1000000000000,
+          "locktime": 1640995200
+        }
+      ]
+    }
+  ],
+  "startTime": 1754362800,
+  "initialStakeDuration": 31536000,
+  "initialStakeDurationOffset": 5400,
+  "initialStakedFunds": [
+    "P-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u"
+  ],
+  "initialStakers": [
+    {
+      "nodeID": "NodeID-5KqnQfaFQxY9rsFBAa68377qWSherYLQ7",
+      "rewardAddress": "P-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u",
+      "delegationFee": 20000
+    }
+  ],
+  "message": "Lux Platform Chain Genesis"
+}

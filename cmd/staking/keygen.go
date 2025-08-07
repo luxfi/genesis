@@ -101,7 +101,7 @@ func NewKeygenCmd() *cobra.Command {
 			fmt.Println("\n=== Genesis Staker Entry ===")
 			genesisEntry := fmt.Sprintf(`{
   "nodeID": "%s",
-  "rewardAddress": "P-custom13kuhcl8vufyu9wvtmspzdnzv9ftm75huejyuac",
+  "rewardAddress": "P-lux18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u",
   "delegationFee": 20000,
   "signer": {
     "publicKey": "0x%s",

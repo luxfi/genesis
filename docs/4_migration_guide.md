@@ -18,7 +18,7 @@ flowchart LR
     E(genesis migrate)
     F(genesis generate)
   end
-  
+
   subgraph Output
     G[C-Chain/L2 Database]
     H[Genesis File]
@@ -31,31 +31,6 @@ flowchart LR
   E --> G
   F --> H
 ```
-
-## The Core Problem: Migrating Subnet Data
-
-The Lux C-Chain (ID 96369) was originally a Subnet EVM. Subnet databases have a different structure than the primary C-Chain database. The migration process bridges this gap.
-
-**Key Challenges Discovered in Real-World Data:**
-
-During the migration of the Lux mainnet, several issues were found in the source data that the `genesis` tools are now designed to handle:
-
-1.  **State-Only Data**: The archived subnet database contained all account balances and contract data (the "state") but was missing the historical blocks, transactions, and receipts.
-2.  **Inconsistent Key Formats**: The keys used to map block numbers to block hashes (`n` keys) were stored in a truncated format, making it impossible to rebuild the chain's history directly.
-3.  **Missing Consensus Data**: Subnet databases lack the "Snowman" consensus metadata that the primary C-Chain requires to understand block relationships.
-
-The `genesis` toolset was built to overcome these specific, real-world challenges.
-
-## Migration Path: C-Chain or L2?
-
-When migrating a subnet, you have two primary destinations:
-
-1.  **Migrate to C-Chain**: Promote the subnet to become the primary C-Chain of the network. This involves adding a 32-byte blockchain ID prefix to every key in the database.
-2.  **Migrate to L2**: Keep the subnet as an L2. This preserves the original key structure and is the standard path for subnets like ZOO and SPC.
-
-The `genesis migrate` command family has different subcommands to handle these distinct paths.
-
----
 
 ## Workflow 1: Migrating a Subnet to the C-Chain
 
@@ -80,7 +55,7 @@ This step copies the data while stripping the 33-byte namespace prefix that subn
 ```bash
 # The `extract state` command is the modern replacement for the old `namespace` tool.
 ./bin/genesis extract state \
-    /path/to/source/subnet/pebbledb \
+    ~/work/lux/state/chaindata/lux-mainnet-96369 \
     /tmp/extracted-data \
     --network 96369 \
     --state

@@ -71,6 +71,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewConsensusCmd(app))
 	rootCmd.AddCommand(NewLaunchBFTCmd(app))
 	rootCmd.AddCommand(NewLaunchBFTSimpleCmd(app))
+	rootCmd.AddCommand(NewMigrateCmd(app))
 
 	return rootCmd
 }
