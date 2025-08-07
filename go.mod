@@ -1,6 +1,6 @@
 module github.com/luxfi/genesis
 
-go 1.24.5
+go 1.23.0
 
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
