@@ -13,7 +13,7 @@ require (
 	github.com/luxfi/go-bip39 v1.1.1
 	github.com/luxfi/ids v1.0.2
 	github.com/luxfi/log v1.0.2
-	github.com/luxfi/node v1.13.4
+	github.com/luxfi/node v1.16.15
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	github.com/prometheus/client_golang v1.23.0
@@ -22,16 +22,6 @@ require (
 )
 
 require go.uber.org/zap v1.27.0 // indirect
-
-replace github.com/luxfi/geth => ../geth
-
-replace github.com/luxfi/crypto => ../crypto
-
-replace github.com/luxfi/database => ../database
-
-replace github.com/luxfi/ids => ../ids
-
-replace github.com/luxfi/log => ../log
 
 require (
 	github.com/DataDog/zstd v1.5.7 // indirect
@@ -132,9 +122,3 @@ require (
 replace launchpad.net/gocheck => gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
 
 replace github.com/gojuukaze/go-bip39 => github.com/luxfi/go-bip39 v1.1.0
-
-replace github.com/luxfi/node => ../node
-
-replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
-
-replace github.com/ethereum/go-ethereum => github.com/luxfi/geth v1.16.27
