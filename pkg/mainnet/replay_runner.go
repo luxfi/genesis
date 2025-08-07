@@ -21,7 +21,7 @@ type ReplayOptions struct {
 	HTTPPort     int
 	StakingPort  int
 
-	// Consensus parameters (for single/dual node operation)
+	// Consensus parameters
 	SnowSampleSize int
 	SnowQuorumSize int
 	K              int
@@ -33,7 +33,8 @@ type ReplayOptions struct {
 	SkipLaunch bool
 	SingleNode bool
 	LogLevel   string
-	
+	EnableStaking bool
+
 	// Multi-node support
 	NumNodes   int
 	BasePort   int

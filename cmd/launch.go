@@ -114,8 +114,8 @@ func NewLaunchCmd(app *application.Genesis) *cobra.Command {
 	cmd.Flags().BoolVar(&daemon, "daemon", false, "Run in daemon mode")
 
 	// Add subcommands from other files
-	cmd.AddCommand(newLaunchBFTCmd(app))
-	cmd.AddCommand(newLaunchReplaySubCmd(app)) // Renamed to avoid conflict
+	// cmd.AddCommand(newLaunchBFTCmd(app)) // TODO: implement
+	// cmd.AddCommand(newLaunchReplaySubCmd(app)) // Moved to separate command
 
 	return cmd
 }

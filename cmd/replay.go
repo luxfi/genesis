@@ -12,8 +12,7 @@ import (
 
 	"github.com/luxfi/genesis/pkg/application"
 	"github.com/luxfi/genesis/pkg/replay"
-	"github.com/luxfi/go-ethereum/core/types"
-	"github.com/luxfi/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 )
 
