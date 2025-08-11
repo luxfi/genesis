@@ -79,8 +79,8 @@ jobs:
 | Genesis Hash | `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e` |
 | Total Blocks | 1,082,781 |
 | Validator Address | `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714` |
-| Initial Stake | 500 LUX |
-| Min Validator Stake | 2000 LUX |
+| P-Chain Staked | 1,000,000,000 LUX (1B LUX) |
+| Min Validator Stake | 1,000,000 LUX (1M LUX) |
 
 ## Run in CI
 

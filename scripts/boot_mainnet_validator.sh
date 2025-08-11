@@ -165,7 +165,7 @@ if [ "$BALANCE_HEX" != "null" ] && [ "$BALANCE_HEX" != "0x0" ]; then
     fi
 else
     echo "  Balance: Checking initial allocation..."
-    echo "  Expected: 500 LUX (validator stake)"
+    echo "  Expected: Part of 1B LUX staked on P-Chain"
 fi
 
 # Get transaction count
@@ -180,8 +180,9 @@ fi
 # Show correct stake information
 echo ""
 echo "Validator Stake Information:"
-echo "  Initial Stake: 2000 LUX (minimum validator requirement)"
-echo "  Address holds: 500 LUX allocation"
+echo "  Minimum Validator Stake: 1,000,000 LUX (1M LUX)"
+echo "  P-Chain Staked Amount: 1,000,000,000 LUX (1B LUX)"
+echo "  Validator Address: 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714"
 
 # Display endpoints
 echo ""
