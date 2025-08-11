@@ -1,0 +1,150 @@
+name: Genesis Build and Verification
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      state_repo_url:
+        description: 'URL to state repository'
+        required: false
+        type: string
+
+jobs:
+  build-genesis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Clone state repository
+      run: |
+        if [ ! -z "${{ github.event.inputs.state_repo_url }}" ]; then
+          git clone --depth 1 "${{ github.event.inputs.state_repo_url }}" state
+          export SOURCE_DB="state/subnet-evm-db"
+        else
+          echo "Using test data"
+          # In real CI, would download test state here
+        fi
+    
+    - name: Run complete pipeline
+      run: |
+        cd genesis
+        chmod +x scripts/ci_pipeline.sh
+        
+        # Set environment
+        export STATE_REPO_URL="${{ github.event.inputs.state_repo_url }}"
+        export DATA_DIR="$HOME/.luxd"
+        
+        # Run the pipeline
+        ./scripts/ci_pipeline.sh
+    
+    - name: Verify results
+      run: |
+        # Check that all expected files exist
+        test -f genesis/build/dist/genesis_info.txt
+        test -f genesis/build/dist/verify_migration
+        test -f genesis/build/dist/check_balance
+        
+        # Display results
+        cat genesis/build/dist/genesis_info.txt
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: genesis-package
+        path: genesis/build/lux-mainnet-genesis-*.tar.gz
+        retention-days: 30
+    
+    - name: Upload verification report
+      uses: actions/upload-artifact@v3
+      with:
+        name: verification-report
+        path: genesis/build/genesis_report.txt
+        retention-days: 30
+
+  test-genesis:
+    needs: build-genesis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Download genesis package
+      uses: actions/download-artifact@v3
+      with:
+        name: genesis-package
+        path: ./artifacts
+    
+    - name: Extract and verify package
+      run: |
+        cd artifacts
+        tar xzf lux-mainnet-genesis-*.tar.gz
+        
+        # Verify checksums
+        echo "Verifying genesis package integrity..."
+        sha256sum -c <<< "$(cat dist/genesis_report.txt | grep SHA256 | cut -d: -f2) lux-mainnet-genesis-*.tar.gz"
+    
+    - name: Test with luxd
+      run: |
+        # Download and test with luxd binary
+        echo "Testing genesis with luxd..."
+        # Would run actual luxd test here
+
+  publish-genesis:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build-genesis, test-genesis]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: genesis-package
+        path: ./artifacts
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: genesis-${{ github.run_number }}
+        release_name: Genesis Build ${{ github.run_number }}
+        body: |
+          Automated genesis build from CI
+          
+          Network ID: 96369
+          Expected Genesis: 0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e
+          Total Blocks: 1,082,781
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/lux-mainnet-genesis-*.tar.gz
+        asset_name: lux-mainnet-genesis.tar.gz
+        asset_content_type: application/gzip

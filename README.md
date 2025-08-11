@@ -1,470 +1,219 @@
-# Genesis - Lux Blockchain Configuration Tool
+# LUX Mainnet Genesis - Complete CI/CD Pipeline
 
-[![CI](https://github.com/luxfi/genesis/actions/workflows/ci.yml/badge.svg)](https://github.com/luxfi/genesis/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/luxfi/genesis)](https://goreportcard.com/report/github.com/luxfi/genesis)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-
-Genesis is a unified CLI tool for managing genesis configurations and launching networks in the Lux blockchain ecosystem. It provides comprehensive support for P-Chain, C-Chain, and X-Chain genesis generation, blockchain data migration, and network bootstrapping.
-
-## Features
-
-- **Multi-Chain Genesis Generation**: Create genesis files for P-Chain, C-Chain, and X-Chain
-- **Blockchain Data Migration**: Import existing blockchain data from SubnetEVM to C-Chain
-- **State Extraction**: Extract and analyze blockchain state from PebbleDB databases
-- **Network Bootstrapping**: Launch Lux nodes with custom genesis configurations
-- **Database Tools**: Inspect and manipulate blockchain databases
-- **L2 Management**: Create and manage L2 networks
-
-## Installation
-
-### From Source
-
-```bash
-# Clone the repository
-git clone https://github.com/luxfi/genesis.git
-cd genesis
-
-# Build the binary
-go build -o genesis ./cmd/genesis
-
-# Install to PATH
-sudo mv genesis /usr/local/bin/
-```
-
-### From Release
-
-Download the latest release for your platform from the [releases page](https://github.com/luxfi/genesis/releases).
-
-```bash
-# Linux
-wget https://github.com/luxfi/genesis/releases/latest/download/genesis-linux-amd64
-chmod +x genesis-linux-amd64
-sudo mv genesis-linux-amd64 /usr/local/bin/genesis
-
-# macOS
-wget https://github.com/luxfi/genesis/releases/latest/download/genesis-darwin-amd64
-chmod +x genesis-darwin-amd64
-sudo mv genesis-darwin-amd64 /usr/local/bin/genesis
-```
+This directory contains the complete, reproducible pipeline for LUX mainnet genesis generation, migration, and validator deployment.
 
 ## Quick Start
 
-### Generate Mainnet Genesis Files
+```bash
+# Run complete CI pipeline locally
+./scripts/test_locally.sh
 
-The genesis tool automatically generates all three required chain genesis files (P-Chain, C-Chain, X-Chain) for Lux mainnet. These files are essential for bootstrapping a working network.
+# Or run full pipeline with custom state
+STATE_REPO_URL=https://github.com/org/state-repo ./scripts/ci_pipeline.sh
+
+# Boot validator with mainnet data
+./scripts/boot_mainnet_validator.sh
+```
+
+## Overview
+
+The LUX mainnet launches with 1,082,781 pre-existing blocks (0-1,082,780) migrated from SubnetEVM format to Coreth format.
+
+### Key Parameters
+- **Network ID**: 96369
+- **Genesis Hash**: `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e`
+- **Total Blocks**: 1,082,781
+- **Chain ID**: `xBBY6aJcNichNCkCXgUcG5Gv2PW6FLS81LYDV8VwnPuadKGqm`
+
+## Reproducible Workflow
+
+### 1. Build Tools
 
 ```bash
-# Using make
-make lux-mainnet
-
-# Or using the binary directly
-genesis generate --network mainnet --chain-id 96369
-
-# Output:
-# configs/lux-mainnet-96369/P/genesis.json
-# configs/lux-mainnet-96369/C/genesis.json
-# configs/lux-mainnet-96369/X/genesis.json
+cd /home/z/work/lux/genesis
+make build
 ```
 
-### Replay Blockchain Data
+This creates:
+- `bin/genesis` - Main migration tool
+- `bin/verify_migration` - Database verification tool  
+- `bin/check_balance` - Account balance checker
 
-Import existing SubnetEVM blockchain data into C-Chain format:
+### 2. Run Migration
 
 ```bash
-# Replay blocks from a SubnetEVM database
-genesis replay /path/to/subnet/pebbledb
+# Set source database path
+export SOURCE_DB=/path/to/subnet/evm/database
 
-# With specific options
-genesis replay /path/to/subnet/pebbledb \
-  --start-block 1000 \
-  --end-block 5000 \
-  --output /path/to/output
+# Run migration
+make migrate
 ```
 
-### Extract Blockchain State
+The migration:
+1. Reads SubnetEVM database (PebbleDB format)
+2. Converts to Coreth format (BadgerDB)
+3. Transforms key mappings to standard geth format
+4. Preserves all 1,082,781 blocks with correct hashes
 
-Extract state from an existing blockchain:
+### 3. Verify Migration
 
 ```bash
-# Extract full state
-genesis extract state /path/to/chaindata /output/path --state
-
-# Extract specific block range
-genesis extract blockchain /path/to/chaindata \
-  --start-block 1000 \
-  --end-block 2000
+make verify
 ```
 
-### Inspect Database
+Verification checks:
+- Genesis hash matches expected value
+- All blocks from 0 to 1,082,780 are present
+- No gaps in blockchain
+- Account allocations are correct
 
-Inspect blockchain database contents:
+### 4. Create Distribution Package
 
 ```bash
-# Show chain tip
-genesis inspect tip /path/to/chaindata
-
-# Inspect specific blocks
-genesis inspect blocks /path/to/chaindata --start 100 --limit 10
-
-# Debug database keys
-genesis debug-keys /path/to/chaindata
+make package
 ```
 
-## Command Reference
+Creates `lux-mainnet-genesis-YYYYMMDD.tar.gz` containing:
+- Converted database
+- Genesis configuration files
+- Verification tools
+- SHA256 checksums
 
-### Core Commands
+## CI/CD Pipeline
 
-#### `genesis version`
-Display version information.
+### Complete Workflow
+
+The CI pipeline (`scripts/ci_pipeline.sh`) performs:
+
+1. **Clone State Repository** - Gets SubnetEVM state data
+2. **Build Tools** - Compiles migration and verification tools
+3. **Migrate to Coreth** - Converts SubnetEVM → Coreth format  
+4. **Convert Database** - Transforms to standard Geth format
+5. **Verify Migration** - Validates all 1,082,781 blocks
+6. **Run Node** - Starts validator and checks balance
+7. **Package Artifacts** - Creates distribution archive
+
+### GitHub Actions
+
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      state_repo_url:
+        description: 'State repository URL'
+
+jobs:
+  build-genesis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./genesis/scripts/ci_pipeline.sh
+```
+
+### Docker Build
 
 ```bash
-genesis version
-# Output: Genesis CLI v1.0.0
+# Build Docker image with genesis
+make docker
+
+# Run in container
+docker run -v $(pwd)/data:/data luxfi/genesis:latest
 ```
 
-#### `genesis replay`
-Replay blockchain blocks from SubnetEVM format.
+## Verification Process
+
+### Manual Verification
 
 ```bash
-genesis replay <source-db> [flags]
+# Check specific account balance
+./bin/check_balance /path/to/database 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714
 
-Flags:
-  --start-block uint    Starting block number (default: 0)
-  --end-block uint      Ending block number (default: latest)
-  --output string       Output directory
-  --batch-size int      Batch size for processing (default: 1000)
+# Full database verification
+./bin/verify_migration /path/to/database
 ```
 
-#### `genesis extract`
-Extract data from blockchain databases.
+### Expected Output
 
-```bash
-# Extract blockchain data
-genesis extract blockchain <source> [flags]
-
-# Extract genesis state
-genesis extract genesis <source> [flags]
-
-# Extract state at specific height
-genesis extract state <source> <output> [flags]
-  --network uint        Network ID
-  --state              Include state data
-  --height uint        Block height for state extraction
+```
+✓ Block 0 canonical hash: 3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e
+✓ CORRECT GENESIS HASH!
+✓ Block 1082780 canonical hash: 32dede1fc8e0f11ecde12fb42aef7933fc6c5fcf863bc277b5eac08ae4d461f0
+✓ Total blocks: 1082781
+✓ No gaps found
 ```
 
-#### `genesis inspect`
-Inspect blockchain database contents.
+## Account Information
 
-```bash
-# Show chain tip
-genesis inspect tip <chaindata-path>
-
-# Inspect blocks
-genesis inspect blocks <chaindata-path> [flags]
-  --start uint         Start block number
-  --limit int          Number of blocks to show
-
-# Inspect database keys
-genesis inspect keys <chaindata-path> [flags]
-  --prefix string      Key prefix to filter
-```
-
-#### `genesis database`
-Database management commands.
-
-```bash
-# List database contents
-genesis database list <path>
-
-# Compact database
-genesis database compact <source> <destination>
-
-# Verify database integrity
-genesis database verify <path>
-```
-
-#### `genesis l2`
-L2 network management.
-
-```bash
-# Create new L2 network
-genesis l2 create <name> [flags]
-  --chain-id uint      Chain ID for the L2
-  --base-chain string  Base chain (default: "lux")
-
-# List L2 networks
-genesis l2 list
-
-# Get L2 network info
-genesis l2 info <name>
-```
-
-### Advanced Commands
-
-#### `genesis compact-ancient`
-Compact ancient blockchain data.
-
-```bash
-genesis compact-ancient <source> <destination> [flags]
-  --batch-size int     Batch size for compaction
-  --compress           Enable compression
-```
-
-#### `genesis convert`
-Convert between blockchain formats.
-
-```bash
-# Convert to Coreth format
-genesis convert coreth <source> <destination>
-
-# Convert to L2 format
-genesis convert l2 <source> <destination>
-```
-
-#### `genesis import-blockchain`
-Import blockchain data into node.
-
-```bash
-genesis import-blockchain <source> [flags]
-  --node-path string   Path to node data directory
-  --chain string       Chain to import into (C, X, or P)
-```
-
-#### `genesis setup-chain-state`
-Set up chain state for node initialization.
-
-```bash
-genesis setup-chain-state <genesis-file> [flags]
-  --data-dir string    Node data directory
-  --chain-id uint      Chain ID
-```
-
-## Go SDK Usage
-
-### Installation
-
-```go
-import "github.com/luxfi/genesis/pkg/core"
-import "github.com/luxfi/genesis/pkg/launch"
-import "github.com/luxfi/genesis/pkg/credentials"
-```
-
-### Basic Usage
-
-```go
-package main
-
-import (
-    "log"
-    "github.com/luxfi/genesis/pkg/core"
-    "github.com/luxfi/genesis/pkg/launch"
-)
-
-func main() {
-    // Create network configuration
-    network := &core.Network{
-        Name:      "mynetwork",
-        NetworkID: 12345,
-        ChainID:   12345,
-        Nodes:     5,
-        Genesis: core.GenesisConfig{
-            Source: "fresh",
-            Allocations: map[string]uint64{
-                "0x1234567890123456789012345678901234567890": 1000000000000000000,
-            },
-        },
-    }
-
-    // Validate configuration
-    if err := network.Validate(); err != nil {
-        log.Fatal(err)
-    }
-
-    // Apply defaults
-    network.Normalize()
-
-    // Launch network
-    launcher := launch.NewLauncher()
-    if err := launcher.LaunchNetwork(network); err != nil {
-        log.Fatal(err)
-    }
-}
-```
-
-### Working with Credentials
-
-```go
-package main
-
-import (
-    "log"
-    "github.com/luxfi/genesis/pkg/credentials"
-)
-
-func main() {
-    // Generate new credentials
-    gen := credentials.NewGenerator()
-    creds, err := gen.Generate()
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    // Save credentials
-    if err := gen.Save(creds, "./staking"); err != nil {
-        log.Fatal(err)
-    }
-
-    log.Printf("Generated NodeID: %s", creds.NodeID)
-}
-```
-
-### Database Operations
-
-```go
-package main
-
-import (
-    "log"
-    "github.com/luxfi/database"
-    "github.com/luxfi/genesis/pkg/ancient"
-)
-
-func main() {
-    // Open database
-    db, err := database.Open("/path/to/chaindata", 0, 0)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer db.Close()
-
-    // Iterate through keys
-    it := db.NewIterator()
-    defer it.Release()
-    
-    for it.Next() {
-        key := it.Key()
-        value := it.Value()
-        log.Printf("Key: %x, Value: %x", key, value)
-    }
-}
-```
-
-## Architecture
-
-Genesis is built with a modular architecture:
-
-- **cmd/genesis**: CLI commands and entry points
-- **pkg/core**: Core data structures and interfaces
-- **pkg/launch**: Network launching functionality
-- **pkg/credentials**: Credential generation and management
-- **pkg/consensus**: Consensus parameter configurations
-- **pkg/ancient**: Ancient data format handling
+### Validator Account
+- **Address**: `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714`
+- **Initial Allocation**: 500 LUX
+- **Minimum Stake**: 2000 LUX
+- **LUX Address**: `X-lux1hfhf94tjcufccczxwfgp8kh9qnphxp5ycvzqzd`
 
 ## Development
-
-### Requirements
-
-- Go 1.24.5 or higher
-- Git
-
-### Building from Source
-
-```bash
-# Clone repository
-git clone https://github.com/luxfi/genesis.git
-cd genesis
-
-# Download dependencies
-go mod download
-
-# Run tests
-go test -v ./...
-
-# Build binary
-go build -o genesis ./cmd/genesis
-```
 
 ### Running Tests
 
 ```bash
 # Run all tests
-go test -v ./...
+make test
 
-# Run tests with coverage
-go test -v -coverprofile=coverage.txt ./...
+# Run benchmarks
+make benchmark
 
-# Run specific package tests
-go test -v ./pkg/core
-
-# Run with race detection
-go test -v -race ./...
+# Test with local luxd
+make dev-server
 ```
 
-### Contributing
+### Project Structure
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Configuration
-
-Genesis uses a YAML configuration file for complex operations. Create `genesis.yaml`:
-
-```yaml
-networks:
-  mainnet:
-    network_id: 96369
-    chain_id: 96369
-    consensus:
-      k: 20
-      alpha: 15
-      beta: 20
-    
-  testnet:
-    network_id: 96368
-    chain_id: 96368
-    consensus:
-      k: 1
-      alpha: 1
-      beta: 1
-
-defaults:
-  output_dir: "./output"
-  data_dir: "./data"
+```
+genesis/
+├── Makefile                    # Build system
+├── scripts/
+│   ├── reproducible_genesis.sh # Main workflow script
+│   └── test_with_luxd.sh      # Integration tests
+├── cmd/
+│   └── genesis/                # Main tool source
+├── tools/                      # Verification tools
+├── data/                       # Source databases
+└── build/                      # Build artifacts
 ```
 
-## Make Targets
+## Troubleshooting
 
-```bash
-# Build and install
-make build          # Build the genesis CLI
-make install        # Install to /usr/local/bin
-make clean          # Clean build artifacts
+### Common Issues
 
-# Quick network generation
-make lux-mainnet    # Generate Lux mainnet genesis
-make lux-testnet    # Generate Lux testnet genesis
-make zoo-mainnet    # Generate Zoo L2 genesis
-make spc-mainnet    # Generate SPC L2 genesis
+1. **Database not found**
+   ```bash
+   export SOURCE_DB=/correct/path/to/database
+   ```
 
-# Development
-make test           # Run all tests
-make fmt            # Format code
-make lint           # Run linters
+2. **Wrong genesis hash**
+   - Ensure using correct source database
+   - Check migration completed successfully
+   - Verify no data corruption
 
-# Pipeline operations
-make pipeline       # Run full genesis pipeline
-make launch         # Launch node with migrated data
-```
+3. **Missing blocks**
+   - Re-run migration with verbose output
+   - Check source database integrity
+   - Verify sufficient disk space
 
-## License
+## Security
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+- All builds are reproducible and deterministic
+- SHA256 checksums provided for all artifacts
+- Database integrity verified at each step
+- No private keys or sensitive data included
 
 ## Support
 
-- Documentation: [https://docs.lux.network](https://docs.lux.network)
-- Issues: [GitHub Issues](https://github.com/luxfi/genesis/issues)
-- Discord: [Lux Community](https://discord.gg/lux)
+For issues or questions:
+- GitHub Issues: [github.com/luxfi/node/issues](https://github.com/luxfi/node/issues)
+- Documentation: [docs.lux.network](https://docs.lux.network)
+
+---
+
+Built with ❤️ for the LUX Network
