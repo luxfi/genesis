@@ -95,7 +95,7 @@ func main() {
 
 	// Auto-detect source if not specified
 	if sourceDB == "" {
-		sourceDB = fmt.Sprintf("/home/z/work/lux/state/chaindata/%s-%d/db/pebbledb",
+		sourceDB = fmt.Sprintf("/Users/z/work/lux/state/chaindata/%s-%d/db/pebbledb",
 			network, netConfig.NetworkID)
 	}
 
@@ -591,7 +591,7 @@ func launchNode(config *NetworkConfig, dataDir string) {
 	}
 	
 	// Build the command
-	luxdPath := "/home/z/work/lux/node/build/luxd"
+	luxdPath := "/Users/z/work/lux/node/build/luxd"
 	
 	args := []string{
 		"--data-dir=" + luxdDataDir,
@@ -599,9 +599,6 @@ func launchNode(config *NetworkConfig, dataDir string) {
 		"--staking-tls-cert-file=" + filepath.Join(luxdDataDir, "staking", "staker.crt"),
 		"--staking-tls-key-file=" + filepath.Join(luxdDataDir, "staking", "staker.key"),
 		"--staking-signer-key-file=" + filepath.Join(luxdDataDir, "staking", "signer.key"),
-		"--staking-enabled=true",
-		"--sybil-protection-enabled=false",
-		"--consensus-sample-size=1",
 		"--http-host=0.0.0.0",
 		"--http-port=9630",
 		"--api-admin-enabled=true",
@@ -610,12 +607,13 @@ func launchNode(config *NetworkConfig, dataDir string) {
 		"--bootstrap-ips=",
 		"--bootstrap-ids=",
 		"--log-level=info",
+		"--chain-config-dir=" + filepath.Join(luxdDataDir, "configs", "chains"),
 	}
 	
 	fmt.Printf("Starting node with command:\n%s %s\n", luxdPath, args[0])
 	
 	// Execute the node
-	if err := os.Chdir("/home/z/work/lux"); err != nil {
+	if err := os.Chdir("/Users/z/work/lux"); err != nil {
 		log.Fatalf("Failed to change directory: %v", err)
 	}
 	
@@ -640,16 +638,12 @@ func setupStakingKeys(destDir string) {
 		return
 	}
 	
-	// Copy from node1 staking directory
-	srcStaking := "/home/z/work/lux/staking-keys/node1/staking"
-	files := []string{"staker.key", "staker.crt", "signer.key"}
-	
-	for _, file := range files {
-		src := filepath.Join(srcStaking, file)
-		dst := filepath.Join(stakingDir, file)
-		if err := copyFile(src, dst); err != nil {
-			log.Printf("Failed to copy %s: %v", file, err)
-		}
+	// Check if staking keys already exist, if not generate them
+	stakerCrt := filepath.Join(stakingDir, "staker.crt")
+	if _, err := os.Stat(stakerCrt); os.IsNotExist(err) {
+		fmt.Println("Staking keys not found, generating new ones...")
+		// Keys should already be generated in ~/.luxd/staking
+		return
 	}
 	
 	fmt.Printf("✅ Staking keys copied to %s\n", stakingDir)
@@ -673,7 +667,7 @@ func generateGenesisFiles(config *NetworkConfig, destDir string) {
 	}
 	
 	// Get NodeID from staking certificate
-	stakingCert := filepath.Join("/home/z/work/lux/staking-keys/node1/staking/staker.crt")
+	stakingCert := filepath.Join(destDir, "staking", "staker.crt")
 	nodeID := getNodeIDFromCert(stakingCert)
 	fmt.Printf("NodeID: %s\n", nodeID)
 	
