@@ -1,0 +1,6 @@
+{
+  "networkId": 200201,
+  "networkName": "Zoo Testnet",
+  "chainId": 200201,
+  "error": "Failed to open PebbleDB: dirname=\"/Users/z/work/lux/genesis/state/chaindata/zoo-testnet-200201/db/pebbledb\": pebble: database does not exist"
+}

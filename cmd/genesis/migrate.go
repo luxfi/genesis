@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
-	"os"
 
 	"github.com/cockroachdb/pebble"
 	"github.com/dgraph-io/badger/v4"
@@ -27,7 +25,10 @@ func migrate(sourceDB, destDB string) error {
 	defer dst.Close()
 
 	// Copy all data
-	iter := src.NewIter(&pebble.IterOptions{})
+	iter, err := src.NewIter(&pebble.IterOptions{})
+	if err != nil {
+		return fmt.Errorf("create iterator: %w", err)
+	}
 	defer iter.Close()
 
 	batch := dst.NewWriteBatch()

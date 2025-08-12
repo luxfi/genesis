@@ -1,11 +1,13 @@
 package convert
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/luxfi/genesis/pkg/application"
+	"github.com/luxfi/genesis/pkg/database"
 )
 
 // Converter handles various conversion operations
@@ -22,14 +24,27 @@ func New(app *application.Genesis) *Converter {
 func (c *Converter) DenamespaceDB(sourceDB, destDB string, namespace string) error {
 	c.app.Log.Info("Denamespacing database", "source", sourceDB, "dest", destDB, "namespace", namespace)
 
-	// TODO: Implement actual denamespacing logic
-	// This would involve:
-	// 1. Opening the source database
-	// 2. Iterating through all keys
-	// 3. Removing namespace prefixes
-	// 4. Writing to destination database
+	// Parse namespace hex string
+	namespaceBytes, err := hex.DecodeString(namespace)
+	if err != nil {
+		return fmt.Errorf("invalid namespace hex: %w", err)
+	}
 
-	return fmt.Errorf("denamespace conversion not yet implemented")
+	// Create database converter
+	config := &database.ConversionConfig{
+		SourcePath:      sourceDB,
+		DestPath:        destDB,
+		SourceType:      database.PebbleDB,
+		DestType:        database.BadgerDB,
+		ConversionType:  database.DenamespaceDB,
+		Namespace:       namespaceBytes,
+		BatchSize:       10000,
+		Verbose:         true,
+		FixCanonical:    true,
+	}
+
+	converter := database.NewDatabaseConverter(config)
+	return converter.Convert()
 }
 
 // ConvertGenesis converts genesis between different formats

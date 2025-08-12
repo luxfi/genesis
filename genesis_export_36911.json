@@ -1,0 +1,6 @@
+{
+  "networkId": 36911,
+  "networkName": "SPC Mainnet",
+  "chainId": 36911,
+  "error": "Failed to open PebbleDB: dirname=\"/Users/z/work/lux/genesis/state/chaindata/spc-mainnet-36911/db/pebbledb\": pebble: database does not exist"
+}
