@@ -29,6 +29,10 @@ func NewDBCmd(app *application.Genesis) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(newDBScanCmd(app, &dbPath))
+	cmd.AddCommand(newDBInspectCmd(app, &dbPath))
+	cmd.AddCommand(newDBFindTipCmd(app, &dbPath))
+	cmd.AddCommand(newDBStatsCmd(app, &dbPath))
+	// Future: db repair, db compact, db verify
 
 	return cmd
 }
@@ -81,4 +85,142 @@ func newDBScanCmd(app *application.Genesis, dbPath *string) *cobra.Command {
 	cmd.Flags().IntVar(&limit, "limit", 100, "Limit the number of results returned")
 
 	return cmd
+}
+
+// newDBInspectCmd creates the `db inspect` subcommand.
+func newDBInspectCmd(app *application.Genesis, dbPath *string) *cobra.Command {
+	var key string
+
+	cmd := &cobra.Command{
+		Use:   "inspect",
+		Short: "Inspect specific database entries",
+		Long:  `Decode and display the contents of specific database keys with proper formatting.`,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			database, err := openDatabase(*dbPath)
+			if err != nil {
+				return err
+			}
+			defer database.Close()
+
+			inspector := db.NewInspector(app, database)
+
+			cmd.Printf("🔍 Inspecting key in database at %s...\n", *dbPath)
+
+			keyBytes, err := hex.DecodeString(key)
+			if err != nil {
+				return fmt.Errorf("invalid hex key: %w", err)
+			}
+
+			result, err := inspector.InspectKey(keyBytes)
+			if err != nil {
+				return fmt.Errorf("inspection failed: %w", err)
+			}
+
+			cmd.Printf("✅ Key inspection result:\n")
+			cmd.Printf("  Type: %s\n", result.Type)
+			cmd.Printf("  Decoded: %s\n", result.Decoded)
+			if result.Details != "" {
+				cmd.Printf("  Details: %s\n", result.Details)
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&key, "key", "", "Hex-encoded key to inspect")
+	cmd.MarkFlagRequired("key")
+
+	return cmd
+}
+
+// newDBFindTipCmd creates the `db find-tip` subcommand.
+func newDBFindTipCmd(app *application.Genesis, dbPath *string) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "find-tip",
+		Short: "Find the tip (latest block) in the database",
+		Long:  `Scans the database to find the highest block number and its associated data.`,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			database, err := openDatabase(*dbPath)
+			if err != nil {
+				return err
+			}
+			defer database.Close()
+
+			inspector := db.NewInspector(app, database)
+
+			cmd.Printf("🔍 Finding tip block in database at %s...\n", *dbPath)
+
+			tip, err := inspector.FindTip()
+			if err != nil {
+				return fmt.Errorf("find tip failed: %w", err)
+			}
+
+			cmd.Printf("✅ Found tip block:\n")
+			cmd.Printf("  Height: %d\n", tip.Height)
+			cmd.Printf("  Hash: 0x%x\n", tip.Hash)
+			cmd.Printf("  Parent: 0x%x\n", tip.ParentHash)
+			cmd.Printf("  Timestamp: %d\n", tip.Timestamp)
+
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+// newDBStatsCmd creates the `db stats` subcommand.
+func newDBStatsCmd(app *application.Genesis, dbPath *string) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stats",
+		Short: "Display database statistics",
+		Long:  `Shows comprehensive statistics about the database including size, key count, and type distribution.`,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			database, err := openDatabase(*dbPath)
+			if err != nil {
+				return err
+			}
+			defer database.Close()
+
+			inspector := db.NewInspector(app, database)
+
+			cmd.Printf("📊 Gathering statistics for database at %s...\n", *dbPath)
+
+			stats, err := inspector.GetStats()
+			if err != nil {
+				return fmt.Errorf("stats gathering failed: %w", err)
+			}
+
+			cmd.Printf("✅ Database Statistics:\n")
+			cmd.Printf("  Total Keys: %d\n", stats.TotalKeys)
+			cmd.Printf("  Total Size: %s\n", formatBytes(stats.TotalSize))
+			cmd.Printf("\n  Key Type Distribution:\n")
+			for keyType, count := range stats.KeyTypes {
+				cmd.Printf("    %s: %d\n", keyType, count)
+			}
+			if stats.LatestBlock > 0 {
+				cmd.Printf("\n  Latest Block: %d\n", stats.LatestBlock)
+			}
+
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+// formatBytes formats bytes into human-readable format
+func formatBytes(bytes uint64) string {
+	const unit = 1024
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	div, exp := uint64(unit), 0
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }

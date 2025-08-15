@@ -121,7 +121,13 @@ func (b *badgerWrapper) DeleteRange(start, end []byte) error { return errors.New
 func (b *badgerWrapper) NewBatch() ethdb.Batch           { panic("not implemented") }
 func (b *badgerWrapper) NewBatchWithSize(int) ethdb.Batch { panic("not implemented") }
 func (b *badgerWrapper) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
-	panic("not implemented")
+	if prefix != nil && len(prefix) > 0 {
+		return b.Database.NewIteratorWithPrefix(prefix)
+	}
+	if start != nil && len(start) > 0 {
+		return b.Database.NewIteratorWithStart(start)
+	}
+	return b.Database.NewIterator()
 }
 func (b *badgerWrapper) Stat() (string, error)                                  { return "", nil }
 func (b *badgerWrapper) Compact([]byte, []byte) error                           { return nil }
