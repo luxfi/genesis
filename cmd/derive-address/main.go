@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"github.com/luxfi/go-bip39"
+	"github.com/luxfi/crypto"
 	"github.com/luxfi/geth/common"
-	"github.com/luxfi/geth/crypto"
 )
 
 func main() {

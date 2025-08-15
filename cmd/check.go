@@ -11,22 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCheckCmd creates the `check` command and its subcommands.
+// NewCheckCmd creates the `check` command for verification tools.
 func NewCheckCmd(app *application.Genesis) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check",
 		Short: "Run checks and verification on blockchain data",
-		Long:  `The check command provides a suite of tools to verify the integrity, state, and history of the blockchain data.`,
+		Long:  `The check command provides tools to verify the integrity, state, and history of the blockchain data.`,
 	}
 
-	cmd.AddCommand(newBalanceCmd(app))
 	// Future checks like `check migration`, `check db`, etc. can be added here.
 
 	return cmd
 }
 
-// newBalanceCmd creates the `check balance` subcommand.
-func newBalanceCmd(app *application.Genesis) *cobra.Command {
+// NewBalanceCmd creates the `balance` command as a top-level command.
+func NewBalanceCmd(app *application.Genesis) *cobra.Command {
 	var ( // Using a closure to hold the flag variables
 		dbPath  string
 		address string

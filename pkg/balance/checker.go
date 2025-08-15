@@ -2,6 +2,7 @@
 package balance
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -81,11 +82,11 @@ func (c *Checker) GetChainStatus() (string, error) {
 	if headHash == (common.Hash{}) {
 		return "", fmt.Errorf("could not read head block hash")
 	}
-	headNum := rawdb.ReadHeaderNumber(c.db, headHash)
-	if headNum == nil {
+	headNum, found := rawdb.ReadHeaderNumber(c.db, headHash)
+	if !found {
 		return "", fmt.Errorf("could not read head block number for hash %s", headHash.Hex())
 	}
-	return fmt.Sprintf("Head Block: %d, Hash: %s", *headNum, headHash.Hex()), nil
+	return fmt.Sprintf("Head Block: %d, Hash: %s", headNum, headHash.Hex()), nil
 }
 
 
@@ -116,12 +117,13 @@ func (b *badgerWrapper) Has(key []byte) (bool, error) {
 }
 func (b *badgerWrapper) Put(key, val []byte) error      { return b.Database.Put(key, val) }
 func (b *badgerWrapper) Delete(key []byte) error         { return b.Database.Delete(key) }
+func (b *badgerWrapper) DeleteRange(start, end []byte) error { return errors.New("not implemented") }
 func (b *badgerWrapper) NewBatch() ethdb.Batch           { panic("not implemented") }
 func (b *badgerWrapper) NewBatchWithSize(int) ethdb.Batch { panic("not implemented") }
 func (b *badgerWrapper) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
 	panic("not implemented")
 }
-func (b *badgerWrapper) Stat(string) (string, error)                            { return "", nil }
+func (b *badgerWrapper) Stat() (string, error)                                  { return "", nil }
 func (b *badgerWrapper) Compact([]byte, []byte) error                           { return nil }
 func (b *badgerWrapper) HasAncient(string, uint64) (bool, error)                { return false, nil }
 func (b *badgerWrapper) Ancient(string, uint64) ([]byte, error)                 { return nil, nil }
@@ -130,3 +132,12 @@ func (b *badgerWrapper) Ancients() (uint64, error)                              
 func (b *badgerWrapper) Tail() (uint64, error)                                  { return 0, nil }
 func (b *badgerWrapper) AncientSize(string) (uint64, error)                     { return 0, nil }
 func (b *badgerWrapper) ReadAncients(func(ethdb.AncientReaderOp) error) error   { return nil }
+func (b *badgerWrapper) ModifyAncients(func(ethdb.AncientWriteOp) error) (int64, error) { return 0, nil }
+func (b *badgerWrapper) TruncateHead(n uint64) (uint64, error)                  { return 0, nil }
+func (b *badgerWrapper) TruncateTail(n uint64) (uint64, error)                  { return 0, nil }
+func (b *badgerWrapper) Sync() error                                            { return nil }
+func (b *badgerWrapper) MigrateTable(string, func([]byte) ([]byte, error)) error { return nil }
+func (b *badgerWrapper) AncientDatadir() (string, error)                        { return "", nil }
+func (b *badgerWrapper) SyncAncient() error                                     { return nil }
+func (b *badgerWrapper) SyncKeyValue() error                                    { return nil }
+func (b *badgerWrapper) Close() error                                           { return b.Database.Close() }

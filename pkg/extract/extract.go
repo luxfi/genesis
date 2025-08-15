@@ -131,7 +131,7 @@ func (e *Extractor) readBlock(number uint64) (*types.Block, error) {
 		return nil, err
 	}
 
-	return types.NewBlockWithHeader(&header).WithBody(&body), nil
+	return types.NewBlockWithHeader(&header).WithBody(body), nil
 }
 
 func encodeBlockNumber(number uint64) []byte {

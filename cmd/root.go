@@ -52,7 +52,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewAddressCmd(app))
 	rootCmd.AddCommand(NewImportCmd(app))
 	rootCmd.AddCommand(NewExtractCmd(app))
-	rootCmd.AddCommand(NewInspectCmd(app))
+	rootCmd.AddCommand(NewBalanceCmd(app))
 	rootCmd.AddCommand(NewCheckCmd(app))
 	rootCmd.AddCommand(NewLaunchCmd(app))
 	rootCmd.AddCommand(NewConvertCmd(app))
