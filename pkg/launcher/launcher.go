@@ -22,6 +22,11 @@ type Config struct {
 	ChainDataPath string
 	LogLevel      string
 	PublicIP      string
+	NoBootstrap   bool
+	BootstrapIPs  string
+	BootstrapIDs  string
+	StakingKey    string
+	StakingCert   string
 }
 
 // NodeLauncher manages the lifecycle of a Lux node
@@ -73,12 +78,32 @@ func (nl *NodeLauncher) Start() error {
 		"--index-enabled=true",
 	}
 
+	// Handle bootstrap configuration
+	if nl.config.NoBootstrap || nl.config.SingleNode {
+		args = append(args, "--bootstrap-ips=")
+		args = append(args, "--bootstrap-ids=")
+	} else if nl.config.BootstrapIPs != "" && nl.config.BootstrapIDs != "" {
+		args = append(args, fmt.Sprintf("--bootstrap-ips=%s", nl.config.BootstrapIPs))
+		args = append(args, fmt.Sprintf("--bootstrap-ids=%s", nl.config.BootstrapIDs))
+	}
+
+	// Handle staking keys
+	if nl.config.StakingKey != "" && nl.config.StakingCert != "" {
+		args = append(args, fmt.Sprintf("--staking-tls-key-file=%s", nl.config.StakingKey))
+		args = append(args, fmt.Sprintf("--staking-tls-cert-file=%s", nl.config.StakingCert))
+	}
+
 	if nl.config.SingleNode {
 		// For single validator mode, we need staking enabled
 		// but with k=1 consensus parameters
 		args = append(args,
-			"--consensus-sample-size=1",
-			"--consensus-quorum-size=1",
+			"--snow-sample-size=1",
+			"--snow-quorum-size=1",
+			"--snow-concurrent-repolls=1",
+			"--network-minimum-staking-duration=24h",
+			"--network-maximum-staking-duration=8760h",
+			"--network-optimal-proposer-num-pchain-blocks=1",
+			"--consensus-shutdown-timeout=1s",
 		)
 	}
 
@@ -180,7 +205,92 @@ func (nl *NodeLauncher) copyChainData() error {
 	return cmd.Run()
 }
 
-// GenerateMinimalGenesis creates a minimal genesis for single node testing
+// GenerateSingleValidatorGenesis creates a genesis for single validator node
+func GenerateSingleValidatorGenesis(networkID uint32) (string, error) {
+	// Use a known test address for single validator setup
+	address := "0x9011e888251ab053b7bd1cdb598db4f9ded94714"
+	nodeID := "NodeID-7Xhw2mDxuDS44j42TCB6U5579esbSt3Lg"
+	
+	genesis := map[string]interface{}{
+		"networkID": networkID,
+		"allocations": []map[string]interface{}{
+			{
+				"ethAddr":       address,
+				"avaxAddr":      "P-lux1qsrd262r5w9dswv2wwzj0un79ncpwvdgkpqzqu",
+				"initialAmount": 3000000000000000000, // 3 billion LUX
+				"unlockSchedule": []map[string]interface{}{
+					{
+						"amount":   3000000000000000000,
+						"locktime": 0,
+					},
+				},
+			},
+		},
+		"startTime":                  uint64(time.Now().Unix() - 60), // 1 minute ago
+		"initialStakeDuration":       365 * 24 * 60 * 60,             // 1 year
+		"initialStakeDurationOffset": 5 * 60,                         // 5 minutes
+		"initialStakedFunds": []string{
+			"P-lux1qsrd262r5w9dswv2wwzj0un79ncpwvdgkpqzqu",
+		},
+		"initialStakers": []map[string]interface{}{
+			{
+				"nodeID":        nodeID,
+				"rewardAddress": "P-lux1qsrd262r5w9dswv2wwzj0un79ncpwvdgkpqzqu",
+				"delegationFee": 20000, // 2%
+			},
+		},
+		"cChainGenesis": createCChainGenesis(networkID, address),
+		"message":       fmt.Sprintf("single validator lux network %d", networkID),
+	}
+
+	// Write to temp file
+	tmpFile, err := os.CreateTemp("", "genesis-single-*.json")
+	if err != nil {
+		return "", err
+	}
+
+	genesisJSON, _ := json.MarshalIndent(genesis, "", "  ")
+	if _, err := tmpFile.Write(genesisJSON); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpFile.Name())
+		return "", err
+	}
+	tmpFile.Close()
+
+	return tmpFile.Name(), nil
+}
+
+// GenerateStakingKeys creates a new staking key pair for validator
+func GenerateStakingKeys(dataDir string) (keyPath, certPath string, err error) {
+	stakingDir := filepath.Join(dataDir, "staking")
+	if err := os.MkdirAll(stakingDir, 0700); err != nil {
+		return "", "", fmt.Errorf("failed to create staking directory: %w", err)
+	}
+
+	keyPath = filepath.Join(stakingDir, "staker.key")
+	certPath = filepath.Join(stakingDir, "staker.crt")
+
+	// Generate using openssl or similar tool
+	cmd := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096",
+		"-keyout", keyPath,
+		"-out", certPath,
+		"-days", "365",
+		"-nodes",
+		"-subj", "/C=US/ST=State/L=City/O=Organization/CN=validator")
+	
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return "", "", fmt.Errorf("failed to generate staking keys: %w\nOutput: %s", err, output)
+	}
+
+	// Set proper permissions
+	if err := os.Chmod(keyPath, 0600); err != nil {
+		return "", "", fmt.Errorf("failed to set key permissions: %w", err)
+	}
+
+	return keyPath, certPath, nil
+}
+
+// GenerateMinimalGenesis creates a minimal genesis for single node testing (deprecated, use GenerateSingleValidatorGenesis)
 func GenerateMinimalGenesis(networkID uint32, address string) (string, error) {
 	genesis := map[string]interface{}{
 		"networkID": networkID,
