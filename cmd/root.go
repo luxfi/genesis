@@ -53,8 +53,10 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewImportCmd(app))
 	rootCmd.AddCommand(NewExtractCmd(app))
 	rootCmd.AddCommand(NewInspectCmd(app))
+	rootCmd.AddCommand(NewCheckCmd(app))
 	rootCmd.AddCommand(NewLaunchCmd(app))
 	rootCmd.AddCommand(NewConvertCmd(app))
+	rootCmd.AddCommand(NewDBCmd(app))
 	rootCmd.AddCommand(NewDatabaseCmd(app))
 	rootCmd.AddCommand(NewL2Cmd(app))
 	rootCmd.AddCommand(NewReplayCmd(app))
@@ -115,4 +117,9 @@ func initializeApp() error {
 	app.Setup(baseDir, logger, viper.GetViper())
 
 	return nil
+}
+
+// Execute runs the root command
+func Execute() error {
+	return NewRootCmd().Execute()
 }

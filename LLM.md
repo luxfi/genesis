@@ -1,8 +1,56 @@
-# LLM Documentation - Lux Genesis Migration
+# LLM Documentation - Lux Genesis Tool
 
 ## Overview
 
-This document provides comprehensive technical documentation for the SubnetEVM to Coreth migration tool, used to migrate Lux mainnet data from subnet format to C-Chain format.
+This document provides comprehensive technical documentation for the Lux Genesis tool, a unified CLI for managing genesis configurations, blockchain operations, and data migrations in the Lux ecosystem.
+
+## Recent Architecture Refactoring (August 2025)
+
+### Command Consolidation
+The project has undergone significant refactoring to consolidate ~40+ individual command files into a cleaner modular structure:
+
+**Before**: Scattered scripts and individual command files
+- `cmd/check_balance.go`, `cmd/check_both_balances.go`, `cmd/check_db_keys.go`
+- `cmd/verify_migration.go`, `cmd/migrate_simple/`, `cmd/migrate_full/`
+- ~90 scripts in `scripts/` directory
+
+**After**: Organized command hierarchy with subcommands
+- `cmd/check.go` - Parent command for all verification operations
+  - `check balance` - Check account balances directly from database
+  - `check migration` - Verify migration integrity (future)
+  - `check db` - Database integrity checks (future)
+- `cmd/db.go` - Database inspection and management
+  - `db scan` - Scan database keys with optional filtering
+  - `db inspect` - Deep inspection (future)
+- `cmd/migrate_cmd.go` - Consolidated migration operations
+
+### Package Structure
+Core functionality extracted into reusable packages:
+- `pkg/balance/checker.go` - Balance checking functionality
+- `pkg/db/inspector.go` - Database inspection utilities
+- `pkg/migration/migrator.go` - Migration logic
+- `pkg/extract/` - Data extraction tools
+- `pkg/genesis/` - Genesis file generation
+
+### Script Organization
+Utility scripts moved to `tools/scripts/` for reference while keeping the main command structure clean.
+
+## Command Structure
+
+### Usage
+```bash
+# Build the unified CLI
+go build -o bin/genesis .
+
+# Check balance
+genesis check balance --db-path /path/to/db --address 0x...
+
+# Scan database
+genesis db scan --db-path /path/to/db --prefix 0x61 --limit 100
+
+# Run migration
+genesis migrate --source /path/to/pebbledb --target /path/to/badgerdb
+```
 
 ## Migration Architecture
 
