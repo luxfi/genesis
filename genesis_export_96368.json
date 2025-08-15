@@ -1,6 +1,0 @@
-{
-  "networkId": 96368,
-  "networkName": "Lux Testnet",
-  "chainId": 96368,
-  "error": "Failed to open PebbleDB: dirname=\"/Users/z/work/lux/genesis/state/chaindata/lux-testnet-96368/db/pebbledb\": pebble: database does not exist"
-}

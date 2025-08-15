@@ -1,6 +1,0 @@
-{
-  "networkId": 200200,
-  "networkName": "Zoo Mainnet",
-  "chainId": 200200,
-  "error": "Failed to open PebbleDB: dirname=\"/Users/z/work/lux/genesis/state/chaindata/zoo-mainnet-200200/db/pebbledb\": pebble: database does not exist"
-}
