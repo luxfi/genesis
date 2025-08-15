@@ -22,6 +22,4 @@ fi
     --staking-port 9651 \
     --no-bootstrap \
     --log-level info \
-    --binary ~/work/lux/node/build/luxd
-
-# Note: Update --binary path once luxd is successfully built
+    --binary ./bin/luxd
