@@ -357,7 +357,7 @@
   },
   "difficulty": "0x0",
   "extraData": "0x",
-  "gasLimit": "0xb71b00",
+  "gasLimit": "0x5f5e100",
   "gasUsed": "0x0",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "nonce": "0x0",

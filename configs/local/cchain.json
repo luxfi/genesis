@@ -1,5 +1,5 @@
 {
-  "_comment": "Local C-Chain genesis — 5 accounts from 'light light light light light light light light light light light energy' (BIP44 m/44'/9000'/0'/0/{0-4})",
+  "_comment": "Local C-Chain genesis \u2014 5 accounts from 'light light light light light light light light light light light energy' (BIP44 m/44'/9000'/0'/0/{0-4})",
   "config": {
     "chainId": 1337,
     "homesteadBlock": 0,
@@ -50,7 +50,7 @@
   "nonce": "0x0",
   "timestamp": "0x0",
   "extraData": "0x",
-  "gasLimit": "0xe4e1c0",
+  "gasLimit": "0x5f5e100",
   "difficulty": "0x0",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",

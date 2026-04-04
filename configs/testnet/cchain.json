@@ -55,7 +55,7 @@
   "baseFeePerGas": "0x5d21dba00",
   "genesisHash": "0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995",
   "extraData": "0x",
-  "gasLimit": "0xb71b00",
+  "gasLimit": "0x5f5e100",
   "difficulty": "0x0",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",
