@@ -1,0 +1,85 @@
+{
+  "_comment": "Dev genesis - 5 accounts derived from 'light light light light light light light light light light light energy'",
+  "alloc": {
+    "0200000000000000000000000000000000000005": {
+      "balance": "0x0",
+      "code": "0x01",
+      "nonce": "0x1"
+    },
+    "0x35D64Ff3f618f7a17DF34DCb21be375A4686a8de": {
+      "balance": "0x193e5939a08ce9dbd480000000",
+      "_comment": "Account 0 (treasury) - 2T LUX"
+    },
+    "0xdAF82928dE0ABBAE133322020B253283d335d3A8": {
+      "balance": "0x33b2e3c9fd0803ce8000000",
+      "_comment": "Account 1 - 1B LUX"
+    },
+    "0xBb5D7C55DbbB353f9e7667dbCC43B228B857998a": {
+      "balance": "0x33b2e3c9fd0803ce8000000",
+      "_comment": "Account 2 - 1B LUX"
+    },
+    "0x6828eAa708F40c11C121C25BdbB4a6fd1415fB24": {
+      "balance": "0x33b2e3c9fd0803ce8000000",
+      "_comment": "Account 3 - 1B LUX"
+    },
+    "0xa238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37": {
+      "balance": "0x33b2e3c9fd0803ce8000000",
+      "_comment": "Account 4 - 1B LUX"
+    },
+    "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC": {
+      "balance": "0x52B7D2DCC80CD2E4000000",
+      "_comment": "Pars Test Address - 100M LUX"
+    }
+  },
+  "baseFeePerGas": "0x3b9aca00",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "config": {
+    "arrowGlacierBlock": 0,
+    "berlinBlock": 0,
+    "byzantiumBlock": 0,
+    "cancunTime": 253399622400,
+    "chainId": 96370,
+    "constantinopleBlock": 0,
+    "durangoTimestamp": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "etnaTimestamp": 253399622400,
+    "feeConfig": {
+      "baseFeeChangeDenominator": 36,
+      "blockGasCostStep": 200000,
+      "gasLimit": 15000000,
+      "maxBlockGasCost": 1000000,
+      "minBaseFee": 1000000000,
+      "minBlockGasCost": 0,
+      "targetBlockRate": 1,
+      "targetGas": 60000000
+    },
+    "fortunaTimestamp": 253399622400,
+    "graniteTimestamp": 253399622400,
+    "grayGlacierBlock": 0,
+    "homesteadBlock": 0,
+    "istanbulBlock": 0,
+    "londonBlock": 0,
+    "mergeNetsplitBlock": 0,
+    "muirGlacierBlock": 0,
+    "petersburgBlock": 0,
+    "shanghaiTime": 0,
+    "subnetEVMTimestamp": 0,
+    "terminalTotalDifficulty": 0,
+    "warpConfig": {
+      "blockTimestamp": 0,
+      "quorumNumerator": 67,
+      "requirePrimaryNetworkSigners": false
+    }
+  },
+  "difficulty": "0x0",
+  "extraData": "0x",
+  "gasLimit": "0xe4e1c0",
+  "gasUsed": "0x0",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "nonce": "0x0",
+  "number": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "timestamp": "0x0"
+}
