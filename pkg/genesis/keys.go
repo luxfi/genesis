@@ -551,6 +551,79 @@ func getMnemonicEnv() string {
 	return ""
 }
 
+// BuildWalletAllocations derives BIP44 keys from the MNEMONIC/LUX_MNEMONIC env var
+// and returns free (no vesting) spending allocations for each key.
+// Uses path m/44'/9000'/0'/0/{i} for i in 0..numKeys-1.
+// Each allocation has both ETHAddr and LUXAddr (StakingAddr).
+func BuildWalletAllocations(numKeys int, amountPerKey uint64) ([]Allocation, error) {
+	mnemonic := getMnemonicEnv()
+	if mnemonic == "" {
+		return nil, fmt.Errorf("wallet allocations require MNEMONIC or LUX_MNEMONIC env var")
+	}
+
+	if !bip39.IsMnemonicValid(mnemonic) {
+		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
+	}
+
+	seed := bip39.NewSeed(mnemonic, "")
+	masterKey, err := bip32.NewMasterKey(seed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create master key: %w", err)
+	}
+
+	// BIP44: m/44'/9000'/0'/0/{i}
+	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive purpose key: %w", err)
+	}
+	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive coin type key: %w", err)
+	}
+	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive account key: %w", err)
+	}
+	change, err := account.NewChildKey(0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive change key: %w", err)
+	}
+
+	allocations := make([]Allocation, 0, numKeys)
+	for i := 0; i < numKeys; i++ {
+		childKey, err := change.NewChildKey(uint32(i))
+		if err != nil {
+			return nil, fmt.Errorf("failed to derive wallet key %d: %w", i, err)
+		}
+
+		// Lux P/X-chain address from secp256k1
+		luxPrivKey, err := luxcrypto.ToPrivateKey(childKey.Key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create secp256k1 key %d: %w", i, err)
+		}
+		stakingAddr := luxPrivKey.Address()
+
+		// ETH address from keccak256(uncompressed_pubkey)
+		ethPrivKey, err := ethcrypto.ToECDSA(childKey.Key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create ECDSA key %d: %w", i, err)
+		}
+		ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
+		var ethShortID ids.ShortID
+		copy(ethShortID[:], ethAddr[:])
+
+		fmt.Fprintf(os.Stderr, "Wallet key %d: luxAddr=%s ethAddr=0x%x\n", i, stakingAddr, ethAddr)
+
+		allocations = append(allocations, Allocation{
+			ETHAddr:       ethShortID,
+			LUXAddr:       stakingAddr,
+			InitialAmount: amountPerKey,
+		})
+	}
+
+	return allocations, nil
+}
+
 // BuildConfigFromEnv builds genesis config from environment variables
 // Checks in order: KEYS_DIR, mnemonic (MNEMONIC/LUX_MNEMONIC/LIGHT_MNEMONIC), PRIVATE_KEY
 //
