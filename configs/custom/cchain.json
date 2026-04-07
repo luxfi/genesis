@@ -99,8 +99,8 @@
       "comment": "Anvil/Hardhat Account 9"
     },
     "8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC": {
-      "balance": "0x52B7D2DCC80CD2E4000000",
-      "comment": "Lux Dev Account (from ewoq key - 100M LUX)"
+      "balance": "0x0",
+      "comment": "EWOQ key disabled — use mnemonic-derived keys only"
     }
   },
   "nonce": "0x0",
