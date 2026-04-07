@@ -57,7 +57,8 @@ type Staker struct {
 	NodeID        ids.NodeID         `json:"nodeID"`
 	RewardAddress ids.ShortID        `json:"rewardAddress"`
 	DelegationFee uint32             `json:"delegationFee"`
-	Signer        *ProofOfPossession `json:"signer,omitempty"`
+	Signer     *ProofOfPossession `json:"signer,omitempty"`
+	PQIdentity *PQIdentity        `json:"pqIdentity,omitempty"`
 	// Weight is the explicit validator stake weight (optional, derived from allocations if not set)
 	Weight uint64 `json:"weight,omitempty"`
 	// StartTime is the Unix timestamp when staking begins (optional)
@@ -70,6 +71,20 @@ type Staker struct {
 type ProofOfPossession struct {
 	PublicKey         string `json:"publicKey"`
 	ProofOfPossession string `json:"proofOfPossession"`
+}
+
+// PQIdentity binds post-quantum keys to a validator's BLS consensus identity.
+// ML-DSA certificates prove BLS/Ringtail key ownership — if BLS is broken by
+// a quantum computer, the ML-DSA certificates still prove validator identity.
+type PQIdentity struct {
+	// ML-DSA public key (FIPS 204, Dilithium — 1952 bytes hex-encoded)
+	MLDSAPublicKey string `json:"mldsaPublicKey"`
+	// ML-DSA signature over the BLS public key — proves BLS key belongs to this ML-DSA identity
+	BLSCertificate string `json:"blsCertificate"`
+	// Ringtail public key for ring signatures (33 bytes hex-encoded)
+	RingtailPublicKey string `json:"ringtailPublicKey,omitempty"`
+	// ML-DSA signature over the Ringtail public key
+	RingtailCertificate string `json:"ringtailCertificate,omitempty"`
 }
 
 // Bootstrapper represents a bootstrap node
@@ -137,6 +152,7 @@ type StakerJSON struct {
 	RewardAddress string             `json:"rewardAddress"`
 	DelegationFee uint32             `json:"delegationFee"`
 	Signer        *ProofOfPossession `json:"signer,omitempty"`
+	PQIdentity    *PQIdentity        `json:"pqIdentity,omitempty"`
 	// Weight is the explicit validator stake weight (optional)
 	Weight uint64 `json:"weight,omitempty"`
 	// StartTime is the Unix timestamp when staking begins (optional)
@@ -268,6 +284,7 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 			RewardAddress: formatBech32WithChain("P", hrp, s.RewardAddress),
 			DelegationFee: s.DelegationFee,
 			Signer:        s.Signer,
+			PQIdentity:    s.PQIdentity,
 		})
 	}
 
