@@ -805,3 +805,29 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		Message:                    genesisMessage(networkID),
 	}, nil
 }
+
+// BuildWalletKeyHex derives the BIP44 private key at index i and returns it as hex.
+// Used by bootstrap tools that need the exact same key the genesis allocated to.
+func BuildWalletKeyHex(index int) (string, error) {
+	mnemonic := getMnemonicEnv()
+	if mnemonic == "" {
+		return "", fmt.Errorf("MNEMONIC or LUX_MNEMONIC env var required")
+	}
+	if !bip39.IsMnemonicValid(mnemonic) {
+		return "", fmt.Errorf("invalid mnemonic")
+	}
+	seed := bip39.NewSeed(mnemonic, "")
+	masterKey, err := bip32.NewMasterKey(seed)
+	if err != nil {
+		return "", err
+	}
+	purpose, _ := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	coinType, _ := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	account, _ := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
+	change, _ := account.NewChildKey(0)
+	child, err := change.NewChildKey(uint32(index))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", child.Key), nil
+}
