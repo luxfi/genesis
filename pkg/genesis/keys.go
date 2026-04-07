@@ -59,6 +59,8 @@ type KeyInfo struct {
 	StakerKey            []byte
 	BLSPublicKey         []byte
 	BLSProofOfPossession []byte
+	MLDSAPublicKey       []byte // ML-DSA post-quantum public key (FIPS 204)
+	RingtailPublicKey    []byte // Ringtail ring signature public key
 	StakingAddr          ids.ShortID // P-chain address derived from staker key
 	ETHAddr              ids.ShortID // C-chain/X-chain address
 }
@@ -195,6 +197,18 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 		// WARNING: These addresses won't have usable private keys!
 		copy(keyInfo.StakingAddr[:], nodeID[:])
 		copy(keyInfo.ETHAddr[:], nodeID[:])
+	}
+
+	// Load ML-DSA public key (post-quantum identity)
+	mldsaPath := filepath.Join(nodeDir, "mldsa", "public.key")
+	if data, err := os.ReadFile(mldsaPath); err == nil {
+		keyInfo.MLDSAPublicKey = data
+	}
+
+	// Load Ringtail public key (ring signatures)
+	rtPath := filepath.Join(nodeDir, "rt", "public.key")
+	if data, err := os.ReadFile(rtPath); err == nil {
+		keyInfo.RingtailPublicKey = data
 	}
 
 	return keyInfo, nil
@@ -778,6 +792,17 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 				PublicKey:         fmt.Sprintf("0x%x", key.BLSPublicKey),
 				ProofOfPossession: fmt.Sprintf("0x%x", key.BLSProofOfPossession),
 			}
+		}
+
+		if len(key.MLDSAPublicKey) > 0 {
+			staker.PQIdentity = &PQIdentity{
+				MLDSAPublicKey: fmt.Sprintf("0x%x", key.MLDSAPublicKey),
+			}
+			if len(key.RingtailPublicKey) > 0 {
+				staker.PQIdentity.RingtailPublicKey = fmt.Sprintf("0x%x", key.RingtailPublicKey)
+			}
+			// BLSCertificate and RingtailCertificate are generated at validator
+			// registration time (requires ML-DSA private key to sign).
 		}
 
 		stakers = append(stakers, staker)
