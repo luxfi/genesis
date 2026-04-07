@@ -34,17 +34,19 @@ import (
 
 func main() {
 	var (
-		network     = flag.String("network", "local", "Network name: mainnet, testnet, devnet, local")
-		networkID   = flag.Uint("network-id", 0, "Network ID (overrides -network if set)")
-		keysDir     = flag.String("keys-dir", "", "Directory containing node keys")
-		genesisDir  = flag.String("genesis-dir", "", "Directory containing genesis component files")
-		output      = flag.String("output", "", "Output file path (default: stdout)")
-		allocation  = flag.Uint64("allocation", genesis.DefaultAllocationPerValidator, "Allocation per validator in nLUX")
-		validators  = flag.Int("validators", 3, "Number of validators for mnemonic-based genesis")
-		cchainPath  = flag.String("cchain", "", "Path to existing C-Chain genesis (preserves original)")
-		format      = flag.String("format", "pretty", "Output format: json, pretty")
-		showHelp    = flag.Bool("help", false, "Show help")
-		showVersion = flag.Bool("version", false, "Show version")
+		network      = flag.String("network", "local", "Network name: mainnet, testnet, devnet, local")
+		networkID    = flag.Uint("network-id", 0, "Network ID (overrides -network if set)")
+		keysDir      = flag.String("keys-dir", "", "Directory containing node keys")
+		genesisDir   = flag.String("genesis-dir", "", "Directory containing genesis component files")
+		output       = flag.String("output", "", "Output file path (default: stdout)")
+		allocation   = flag.Uint64("allocation", genesis.DefaultAllocationPerValidator, "Allocation per validator in nLUX")
+		validators   = flag.Int("validators", 3, "Number of validators for mnemonic-based genesis")
+		walletKeys   = flag.Int("wallet-keys", 0, "Number of BIP44 mnemonic-derived wallet keys to fund (requires MNEMONIC env)")
+		walletAmount = flag.Uint64("wallet-amount", 10000, "Allocation per wallet key in LUX (default: 10000)")
+		cchainPath   = flag.String("cchain", "", "Path to existing C-Chain genesis (preserves original)")
+		format       = flag.String("format", "pretty", "Output format: json, pretty")
+		showHelp     = flag.Bool("help", false, "Show help")
+		showVersion  = flag.Bool("version", false, "Show version")
 	)
 
 	flag.Parse()
@@ -64,7 +66,7 @@ func main() {
 	networkIDExplicit := *networkID != 0 // User explicitly provided network ID
 
 	// Build genesis config
-	config, err := buildConfig(netID, *keysDir, *genesisDir, *allocation, *validators, *cchainPath, networkIDExplicit)
+	config, err := buildConfig(netID, *keysDir, *genesisDir, *allocation, *validators, *walletKeys, *walletAmount, *cchainPath, networkIDExplicit)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -91,6 +93,8 @@ Flags:
   -output string      Output file path (default: stdout)
   -allocation uint    Allocation per validator in nLUX (default: 1B LUX)
   -validators int     Number of validators for mnemonic-based genesis (default: 3)
+  -wallet-keys int    Number of BIP44 mnemonic-derived wallet keys to fund (default: 0)
+  -wallet-amount uint Allocation per wallet key in LUX (default: 10000)
   -cchain string      Path to existing C-Chain genesis (preserves original)
   -format string      Output format: json, pretty (default "pretty")
   -help               Show help
@@ -136,7 +140,7 @@ func resolveNetworkID(network string, explicitID uint32) uint32 {
 	}
 }
 
-func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64, validators int, cchainPath string, networkIDExplicit bool) (*genesis.Config, error) {
+func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64, validators int, walletKeys int, walletAmount uint64, cchainPath string, networkIDExplicit bool) (*genesis.Config, error) {
 	var config *genesis.Config
 	var err error
 
@@ -148,6 +152,7 @@ func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64
 			if networkIDExplicit {
 				config.NetworkID = networkID
 			}
+			config = maybeAddWalletAllocations(config, walletKeys, walletAmount)
 			return maybePreserveCChain(config, cchainPath)
 		}
 		// If genesis dir specified but failed, report error
@@ -157,6 +162,7 @@ func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64
 	// Try environment-based config
 	config, err = genesis.BuildConfigFromEnv(networkID, validators, allocation)
 	if err == nil {
+		config = maybeAddWalletAllocations(config, walletKeys, walletAmount)
 		return maybePreserveCChain(config, cchainPath)
 	}
 
@@ -171,7 +177,24 @@ func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64
 		return nil, fmt.Errorf("failed to build config: %w (try setting KEYS_DIR, MNEMONIC, or PRIVATE_KEY)", err)
 	}
 
+	config = maybeAddWalletAllocations(config, walletKeys, walletAmount)
 	return maybePreserveCChain(config, cchainPath)
+}
+
+func maybeAddWalletAllocations(config *genesis.Config, walletKeys int, walletAmountLUX uint64) *genesis.Config {
+	if walletKeys <= 0 {
+		return config
+	}
+
+	walletAllocs, err := genesis.BuildWalletAllocations(walletKeys, walletAmountLUX*genesis.Lux)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to build wallet allocations: %v\n", err)
+		return config
+	}
+
+	config.Allocations = append(config.Allocations, walletAllocs...)
+	fmt.Fprintf(os.Stderr, "Added %d wallet allocations (%d LUX each)\n", len(walletAllocs), walletAmountLUX)
+	return config
 }
 
 func maybePreserveCChain(config *genesis.Config, cchainPath string) (*genesis.Config, error) {
