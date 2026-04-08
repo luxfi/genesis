@@ -25,22 +25,23 @@ import (
 )
 
 // Network ID constants (P-Chain)
-// mainnet, testnet, devnet: proper public networks (can run locally with validators)
-// custom: for custom local development with chainID 1337
+// mainnet, testnet, devnet: proper public networks
+// localnet: local development with LIGHT mnemonic (networkID=1337, EVM chainID=31337)
+// anything else is custom (override via --genesis-file)
 const (
-	MainnetID = 1
-	TestnetID = 2
-	DevnetID  = 3
-	CustomID  = 1337 // custom local development network
+	MainnetID  = 1
+	TestnetID  = 2
+	DevnetID   = 3
+	LocalnetID = 1337
 
-	// Chain ID constants (C-Chain EVM) - can be used as network ID aliases
-	MainnetChainID = 96369
-	TestnetChainID = 96368
-	DevnetChainID  = 96370
-	CustomChainID  = 1337
+	// Chain ID constants (C-Chain EVM)
+	MainnetChainID  = 96369
+	TestnetChainID  = 96368
+	DevnetChainID   = 96370
+	LocalnetChainID = 31337
 )
 
-//go:embed mainnet testnet devnet custom
+//go:embed mainnet testnet devnet localnet
 var embeddedGenesis embed.FS
 
 // GetGenesis returns the genesis JSON bytes for a network ID.
@@ -228,8 +229,8 @@ func networkNameFromID(networkID uint32) string {
 		return "testnet"
 	case DevnetID, DevnetChainID:
 		return "devnet"
-	case CustomID: // CustomChainID == CustomID (both 1337)
-		return "custom"
+	case LocalnetID: // LocalnetChainID == LocalnetID (both 1337)
+		return "localnet"
 	default:
 		return ""
 	}
@@ -320,7 +321,7 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 func loadGenesisFromFS(networkID uint32) ([]byte, error) {
 	networkName := networkNameFromID(networkID)
 	if networkName == "" {
-		networkName = "custom"
+		networkName = "localnet"
 	}
 
 	home, _ := os.UserHomeDir()

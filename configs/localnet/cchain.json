@@ -1,6 +1,6 @@
 {
   "config": {
-    "chainId": 1337,
+    "chainId": 31337,
     "homesteadBlock": 0,
     "eip150Block": 0,
     "eip155Block": 0,
@@ -100,7 +100,7 @@
     },
     "8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC": {
       "balance": "0x0",
-      "comment": "EWOQ key disabled — use mnemonic-derived keys only"
+      "comment": "EWOQ key disabled \u2014 use mnemonic-derived keys only"
     }
   },
   "nonce": "0x0",
