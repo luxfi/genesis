@@ -471,6 +471,18 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 			copy(keyInfo.ETHAddr[:], ethAddr[:])
 		}
 
+		// BLS signer key — derive deterministically from mnemonic seed + index
+		// Uses SHA-256(seed || "bls-signer" || index) as the BLS secret key seed
+		// This ensures BLS keys are reproducible from the same mnemonic
+		blsSeed := keccak256(append(append(seed, []byte("bls-signer")...), byte(i)))
+		blsSK, blsErr := bls.SecretKeyFromSeed(blsSeed)
+		if blsErr == nil {
+			blsPK := bls.PublicFromSecretKey(blsSK)
+			keyInfo.BLSPublicKey = bls.PublicKeyToCompressedBytes(blsPK)
+			sig := bls.SignProofOfPossession(blsSK, keyInfo.BLSPublicKey)
+			keyInfo.BLSProofOfPossession = bls.SignatureToBytes(sig)
+		}
+
 		keys = append(keys, *keyInfo)
 	}
 
