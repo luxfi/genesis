@@ -25,9 +25,9 @@ func GetConfig(networkID uint32) *Config {
 	case constants.DevnetID, constants.DevnetChainID:
 		networkName = "devnet"
 	case constants.LocalID:
-		networkName = "custom"
+		networkName = "localnet"
 	default:
-		networkName = "custom"
+		networkName = "localnet"
 	}
 
 	// Try standard genesis locations (user overrides checked first)
@@ -180,7 +180,7 @@ func GetConfigFromDir(dir string) (*Config, error) {
 //   - LUX_GENESIS_DIR: directory containing genesis files
 //   - LUX_KEYS_DIR: directory containing node keys (default: ~/.lux/keys)
 func GetConfigFromEnv() (*Config, error) {
-	networkID := uint32(constants.CustomID)
+	networkID := uint32(constants.LocalID)
 	if envID := os.Getenv("LUX_NETWORK_ID"); envID != "" {
 		var id uint32
 		if _, err := fmt.Sscanf(envID, "%d", &id); err == nil {
