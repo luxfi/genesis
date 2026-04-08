@@ -16,15 +16,24 @@
     "grayGlacierBlock": 0,
     "mergeNetsplitBlock": 0,
     "shanghaiTime": 0,
-    "cancunTime": 253399622400,
+    "cancunTime": 0,
     "terminalTotalDifficulty": 0,
-    "subnetEVMTimestamp": 0,
+    "chainEVMTimestamp": 0,
     "durangoTimestamp": 0,
-    "etnaTimestamp": 253399622400,
+    "etnaTimestamp": 0,
+    "fortunaTimestamp": 0,
+    "graniteTimestamp": 0,
+    "blobSchedule": {
+      "cancun": {
+        "target": 3,
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
+      }
+    },
     "feeConfig": {
-      "gasLimit": 12000000,
-      "targetBlockRate": 2,
-      "minBaseFee": 25000000000,
+      "gasLimit": 15000000,
+      "targetBlockRate": 1,
+      "minBaseFee": 1000000000,
       "targetGas": 60000000,
       "baseFeeChangeDenominator": 36,
       "minBlockGasCost": 0,
@@ -37,80 +46,322 @@
       "requirePrimaryNetworkSigners": false
     }
   },
-  "alloc": {
-    "35D64Ff3f618f7a17DF34DCb21be375A4686a8de": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Mnemonic Account 0 (light light light...)"
-    },
-    "dAF82928dE0ABBAE133322020B253283d335d3A8": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Mnemonic Account 1"
-    },
-    "Bb5D7C55DbbB353f9e7667dbCC43B228B857998a": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Mnemonic Account 2"
-    },
-    "6828eAa708F40c11C121C25BdbB4a6fd1415fB24": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Mnemonic Account 3"
-    },
-    "a238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Mnemonic Account 4"
-    },
-    "f39Fd6e51aad88F6F4ce6aB8827279cffFb92266": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 0 (pk: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)"
-    },
-    "70997970C51812dc3A010C7d01b50e0d17dc79C8": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 1 (pk: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d)"
-    },
-    "3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 2"
-    },
-    "90F79bf6EB2c4f870365E785982E1f101E93b906": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 3"
-    },
-    "15d34AAf54267DB7D7c367839AAf71A00a2C6A65": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 4"
-    },
-    "9965507D1a55bcC2695C58ba16FB37d819B0A4dc": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 5"
-    },
-    "976EA74026E726554dB657fA54763abd0C3a0aa9": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 6"
-    },
-    "14dC79964da2C08b23698B3D3cc7Ca32193d9955": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 7"
-    },
-    "23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 8"
-    },
-    "a0Ee7A142d267C1f36714E4a8F75612F20a79720": {
-      "balance": "0x200000000000000000000000000000000000000000000000000000000000000",
-      "comment": "Anvil/Hardhat Account 9"
-    },
-    "8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC": {
-      "balance": "0x0",
-      "comment": "EWOQ key disabled \u2014 use mnemonic-derived keys only"
-    }
-  },
   "nonce": "0x0",
   "timestamp": "0x0",
   "extraData": "0x",
-  "gasLimit": "0xb71b00",
+  "gasLimit": "0xe4e1c0",
   "difficulty": "0x0",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "0200000000000000000000000000000000000005": {
+      "balance": "0x0",
+      "code": "0x01",
+      "nonce": "0x1"
+    },
+    "35D64Ff3f618f7a17DF34DCb21be375A4686a8de": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "dAF82928dE0ABBAE133322020B253283d335d3A8": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "Bb5D7C55DbbB353f9e7667dbCC43B228B857998a": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "6828eAa708F40c11C121C25BdbB4a6fd1415fB24": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "a238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "351100DC9051d4637e91277e7c3D061B12E2Cb21": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "EC1c7d8f03143147ff351d3fEB476Ef96f417Fc6": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "Fd5Fb83Fd85CC90FA922D259296c9cD8c3fa2762": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "fB77826fc69129b906E5f3305d0C0614F662011a": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "1850e0401C012Df4ac5E2e6272A30accC24900f6": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "E3646ef14E69458255521d7f5886EB49BEB2DbAE": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "6F7c6fE55E099104b737e7062493f3962c8A09F4": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "8c26106A4C017CfB6574eD96581244557380B97B": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "332bdc8219b644abfe2F6Bf2c0925840a28dac89": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "1dfC72c8d90F4B4f89f3fd923dD7EBF7222Ae964": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "1cD5B7335F0A80d4F19280B455fCD508eB1f1a0E": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4DEf057e77040820c125F38CF4dCDfd7873e8485": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4296fdbC02C876Ec5F58F314329aD20c471Dc423": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "9FE3E60FE069249F74319E8BAB707377409703BE": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "318F8b7f7E13FE60c10894a9ac5bb7ebE8B0Cf89": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "b5Cc1d3b35356fF69813f336cE3d22FCf0470358": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "5a5F94180013d3a28eb94FD1b0089671e4dCbE75": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "79B5831B2d62252795E247a2Cc7bF8af88905F44": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "44BC9CF0EA8708f35d6CbB08B3A7C325bEdB43d2": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "0695E34260EbeeB0932e1C537e4d303282a46704": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "3D9a021d3e9792b14144eD4ADed1A9e0fBdE1798": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "f1Aace061e3F5D41E453cAeC50bc814BC17CCaB8": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "e45bf9c80bb2D74098a1b453Ead984Cc960aD0ea": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "bB4D92695497fe92341fB34FFB7FDB43a0599B61": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "A156F29229ba573e330776D3763825dAfBb1D266": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "21acf4Ba4feE497665C757F57a0d1e4ABfc7520D": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "9512cE13da6a73D6aDdFE56F58097448554828e8": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "fa21228af109198576dEd61eD239A6D18b7b54A1": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "f9F98EC76c45c847893267b3DA105fE856D314e8": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "15c5389c99BD660017aa936a64262426a5E09462": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "B42c9947026051a897a0439D6469c9DDEcb4B74D": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "19B7033268B740299aFc565d5f3bb76DFb5083C0": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "5AEA0ccBf6B7A868636A871473b4B5F29121FB76": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "BE2d3AAeBa313D3722F5D6BE814b08d09eEE341F": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "1870bed0BfC2E47A1f5557ade4fedcE3a5DC6768": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "d29194c765b89b7C4efB19e3A2fC5ED4D136b8A5": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4aE73f0D214482851877923B2Cbc73e39dd30F44": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "e11c7f439904cf4a80aBf82cE54f2564AaE9464d": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "b822A4773D252a7426a69f0f107E7Ff788E8F108": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "2Dc585584b02c25b53b1a49bFBa721A91A50aa54": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "3c3f10eE65e6b33B28e63087Bbc3881ecB586f11": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "c0f8A33260ACA097423EF91a943b37b0bB1f8cc3": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "01e28348d873bFf975d02EBB40e7b94EF88e998A": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4960A28C9E352811BD8190D541981021fA579734": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "f634Fad618bdE7ab4403dE32879BF2A7E5AAdcBF": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4116e5a50769a44359b9d6EB1b2A2C1918a82E73": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "96019dCED2d22b48E9aCaedb3Cd9Ff87F2B21BDD": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "D52953Edc033c87d84f424E3D01B2d96F3Bb5999": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "d5D08316748D4B74dbF0d0Ba5773aC9CB10bd37D": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4b8AaD6e30B41ef53D088Ce84f37efEe8397F9f1": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4d7BA805cC5B306FD3E043F2FfFc5DD86a95A77C": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "8E7039654e04DcbdC0bdc1DA0980de156272c731": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "51a0EEe49F47a496B5c7FBb483Fd716B2632CC27": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "bf2FB01A626ac6f80Fa4C44Db324e1D0718C02c6": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "8fB3F867FD8FfB3e998a57B0839CCE3e18599EED": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "CB9518cDED18b699802c10a048Ea100CbCb1F604": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "Cd84cE65dC718A480444DCE29f0943Fe203d2CaA": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "d2BD9f215fB878AF478C9eC6AA1bAE249c83Daae": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "521fDD9AC2c0E4867c44850c70dD790eAAD42d3e": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "7059C13B638d52f7a6d33310F9B953A1FD35c303": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "94816A30f1BbfE127819164601a11Ff4A55B3dd7": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "8c9460E0531235a31F3306991769E9d8eD6B5411": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "321787951440db08103dF9f4a5a81e010cbda49B": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "A27b815B27bC8Bad6C962AFE846Ff4dd3d0933af": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "F417198cAa0127c8754c761206434eCf48260CDE": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "29826B2045CBdb24536884Fbf3B0A42d86B09bBA": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "D6CF78e2fd0f21b076a1D29916aA1cC74D71afff": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "B0a5Ee1dD2c5207Ff64E9B3863891375aA13423F": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "BBF161Bc372cF59Ef64B3A5e225Ad5e85eF6756d": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "7BC8e378405616f607846f3d306625dA28Ce4B02": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "ef8EcffB0C1C34b2d257FB90c6Ae46Edd38b8b2f": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "42E7e56eBab9BAA5DDEF5d5c8a9Bd86db1153140": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "AfA864b0809C59Da0cdE027D534788d47E8DAb9a": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "70A9B21E3A1313B0335f1a163b0d0604CD04C088": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "0d16494fB546e74aA898c2C9cd447fD245eed2f0": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "5a5E743B3f55696658c1Dd8f3Ea7F97799bBaa48": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "11546cFeE07Af08ADD2d1885A9f25a420f999528": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "Ea19F2F980D3F47d9874937B90c61Fce7B0aD328": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "e74e2b34A156fDB82b41a7C7C9C4b68E887b09A2": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "85EBC23d36485c8CF2BC4C5A9d0Ba5F71Db13861": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "97Af81C8c3B2A312A9baCae95BeB735690823870": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "3aF293bdd992E7AfBd8de8151927A9307D5eEc41": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "664Fc9DD01323cDc0979959c33b43A5980F4fB20": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "db5239FE0fF0F9f9Adb88CFEA1c2940E3F10a586": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "b0015E7E7E092D9b52e6E1f496EfDBDEaDAa1067": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "4e34e72a83238E7F5EE45b732551D3F3Af1f0602": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "edf2B23f5f3590746Acb5677A3b4EFd788a34637": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "98895aD52a160D1f31583F838ba3Be82AD3d50c8": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "8E29a5583c6e72003eE45d28460cB86857095e53": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "c3c75f7F8Eb36FbD5A1561E59425981f0399de93": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "F143F7e550ac3992A3C7A9f122c4cbb541b19064": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "714ADE56eAD7AAe6CE9a382d021eF19Ad9432925": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "BbbA09dBA8B251D13fB5E62055C07fDB0ceF59aE": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "Dd9AC238Fa37317D9CA6f20915Fd2A0C3f7E4414": {
+      "balance": "0x19d971e4fe8401e74000000"
+    },
+    "6D02fe083F55F5c81969D398b2811DDe638E17d5": {
+      "balance": "0x19d971e4fe8401e74000000"
+    }
+  },
   "number": "0x0",
   "gasUsed": "0x0",
-  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "baseFeePerGas": "0x3b9aca00"
 }
