@@ -32,6 +32,12 @@ type Config struct {
 	KChainGenesis              string        `json:"kChainGenesis,omitempty"` // K-Chain: KMS VM genesis
 	Message                    string        `json:"message"`
 
+	// Chains defines additional chains to include in genesis beyond the
+	// built-in alphabet chains (C, D, Q, B, T, Z, G, K). Each entry becomes
+	// a CreateChainTx in the platform genesis. This allows L1/subnet chains
+	// to be embedded directly in the genesis for automatic bootstrap.
+	Chains []ChainEntry `json:"chains,omitempty"`
+
 	// ChainMapping provides dynamic chain ID configuration per network.
 	// This allows chains (P/X/C/Q/etc.) to have network-specific IDs that
 	// can be migrated/upgraded over time via governance.
@@ -226,6 +232,15 @@ type WarpConfig struct {
 	RequirePrimaryNetworkSigners bool   `json:"requirePrimaryNetworkSigners"`
 }
 
+// ChainEntry defines an additional chain to create at genesis.
+// Used for embedding L1/subnet chains directly in the platform genesis.
+type ChainEntry struct {
+	VMID        string `json:"vmID"`                  // VM ID (base58 encoded)
+	Name        string `json:"name"`                  // Human-readable chain name
+	GenesisData string `json:"genesisData"`           // Genesis JSON (string-encoded)
+	SubnetID    string `json:"subnetID,omitempty"`     // Subnet/network ID (default: primary network)
+}
+
 // Balance represents an EVM account balance
 type Balance struct {
 	Balance string `json:"balance"`
@@ -250,6 +265,7 @@ type ConfigOutput struct {
 	ZChainGenesis              string           `json:"zChainGenesis,omitempty"` // Z-Chain: ZK VM genesis
 	GChainGenesis              string           `json:"gChainGenesis,omitempty"` // G-Chain: Graph VM genesis
 	KChainGenesis              string           `json:"kChainGenesis,omitempty"` // K-Chain: KMS VM genesis
+	Chains                     []ChainEntry     `json:"chains,omitempty"`        // Additional genesis chains
 	Message                    string           `json:"message"`
 }
 
