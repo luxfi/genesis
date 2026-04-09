@@ -41,6 +41,36 @@ const (
 	LocalnetChainID = 31337
 )
 
+// Liquid L2 Chain IDs (EVM-compatible, for wallets/dApps).
+// These are the chain IDs used by the Liquid settlement chains running
+// as L2s on the Lux Network. They are NOT the primary network C-Chain IDs.
+//
+//	Network    NetworkID    EVM          DEX          FHE
+//	─────────  ─────────    ───────      ───────      ───────
+//	Mainnet    1            8675309      8675313      8675317
+//	Testnet    2            8675310      8675314      8675318
+//	Devnet     3            8675311      8675315      8675319
+//	Localnet   1337         31337        31338        31339
+const (
+	//  — primary settlement chain
+	LiquidEVMMainnet  = 8675309
+	LiquidEVMTestnet  = 8675310
+	LiquidEVMDevnet   = 8675311
+	LiquidEVMLocalnet = 31337
+
+	//  — native orderbook chain
+	LiquidDEXMainnet  = 8675313
+	LiquidDEXTestnet  = 8675314
+	LiquidDEXDevnet   = 8675315
+	LiquidDEXLocalnet = 31338
+
+	// Liquid FHE — confidential compute chain
+	LiquidFHEMainnet  = 8675317
+	LiquidFHETestnet  = 8675318
+	LiquidFHEDevnet   = 8675319
+	LiquidFHELocalnet = 31339
+)
+
 //go:embed mainnet testnet devnet localnet
 var embeddedGenesis embed.FS
 
