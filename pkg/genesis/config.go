@@ -261,3 +261,42 @@ func parseAddresses(addrs []string) ([]ids.ShortID, error) {
 	}
 	return result, nil
 }
+
+// ParseConfigOutput converts a ConfigOutput (JSON-friendly string addresses)
+// to a Config (binary addresses). This is the inverse of Config.ToJSON().
+func ParseConfigOutput(output *ConfigOutput, networkID uint32) (*Config, error) {
+	allocations, err := parseAllocations(output.Allocations)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse allocations: %w", err)
+	}
+
+	stakers, err := parseStakers(output.InitialStakers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse stakers: %w", err)
+	}
+
+	stakedFunds, err := parseAddresses(output.InitialStakedFunds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse staked funds: %w", err)
+	}
+
+	return &Config{
+		NetworkID:                  output.NetworkID,
+		Allocations:                allocations,
+		StartTime:                  output.StartTime,
+		InitialStakeDuration:       output.InitialStakeDuration,
+		InitialStakeDurationOffset: output.InitialStakeDurationOffset,
+		InitialStakedFunds:         stakedFunds,
+		InitialStakers:             stakers,
+		CChainGenesis:              output.CChainGenesis,
+		DChainGenesis:              output.DChainGenesis,
+		QChainGenesis:              output.QChainGenesis,
+		BChainGenesis:              output.BChainGenesis,
+		TChainGenesis:              output.TChainGenesis,
+		ZChainGenesis:              output.ZChainGenesis,
+		GChainGenesis:              output.GChainGenesis,
+		KChainGenesis:              output.KChainGenesis,
+		Chains:                     output.Chains,
+		Message:                    output.Message,
+	}, nil
+}
