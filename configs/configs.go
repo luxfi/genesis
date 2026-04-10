@@ -212,12 +212,15 @@ func GetConfig(networkID uint32) (*genesis.Config, error) {
 		return nil, err
 	}
 
-	var config genesis.Config
-	if err := json.Unmarshal(data, &config); err != nil {
+	// The embedded genesis files use string-encoded addresses (ConfigOutput format).
+	// Parse as ConfigOutput first, then convert to Config.
+	var output genesis.ConfigOutput
+	if err := json.Unmarshal(data, &output); err != nil {
 		return nil, fmt.Errorf("failed to parse genesis config: %w", err)
 	}
 
-	return &config, nil
+	// Convert ConfigOutput → Config by parsing string addresses to binary.
+	return genesis.ParseConfigOutput(&output, networkID)
 }
 
 // networkNameFromID returns the network directory name for a network ID.
