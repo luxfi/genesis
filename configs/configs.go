@@ -34,6 +34,10 @@ const (
 	DevnetID   = 3
 	LocalnetID = 1337
 
+	// CustomID is an alias for LocalnetID, kept for backward compatibility
+	// with netrunner and other tools that reference configs.CustomID.
+	CustomID = LocalnetID
+
 	// Chain ID constants (C-Chain EVM)
 	MainnetChainID  = 96369
 	TestnetChainID  = 96368
