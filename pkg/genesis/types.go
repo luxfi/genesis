@@ -233,12 +233,12 @@ type WarpConfig struct {
 }
 
 // ChainEntry defines an additional chain to create at genesis.
-// Used for embedding L1/subnet chains directly in the platform genesis.
+// Used for embedding L1/L2 chains directly in the platform genesis.
 type ChainEntry struct {
-	VMID        string `json:"vmID"`                  // VM ID (base58 encoded)
-	Name        string `json:"name"`                  // Human-readable chain name
-	GenesisData string `json:"genesisData"`           // Genesis JSON (string-encoded)
-	SubnetID    string `json:"subnetID,omitempty"`     // Subnet/network ID (default: primary network)
+	VMID        string `json:"vmID"`           // VM ID (base58 encoded)
+	Name        string `json:"name"`           // Human-readable chain name
+	GenesisData string `json:"genesisData"`    // Genesis JSON (string-encoded)
+	L1ID        string `json:"l1ID,omitempty"` // L1 ID this chain belongs to (empty = Primary Network)
 }
 
 // Balance represents an EVM account balance
