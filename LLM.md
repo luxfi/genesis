@@ -138,7 +138,7 @@ C-Chain protocol upgrades activated Dec 25, 2024 @ 4:20pm UTC (timestamp 1735143
 
 ```json
 {
-  "subnetEVMTimestamp": 0,
+  "evmTimestamp": 0,
   "durangoTimestamp": 0,
   "etnaTimestamp": 1735143600,
   "fortunaTimestamp": 1735143600,

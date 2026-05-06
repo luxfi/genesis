@@ -30,7 +30,7 @@ This hash is computed from the canonical genesis configuration below. Any deviat
     "londonBlock": 0,
     "terminalTotalDifficulty": 0,
     "terminalTotalDifficultyPassed": true,
-    "subnetEVMTimestamp": 0,
+    "evmTimestamp": 0,
     "durangoTimestamp": 0
   },
   "nonce": "0x0",
@@ -66,14 +66,14 @@ This hash is computed from the canonical genesis configuration below. Any deviat
 | `chainId` | 96369 | Lux Mainnet chain ID |
 | `terminalTotalDifficulty` | 0 | Post-merge (PoS) from genesis |
 | `terminalTotalDifficultyPassed` | true | Merge already happened |
-| `subnetEVMTimestamp` | 0 | SubnetEVM features active from genesis |
+| `evmTimestamp` | 0 | SubnetEVM features active from genesis |
 | `durangoTimestamp` | 0 | Durango upgrade (Shanghai EIPs) from genesis |
 
 ### SubnetEVM-Specific Fields
 
 These fields are **REQUIRED** in `luxfi/geth` for SubnetEVM compatibility:
 
-#### `subnetEVMTimestamp`
+#### `evmTimestamp`
 
 Enables SubnetEVM gas accounting:
 - Coinbase receives full `gasPrice * gasUsed` (no EIP-1559 burning)
@@ -162,7 +162,7 @@ If you see a different hash, check:
 | Mistake | Effect |
 |---------|--------|
 | `difficulty: "0x1"` | Different hash, all state roots fail |
-| Missing `subnetEVMTimestamp` | Gas accounting mismatch |
+| Missing `evmTimestamp` | Gas accounting mismatch |
 | Missing `durangoTimestamp` | EIP-3860 gas mismatch (876 gas per contract deploy) |
 | Different timestamp | Different genesis hash |
 | Different alloc balances | Different genesis state root |
@@ -177,7 +177,7 @@ If state roots match until block N then fail:
 ## Code References
 
 ### geth Configuration
-- `params/config.go`: ChainConfig with SubnetEVMTimestamp, DurangoTimestamp
+- `params/config.go`: ChainConfig with EVMTimestamp, DurangoTimestamp
 - `params/config.go:1518`: Rules() enables Shanghai when Durango active
 
 ### State Transition
