@@ -65,7 +65,7 @@
     "muirGlacierBlock": 0,
     "petersburgBlock": 0,
     "shanghaiTime": 0,
-    "subnetEVMTimestamp": 0,
+    "evmTimestamp": 0,
     "terminalTotalDifficulty": 0,
     "warpConfig": {
       "blockTimestamp": 0,

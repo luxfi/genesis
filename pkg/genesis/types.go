@@ -206,7 +206,7 @@ type CChainParams struct {
 	ShanghaiTime            uint64      `json:"shanghaiTime,omitempty"`
 	CancunTime              uint64      `json:"cancunTime,omitempty"`
 	TerminalTotalDifficulty uint64      `json:"terminalTotalDifficulty,omitempty"`
-	SubnetEVMTimestamp      uint64      `json:"subnetEVMTimestamp,omitempty"`
+	EVMTimestamp      uint64      `json:"evmTimestamp,omitempty"`
 	DurangoTimestamp        uint64      `json:"durangoTimestamp,omitempty"`
 	EtnaTimestamp           uint64      `json:"etnaTimestamp,omitempty"`
 	FeeConfig               FeeConfig   `json:"feeConfig"`
