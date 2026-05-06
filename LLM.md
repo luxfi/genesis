@@ -1,6 +1,22 @@
 # Genesis
 
-Canonical genesis configurations for all Lux blockchain networks.
+Canonical genesis configurations for all Lux blockchain networks. **This repo is the single source of truth for chain IDs, genesis hashes, state roots, and required precompiles.** Other repos (`~/work/lux/{node,evm,state}`) reference these values; do not duplicate them.
+
+## Canonical Requirements
+
+Every Lux chain genesis MUST satisfy these, or block import / consensus will fail:
+
+| Requirement | Mainnet C-Chain | How to verify |
+|---|---|---|
+| chainId | 96369 (NOT 1) | `jq -r .chainId configs/mainnet/cchain.json` |
+| Genesis hash | `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e` | `geth init --datadir /tmp/v configs/mainnet/cchain.json 2>&1 \| grep "genesis hash"` |
+| State root | `0x2d1cedac263020c5c56ef962f6abe0da1f5217bdc6468f8c9258a0ea23699e80` | `jq -r .stateRoot configs/mainnet/cchain.json` |
+| Warp precompile in alloc | `0200000000000000000000000000000000000005` `nonce:0x1` `code:0x01` | `jq '.alloc."0200000000000000000000000000000000000005"' configs/mainnet/cchain.json` |
+| `warpConfig.blockTimestamp` | `1730446786` (== genesis ts `0x672485c2`) | must equal genesis timestamp |
+| Treasury | `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714` = 2T LUX | `jq '.alloc."0x9011…"' configs/mainnet/cchain.json` |
+| File determinism | sorted, sha256 matches Canonical Genesis Checksums table below | `shasum -a 256 configs/mainnet/cchain.json` |
+
+If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the literal canonical `cchain.json` content. Common drift: `chainId=1` + missing warp = wrong-network template.
 
 ## Networks
 
@@ -458,4 +474,92 @@ The state repo should be periodically updated with:
 
 ---
 
-*Last Updated: 2025-12-28 - Genesis hashes verified against RLP*
+## RLP Import via luxd `--import-chain-data`
+
+End-to-end auto-import of historical chain data on luxd startup. Replaces the
+prior geth-sidecar workflow.
+
+### Flow
+
+1. `luxd --import-chain-data=<path.rlp>` (existing flag, was unwired).
+2. `node/config/config.go` *config bridge* injects `import-chain-data` into
+   `nodeConfig.ChainConfigs["C"].Config` JSON map. Merges with any existing
+   C-Chain config.
+3. EVM plugin reads `vm.config.ImportChainData` in `Initialize()` after
+   `initializeChain()` returns. If non-empty, calls `importBlocksFromFile`
+   (same code path as `admin_importChain` RPC).
+4. RLP stream decoded in batches of 2,500 blocks. State trie committed every
+   `CommitInterval` (4,096) blocks; `acceptedBlockDB` updated atomically with
+   each commit so restart-safe.
+5. Final state commit + last-accepted update at end-of-stream.
+
+### Required cChainGenesis (NON-NEGOTIABLE)
+
+`genesis.json` `cChainGenesis` MUST be the canonical mainnet config:
+- `chainId`: 96369 (NOT 1 — chainId 1 in cChainGenesis means genesis.json was
+  overwritten with a wrong-network template; restore from `cchain.json`)
+- Warp precompile in `alloc`: address `0200000000000000000000000000000000000005`,
+  `nonce: "0x1"`, `code: "0x01"`
+- `warpConfig.blockTimestamp`: 1730446786 (== genesis timestamp 0x672485c2)
+
+If any of these drift, the EVM computes a non-canonical genesis hash (commonly
+`0xcd5083cb…`) and RLP block 1's `parentHash` won't match → import fails with
+`batch 0: block 1 parent mismatch - expected genesis 0xcd…, got 0x3f4fa2a0…`.
+
+Restore from canonical:
+```bash
+python3 -c "import json
+canon = json.load(open('configs/mainnet/cchain.json'))
+g = json.load(open('configs/mainnet/genesis.json'))
+g['cChainGenesis'] = json.dumps(canon, separators=(',', ':'), sort_keys=True)
+json.dump(g, open('configs/mainnet/genesis.json', 'w'), indent=2, sort_keys=True)"
+```
+
+### Wiring sites (when re-implementing)
+
+| Layer | File | What |
+|-------|------|------|
+| Flag | `node/config/keys.go` `ImportChainDataKey` | Already exists |
+| Flag | `node/config/flags.go:370` | Already exists |
+| Bridge | `node/config/config.go:2012-2028` | NEW: inject into `chainConfigs["C"]` after `getChainConfigs` |
+| Plugin config | `evm/plugin/evm/config/config.go` `Config.ImportChainData` | NEW: matches JSON key `import-chain-data` |
+| Plugin init | `evm/plugin/evm/vm.go` `Initialize()` post-`initializeChain` | NEW: calls `importBlocksFromFile` |
+| Import logic | `evm/plugin/evm/admin_api.go:220` `importBlocksFromFile` | Pre-existing — used by `admin_importChain` |
+
+### macOS gotcha (kills luxd silently)
+
+After `cp` of the luxd binary to a new path, macOS gatekeeper can SIGKILL on
+launch (exit 137, no output). The provenance attribute (`com.apple.provenance`)
+plus an invalidated ad-hoc signature is the cause. Fix:
+```bash
+codesign --force --sign - ~/work/lux/node/build/luxd
+codesign --force --sign - ~/work/lux/node/build/plugins/*
+```
+
+### Plugin filename / VM ID
+
+The Lux EVM plugin has one canonical VM ID for both C-Chain and EVM-based subnets:
+
+```
+mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6
+```
+
+This is `CB58(ids.ID{'e','v','m'})` per `luxfi/constants.EVMID`. luxd's chain manager, the lux-operator, and `luxfi/cli` all reference this one ID. Install the plugin binary at `~/.lux/plugins/mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6` — no other filename, no aliases.
+
+### Verified output (mainnet)
+
+```
+read last accepted hash=0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e height=0
+Loaded most recent local header  hash=0x3f4fa2a0…
+Initializing snapshots  headHash=0x3f4fa2a0…  headRoot=0x2d1cedac263020c5c56ef962f6abe0da1f5217bdc6468f8c9258a0ea23699e80
+Auto-importing chain data at startup  path=…/lux-mainnet-96369.rlp
+ImportChain: inserting batch  batch=0 blocks=2500 firstNum=1
+ImportChain: batch done  batch=0 imported=2500 height=2500
+…
+```
+
+Throughput: ~550 blocks/sec early, ~150 blocks/sec by ~100k blocks (state-trie
+growth). 1.08M blocks → ~60-90 min wall time on M-series.
+
+---
+
