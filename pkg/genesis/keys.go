@@ -51,6 +51,10 @@ const (
 
 	// PChainFeeReserve is 10,000 LUX per validator for P-Chain fees
 	PChainFeeReserve = 10_000 * Lux
+
+	// LightMnemonic is the well-known dev mnemonic for local networks (network-id >= 1337).
+	// NEVER use on public networks (mainnet, testnet, devnet).
+	LightMnemonic = "light light light light light light light light light light light energy"
 )
 
 // KeyInfo contains parsed key information for a node

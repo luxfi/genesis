@@ -18,7 +18,7 @@
     "shanghaiTime": 0,
     "cancunTime": 253399622400,
     "terminalTotalDifficulty": 0,
-    "subnetEVMTimestamp": 0,
+    "evmTimestamp": 0,
     "durangoTimestamp": 0,
     "etnaTimestamp": 253399622400,
     "fortunaTimestamp": 253399622400,
