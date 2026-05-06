@@ -29,7 +29,7 @@ If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the litera
 | Devnet | 3 | 96370 | `0x53fe8be293555d20de41847f96081f4e8beca1ee2c206999ffbf7c70e497cf43` | 2T LUX |
 | Local | 1337 | 1337 | - | 2T LUX |
 
-### Subnet Chains
+### L2 Chains
 
 | Chain | Mainnet ID | Testnet ID | Devnet ID | Treasury |
 |-------|-----------|-----------|-----------|----------|
@@ -250,9 +250,9 @@ geth init --datadir /tmp/lux genesis/configs/mainnet/cchain.json
 geth import --datadir /tmp/lux state/rlp/lux-mainnet/lux-mainnet-96369.rlp
 ```
 
-### SubnetEVM Header Formats
+### LuxEVM Header Formats
 
-State repo RLP uses SubnetEVM header encoding:
+State repo RLP uses LuxEVM header encoding:
 
 | Fields | Format | Usage |
 |--------|--------|-------|
@@ -538,7 +538,7 @@ codesign --force --sign - ~/work/lux/node/build/plugins/*
 
 ### Plugin filename / VM ID
 
-The Lux EVM plugin has one canonical VM ID for both C-Chain and EVM-based subnets:
+The Lux EVM plugin has one canonical VM ID for both C-Chain and EVM-based L2 chains:
 
 ```
 mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6
