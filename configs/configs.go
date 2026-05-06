@@ -29,20 +29,40 @@ import (
 // localnet: local development with LIGHT mnemonic (networkID=1337, EVM chainID=31337)
 // anything else is custom (override via --genesis-file)
 const (
-	MainnetID  = 1
-	TestnetID  = 2
-	DevnetID   = 3
-	LocalnetID = 1337
+	// Network IDs (P-Chain). These identify the PRIMARY network.
+	MainnetID = 1
+	TestnetID = 2
+	DevnetID  = 3
+	// LocalID is the canonical local single/multi-node dev network.
+	// Pair with LocalChainID = 31337 on the C-Chain (Anvil convention).
+	LocalID = 1337
 
-	// CustomID is an alias for LocalnetID, kept for backward compatibility
-	// with netrunner and other tools that reference configs.CustomID.
-	CustomID = LocalnetID
+	// CustomID is the sentinel for any network ID outside the well-known
+	// {1, 2, 3, 1337} set — i.e. genuinely user-defined networks. It is
+	// deliberately NOT 1337 so callers can distinguish "this is the local
+	// dev network" (LocalID) from "this is some other custom network the
+	// caller will configure via --genesis-file" (CustomID).
+	CustomID uint32 = 0
 
-	// Chain ID constants (C-Chain EVM)
-	MainnetChainID  = 96369
-	TestnetChainID  = 96368
-	DevnetChainID   = 96370
-	LocalnetChainID = 31337
+	// LocalnetID is a deprecated alias for LocalID; existing callers
+	// should migrate to LocalID. Kept here so older code keeps building
+	// during the rollout.
+	LocalnetID = LocalID
+
+	// Chain ID constants (C-Chain EVM).
+	MainnetChainID = 96369
+	TestnetChainID = 96368
+	DevnetChainID  = 96370
+	// LocalChainID is the canonical local C-Chain EVM ID (Anvil convention).
+	LocalChainID = 31337
+	// CustomChainID is the sentinel C-Chain EVM ID for any chain outside
+	// the well-known {96369, 96368, 96370, 31337} set. Mirrors CustomID
+	// at the network-ID layer; the two should always be paired (a peer
+	// presenting CustomID at the network layer also presents
+	// CustomChainID at the EVM layer unless overridden via genesis-file).
+	CustomChainID uint32 = 0
+	// LocalnetChainID is a deprecated alias for LocalChainID.
+	LocalnetChainID = LocalChainID
 )
 
 
@@ -237,7 +257,7 @@ func networkNameFromID(networkID uint32) string {
 		return "testnet"
 	case DevnetID, DevnetChainID:
 		return "devnet"
-	case LocalnetID: // LocalnetChainID == LocalnetID (both 1337)
+	case LocalID, LocalChainID: // LocalChainID is 31337
 		return "localnet"
 	default:
 		return ""
