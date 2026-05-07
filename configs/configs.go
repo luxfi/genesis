@@ -247,8 +247,27 @@ func GetConfig(networkID uint32) (*genesis.Config, error) {
 	return genesis.ParseConfigOutput(&output, networkID)
 }
 
+// IsCustom reports whether the networkID is a user-defined network
+// outside the well-known {Mainnet, Testnet, Devnet, Local + their
+// C-Chain aliases} set. Mirrors luxfi/constants.IsCustom; both the
+// genesis layer and the constants layer agree on the classification
+// so a network can be classified consistently end-to-end.
+func IsCustom(networkID uint32) bool {
+	switch networkID {
+	case MainnetID, MainnetChainID,
+		TestnetID, TestnetChainID,
+		DevnetID, DevnetChainID,
+		LocalID, LocalChainID:
+		return false
+	}
+	return true
+}
+
 // networkNameFromID returns the network directory name for a network ID.
-// Accepts both network IDs (1, 2, 3, 1337) and chain IDs (96369, 96368, 96370) as aliases.
+// Accepts both network IDs (1, 2, 3, 1337) and chain IDs (96369, 96368, 96370, 31337)
+// as aliases. User-defined custom networks return "" — callers must
+// supply a genesis file (`--genesis-file`) for them since there are no
+// embedded canonical configs to load from disk.
 func networkNameFromID(networkID uint32) string {
 	switch networkID {
 	case MainnetID, MainnetChainID:
@@ -257,7 +276,7 @@ func networkNameFromID(networkID uint32) string {
 		return "testnet"
 	case DevnetID, DevnetChainID:
 		return "devnet"
-	case LocalID, LocalChainID: // LocalChainID is 31337
+	case LocalID, LocalChainID:
 		return "localnet"
 	default:
 		return ""
