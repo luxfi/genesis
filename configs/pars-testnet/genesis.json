@@ -33,12 +33,12 @@
     "feeConfig": {
       "baseFeeChangeDenominator": 36,
       "blockGasCostStep": 200000,
-      "gasLimit": 12000000,
+      "gasLimit": 1000000000,
       "maxBlockGasCost": 1000000,
       "minBaseFee": 25000000000,
       "minBlockGasCost": 0,
       "targetBlockRate": 2,
-      "targetGas": 60000000
+      "targetGas": 500000000
     },
     "fortunaTimestamp": 253399622400,
     "graniteTimestamp": 253399622400,
@@ -60,7 +60,7 @@
   },
   "difficulty": "0x0",
   "extraData": "0x",
-  "gasLimit": "0xb71b00",
+  "gasLimit": "0x3b9aca00",
   "gasUsed": "0x0",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "nonce": "0x0",
