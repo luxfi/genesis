@@ -10,6 +10,7 @@ require (
 	github.com/luxfi/go-bip39 v1.1.2
 	github.com/luxfi/ids v1.2.9
 	github.com/luxfi/math v1.2.3
+	github.com/luxfi/node v1.23.1
 	github.com/luxfi/tls v1.0.3
 	github.com/luxfi/utxo v0.2.4
 	github.com/luxfi/vm v1.0.33
