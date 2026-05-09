@@ -194,21 +194,37 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		}
 	}
 
-	// Load C-Chain genesis. Operator override:
-	//   LUX_CCHAIN_GENESIS_FILE — absolute path to a JSON file that
-	//   replaces the embedded cchain.json verbatim. Lets downstream
-	//   networks (Liquidity at chainId 8675312, etc.) reuse the lqd
-	//   binary without forking the embedded genesis tree.
+	// Load C-Chain genesis. Three operator paths in precedence order:
 	//
-	// Unset → embedded default (per-network, immutable).
+	//  1. LUX_DISABLE_CCHAIN=1 — bake NO C-Chain into the primary
+	//     genesis. Used by Liquidity (and any other downstream that
+	//     runs Liquid VMs only on the primary network's P-Chain via
+	//     CreateChainTx, never as a baked-in primary chain). The
+	//     resulting CChainGenesis is empty so builder.FromConfig's
+	//     `if config.CChainGenesis != ""` guard skips the C-Chain
+	//     entry entirely. Without this knob, every fork that doesn't
+	//     want a C-Chain ended up with chainId 31337 silently mounted
+	//     at /ext/bc/C/rpc — confusing for SREs and a foot-gun for
+	//     any service that hard-codes the C alias.
+	//
+	//  2. LUX_CCHAIN_GENESIS_FILE — absolute path to a JSON file that
+	//     replaces the embedded cchain.json verbatim. Lets downstream
+	//     networks (e.g. operator-driven custom chainId) reuse the
+	//     lqd binary without forking the embedded genesis tree.
+	//
+	//  3. Unset → embedded default (per-network, immutable).
 	var cchainData []byte
-	if override := os.Getenv("LUX_CCHAIN_GENESIS_FILE"); override != "" {
+	switch {
+	case os.Getenv("LUX_DISABLE_CCHAIN") == "1":
+		// Empty — primary genesis won't include a C-Chain entry.
+	case os.Getenv("LUX_CCHAIN_GENESIS_FILE") != "":
+		override := os.Getenv("LUX_CCHAIN_GENESIS_FILE")
 		body, ferr := os.ReadFile(override)
 		if ferr != nil {
 			return nil, fmt.Errorf("read LUX_CCHAIN_GENESIS_FILE=%q: %w", override, ferr)
 		}
 		cchainData = body
-	} else {
+	default:
 		cchainData, err = embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read cchain.json: %w", err)
