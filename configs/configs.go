@@ -194,10 +194,25 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		}
 	}
 
-	// Load C-Chain genesis (always embedded, immutable)
-	cchainData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read cchain.json: %w", err)
+	// Load C-Chain genesis. Operator override:
+	//   LUX_CCHAIN_GENESIS_FILE — absolute path to a JSON file that
+	//   replaces the embedded cchain.json verbatim. Lets downstream
+	//   networks (Liquidity at chainId 8675312, etc.) reuse the lqd
+	//   binary without forking the embedded genesis tree.
+	//
+	// Unset → embedded default (per-network, immutable).
+	var cchainData []byte
+	if override := os.Getenv("LUX_CCHAIN_GENESIS_FILE"); override != "" {
+		body, ferr := os.ReadFile(override)
+		if ferr != nil {
+			return nil, fmt.Errorf("read LUX_CCHAIN_GENESIS_FILE=%q: %w", override, ferr)
+		}
+		cchainData = body
+	} else {
+		cchainData, err = embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read cchain.json: %w", err)
+		}
 	}
 
 	// Build combined genesis config
