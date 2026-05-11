@@ -63,8 +63,8 @@ type Staker struct {
 	NodeID        ids.NodeID         `json:"nodeID"`
 	RewardAddress ids.ShortID        `json:"rewardAddress"`
 	DelegationFee uint32             `json:"delegationFee"`
-	Signer     *ProofOfPossession `json:"signer,omitempty"`
-	PQIdentity *PQIdentity        `json:"pqIdentity,omitempty"`
+	Signer        *ProofOfPossession `json:"signer,omitempty"`
+	PQIdentity    *PQIdentity        `json:"pqIdentity,omitempty"`
 	// Weight is the explicit validator stake weight (optional, derived from allocations if not set)
 	Weight uint64 `json:"weight,omitempty"`
 	// StartTime is the Unix timestamp when staking begins (optional)
@@ -206,7 +206,7 @@ type CChainParams struct {
 	ShanghaiTime            uint64      `json:"shanghaiTime,omitempty"`
 	CancunTime              uint64      `json:"cancunTime,omitempty"`
 	TerminalTotalDifficulty uint64      `json:"terminalTotalDifficulty,omitempty"`
-	EVMTimestamp      uint64      `json:"evmTimestamp,omitempty"`
+	EVMTimestamp            uint64      `json:"evmTimestamp,omitempty"`
 	DurangoTimestamp        uint64      `json:"durangoTimestamp,omitempty"`
 	EtnaTimestamp           uint64      `json:"etnaTimestamp,omitempty"`
 	FeeConfig               FeeConfig   `json:"feeConfig"`
@@ -235,9 +235,9 @@ type WarpConfig struct {
 // ChainEntry defines an additional chain to create at genesis.
 // Used for embedding L1/L2 chains directly in the platform genesis.
 type ChainEntry struct {
-	VMID        string `json:"vmID"`           // VM ID (base58 encoded)
-	Name        string `json:"name"`           // Human-readable chain name
-	GenesisData string `json:"genesisData"`    // Genesis JSON (string-encoded)
+	VMID        string `json:"vmID"`        // VM ID (base58 encoded)
+	Name        string `json:"name"`        // Human-readable chain name
+	GenesisData string `json:"genesisData"` // Genesis JSON (string-encoded)
 }
 
 // Balance represents an EVM account balance
