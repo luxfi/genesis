@@ -1,6 +1,6 @@
 module github.com/luxfi/genesis
 
-go 1.26.1
+go 1.26.2
 
 require (
 	github.com/luxfi/constants v1.4.6
@@ -9,6 +9,7 @@ require (
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
 	github.com/luxfi/ids v1.2.9
+	github.com/luxfi/log v1.4.1
 	github.com/luxfi/math v1.2.3
 	github.com/luxfi/node v1.23.1
 	github.com/luxfi/tls v1.0.3
@@ -26,7 +27,6 @@ require (
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/database v1.17.40 // indirect
 	github.com/luxfi/keychain v1.0.2 // indirect
-	github.com/luxfi/log v1.4.1 // indirect
 	github.com/luxfi/ordering v0.0.1 // indirect
 	github.com/luxfi/runtime v1.0.1 // indirect
 	github.com/luxfi/timer v1.0.1 // indirect
@@ -38,7 +38,7 @@ require (
 require (
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260311194731-d5b7577c683d // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.6 // indirect
-	github.com/cloudflare/circl v1.6.3 // indirect
+	github.com/cloudflare/circl v1.6.3
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
 	github.com/gorilla/rpc v1.2.1 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/luxfi/formatting v1.0.1
 	github.com/luxfi/geth v1.16.73 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
-	github.com/luxfi/metric v1.4.11 // indirect
+	github.com/luxfi/metric v1.4.12 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/p2p v1.18.9 // indirect
 	github.com/luxfi/protocol v0.0.3
