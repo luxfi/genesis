@@ -18,7 +18,7 @@ import (
 //
 // Wire form is pin-by-ID + pin-by-hash:
 //   - ProfileID names the canonical ChainSecurityProfile (e.g. 0x01 =
-//     LuxStrictPQ).
+//     StrictPQ).
 //   - ProfileHashHex is the 48-byte SHA3-384 ComputeHash of the
 //     canonical profile, hex-encoded. The genesis loader recomputes
 //     the hash at boot from consensusconfig.ProfileByID(ProfileID) and
@@ -36,7 +36,7 @@ import (
 // hash. Both fields are mandatory on a profile-bound genesis.
 type SecurityProfile struct {
 	// ProfileID is the wire byte that names the canonical profile.
-	// 0x01 = LuxStrictPQ, 0x02 = LuxPermissive, 0x03 = LuxFIPS.
+	// 0x01 = StrictPQ, 0x02 = Permissive, 0x03 = FIPS.
 	// 0x80+ is reserved for downstream / white-label profiles (which
 	// must register with the consensus team to obtain a byte).
 	ProfileID uint8 `json:"profileID"`
