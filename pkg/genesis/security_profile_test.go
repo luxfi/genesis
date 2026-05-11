@@ -13,20 +13,20 @@ import (
 	consensusconfig "github.com/luxfi/consensus/config"
 )
 
-// TestSecurityProfile_Resolve_LuxStrictPQ proves a genesis pin for the
-// canonical LuxStrictPQ profile resolves, validates, and round-trips
+// TestSecurityProfile_Resolve_StrictPQ proves a genesis pin for the
+// canonical StrictPQ profile resolves, validates, and round-trips
 // through ComputeHash without mutation. Closes F102 at the genesis
 // load layer: the profile that ships in consensus/config is reachable
 // from the genesis package and its content hash is checked.
-func TestSecurityProfile_Resolve_LuxStrictPQ(t *testing.T) {
-	canonical := consensusconfig.LuxStrictPQ()
+func TestSecurityProfile_Resolve_StrictPQ(t *testing.T) {
+	canonical := consensusconfig.StrictPQ()
 	live, err := canonical.ComputeHash()
 	if err != nil {
-		t.Fatalf("LuxStrictPQ().ComputeHash() returned error: %v", err)
+		t.Fatalf("StrictPQ().ComputeHash() returned error: %v", err)
 	}
 
 	pin := &SecurityProfile{
-		ProfileID:      uint8(consensusconfig.ProfileLuxStrictPQ),
+		ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 		ProfileHashHex: hex.EncodeToString(live[:]),
 	}
 	got, err := pin.Resolve()
@@ -36,9 +36,9 @@ func TestSecurityProfile_Resolve_LuxStrictPQ(t *testing.T) {
 	if got == nil {
 		t.Fatalf("Resolve() returned nil profile")
 	}
-	if got.ProfileID != uint32(consensusconfig.ProfileLuxStrictPQ) {
+	if got.ProfileID != uint32(consensusconfig.ProfileStrictPQ) {
 		t.Errorf("Resolve() returned profile with ProfileID=%d; want %d",
-			got.ProfileID, consensusconfig.ProfileLuxStrictPQ)
+			got.ProfileID, consensusconfig.ProfileStrictPQ)
 	}
 	if got.ProfileHash != live {
 		t.Errorf("Resolve() did not stamp the live hash onto the returned profile")
@@ -51,9 +51,9 @@ func TestSecurityProfile_Resolve_LuxStrictPQ(t *testing.T) {
 // swaps in a different canonical profile content must fail genesis
 // boot.
 func TestSecurityProfile_Resolve_HashMismatchRejected(t *testing.T) {
-	// Pin a wrong hash for LuxStrictPQ.
+	// Pin a wrong hash for StrictPQ.
 	pin := &SecurityProfile{
-		ProfileID:      uint8(consensusconfig.ProfileLuxStrictPQ),
+		ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 		ProfileHashHex: strings.Repeat("00", 48), // 96 hex zeros
 	}
 	_, err := pin.Resolve()
@@ -94,7 +94,7 @@ func TestSecurityProfile_Resolve_InvalidHashHexRejected(t *testing.T) {
 	}
 	for name, hashHex := range cases {
 		pin := &SecurityProfile{
-			ProfileID:      uint8(consensusconfig.ProfileLuxStrictPQ),
+			ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 			ProfileHashHex: hashHex,
 		}
 		_, err := pin.Resolve()
@@ -122,13 +122,13 @@ func TestSecurityProfile_Resolve_NilRejected(t *testing.T) {
 // field survives a Config → ConfigOutput → JSON → ConfigOutput round
 // trip. Closes the wire-form half of F102.
 func TestConfig_SecurityProfile_JSONRoundtrip(t *testing.T) {
-	canonical := consensusconfig.LuxStrictPQ()
+	canonical := consensusconfig.StrictPQ()
 	live, err := canonical.ComputeHash()
 	if err != nil {
 		t.Fatalf("ComputeHash: %v", err)
 	}
 	pin := &SecurityProfile{
-		ProfileID:      uint8(consensusconfig.ProfileLuxStrictPQ),
+		ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 		ProfileHashHex: hex.EncodeToString(live[:]),
 	}
 
