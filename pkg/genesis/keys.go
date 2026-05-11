@@ -13,21 +13,16 @@ import (
 	"strings"
 	"time"
 
-	// ML-DSA-65 (FIPS 204) keygen — Cloudflare CIRCL provides
-	// NewKeyFromSeed(*[32]byte) which is exactly the FIPS 204 §5.1
-	// KeyGen-from-ξ interface we need.
-	//
-	// TODO(canonical): replace with github.com/luxfi/crypto/pq/mldsa once
-	// that package exposes a public NewKeyFromSeed entry point. At
-	// luxfi/crypto v1.17.44 the pq/mldsa directory exists but does not
-	// expose the FIPS 204 seed→keypair API; CIRCL's mldsa65 is the
-	// stop-gap and the SHAKE-256 expansion below makes the migration
-	// transparent (the canonical lux/crypto/mldsa package MUST adopt the
-	// same SHAKE-256(child_seed)→ξ derivation or we lose determinism).
-	"github.com/cloudflare/circl/sign/mldsa/mldsa65"
 	"github.com/luxfi/constants"
+	// ML-DSA-65 (FIPS 204) deterministic keygen — canonical lux/crypto
+	// package. NewKeyFromSeed accepts the 32-byte ξ FIPS 204 §5.1 KeyGen
+	// consumes; the HIP-0077 SHAKE-256(label || child_seed) expansion
+	// happens at the call site below (mldsaKeygenFromChildSeed) so the
+	// derivation is byte-for-byte reproducible against the prior CIRCL
+	// stop-gap.
 	ethcrypto "github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/bls"
+	"github.com/luxfi/crypto/pq/mldsa/mldsa65"
 	luxcrypto "github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
@@ -545,6 +540,12 @@ func deriveLuxAccount(masterKey *bip32.Key, nid uint32) (*bip32.Key, error) {
 // The domain-separation label means a future scheme that wants to use
 // the same BIP-32 child seed for a different KEM/SIG cannot collide
 // with our ML-DSA key.
+//
+// The 32-byte ξ is then handed verbatim to
+// github.com/luxfi/crypto/pq/mldsa/mldsa65.NewKeyFromSeed: at len == 32
+// the package wires the seed straight into the FIPS 204 §5.1 KeyGen, so
+// the keypair is byte-for-byte reproducible against the prior CIRCL
+// stop-gap (which the canonical package wraps unchanged).
 func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
 	if len(childSeed) != 32 {
 		return nil, fmt.Errorf("child seed must be 32 bytes, got %d", len(childSeed))
@@ -560,7 +561,10 @@ func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
 	if _, err := h.Read(xi[:]); err != nil {
 		return nil, fmt.Errorf("shake read xi: %w", err)
 	}
-	pk, _ := mldsa65.NewKeyFromSeed(&xi)
+	pk, _, err := mldsa65.NewKeyFromSeed(xi[:])
+	if err != nil {
+		return nil, fmt.Errorf("mldsa65 keygen: %w", err)
+	}
 	return pk.Bytes(), nil
 }
 
