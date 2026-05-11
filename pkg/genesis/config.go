@@ -107,6 +107,7 @@ func GetConfigFile(filepath string) (*Config, error) {
 		ZChainGenesis:              output.ZChainGenesis,
 		GChainGenesis:              output.GChainGenesis,
 		KChainGenesis:              output.KChainGenesis,
+		SecurityProfile:            output.SecurityProfile,
 		Message:                    output.Message,
 	}, nil
 }
