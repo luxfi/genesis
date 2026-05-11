@@ -42,9 +42,10 @@ jobs:
       - name: go vet
         run: go vet ./...
 
-      # TestGetGenesisLocalnet asserts a 0.5 LUX (5e17 wei) localnet
-      # allocation amount; the embedded localnet genesis currently encodes
-      # 5e14 (1000x smaller). That's a data-side mismatch, not a workflow
-      # bug — skip until the localnet genesis is regenerated.
+      # Skipped tests (until upstream is fixed):
+      #   TestGetGenesisLocalnet   — embedded localnet genesis amount is
+      #                              1000x off (5e14 wei vs 5e17 expected)
+      #   TestTransferPChain       — live RPC call to api.lux-dev.network;
+      #                              integration-only, not safe for CI
       - name: go test
-        run: go test -count=1 -timeout=10m -skip TestGetGenesisLocalnet ./...
+        run: go test -count=1 -timeout=10m -skip '^(TestGetGenesisLocalnet|TestTransferPChain)$' ./...
