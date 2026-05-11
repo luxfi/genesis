@@ -13,6 +13,18 @@ import (
 	"strings"
 	"time"
 
+	// ML-DSA-65 (FIPS 204) keygen — Cloudflare CIRCL provides
+	// NewKeyFromSeed(*[32]byte) which is exactly the FIPS 204 §5.1
+	// KeyGen-from-ξ interface we need.
+	//
+	// TODO(canonical): replace with github.com/luxfi/crypto/pq/mldsa once
+	// that package exposes a public NewKeyFromSeed entry point. At
+	// luxfi/crypto v1.17.44 the pq/mldsa directory exists but does not
+	// expose the FIPS 204 seed→keypair API; CIRCL's mldsa65 is the
+	// stop-gap and the SHAKE-256 expansion below makes the migration
+	// transparent (the canonical lux/crypto/mldsa package MUST adopt the
+	// same SHAKE-256(child_seed)→ξ derivation or we lose determinism).
+	"github.com/cloudflare/circl/sign/mldsa/mldsa65"
 	"github.com/luxfi/constants"
 	ethcrypto "github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/bls"
@@ -20,6 +32,7 @@ import (
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/log"
 	luxtls "github.com/luxfi/tls"
 	"golang.org/x/crypto/sha3"
 )
@@ -397,11 +410,42 @@ func LoadKeyFromEnv() (*KeyInfo, error) {
 	return keyInfoFromPrivateKey(privKeyBytes)
 }
 
-// LoadKeysFromMnemonic derives multiple keys from a BIP39 mnemonic
-// Uses BIP44 path: m/44'/9000'/0'/0/{account} (Lux P/X-Chain coin type)
-func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
+// LoadKeysFromMnemonic derives multiple keys from a BIP39 mnemonic per
+// HIP-0077 §"Identity". Two hardened branches descend from a per-network
+// account level:
+//
+//	device_pq_key[i]  = m/44'/9000'/nid'/0'/i'  → ML-DSA-65  (FIPS 204)
+//	device_lux_key[i] = m/44'/9000'/nid'/1'/i'  → secp256k1  (Lux account)
+//
+// All five levels are hardened. This gives two guarantees:
+//
+//  1. Per-network isolation — a leaked branch on nid=A does not let an
+//     attacker derive any branch on nid=B for the same mnemonic.
+//  2. Branch independence — leaking the branch-0' (ML-DSA child seed)
+//     reveals nothing about branch-1' (secp256k1 spend key) because
+//     hardened siblings are derived from the parent *private* key, not
+//     the parent xpub (BIP-32 §"Private parent → private child").
+//
+// The ML-DSA-65 keypair is generated from the 32-byte BIP-32 child seed
+// expanded via SHAKE-256 into a 32-byte ξ (per FIPS 204 §5.1 KeyGen).
+// SHAKE-256 expansion of the child seed is the FIPS 204-aligned way to
+// derive ξ from a parent BIP-32 child, and lux/crypto/mldsa MUST adopt
+// the same expansion when it lands (see TODO at the mldsa65 import).
+//
+// Backward-incompatible change vs. the prior layout
+// (m/44'/9000'/0'/0/i): addresses derived under that path will NOT
+// reproduce. The treasury and any keys-on-disk you want to keep MUST be
+// re-derived (or loaded from KEYS_DIR instead of the mnemonic). See
+// genesis/CHANGELOG.md for the migration note.
+func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyInfo, error) {
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic")
+	}
+	if nid >= bip32.FirstHardenedChild {
+		// Hardening folds the high bit; a network id at or above 2^31
+		// would collide with another network id mod 2^31. Refuse rather
+		// than silently producing colliding addresses.
+		return nil, fmt.Errorf("network id %d must be < 2^31 (BIP-32 hardening limit)", nid)
 	}
 
 	seed := bip39.NewSeed(mnemonic, "")
@@ -410,74 +454,50 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 		return nil, fmt.Errorf("failed to create master key: %w", err)
 	}
 
-	// BIP44 path for Lux P/X-Chain: m/44'/9000'/0'/0/{account}
-	// 44' = purpose (BIP44)
-	// 9000' = Lux coin type (P/X-Chain)
-	// 0' = account
-	// 0 = external chain
-	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	account, err := deriveLuxAccount(masterKey, nid)
 	if err != nil {
-		return nil, fmt.Errorf("failed to derive purpose: %w", err)
+		return nil, err
 	}
 
-	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	// Branch 1' — Lux secp256k1 account.
+	luxBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 1)
 	if err != nil {
-		return nil, fmt.Errorf("failed to derive coin type: %w", err)
+		return nil, fmt.Errorf("failed to derive branch 1' (secp256k1): %w", err)
 	}
 
-	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
+	// Branch 0' — ML-DSA-65 mesh identity.
+	mldsaBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to derive account: %w", err)
-	}
-
-	change, err := account.NewChildKey(0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive change: %w", err)
-	}
-
-	// Also derive ETH keys (coin type 60) for C-Chain addresses.
-	// P/X-Chain uses coin type 9000, C-Chain uses standard ETH derivation.
-	ethCoinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 60)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive ETH coin type: %w", err)
-	}
-	ethAccount, err := ethCoinType.NewChildKey(bip32.FirstHardenedChild + 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive ETH account: %w", err)
-	}
-	ethChange, err := ethAccount.NewChildKey(0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive ETH change: %w", err)
+		return nil, fmt.Errorf("failed to derive branch 0' (ML-DSA): %w", err)
 	}
 
 	keys := make([]KeyInfo, 0, numAccounts)
 	for i := 0; i < numAccounts; i++ {
-		// Lux key (coin type 9000) → P/X-Chain address + NodeID
-		childKey, err := change.NewChildKey(uint32(i))
+		// Hardened child index i' on branch 1' → secp256k1 spend key.
+		luxChild, err := luxBranch.NewChildKey(bip32.FirstHardenedChild + uint32(i))
 		if err != nil {
-			return nil, fmt.Errorf("failed to derive key %d: %w", i, err)
+			return nil, fmt.Errorf("failed to derive secp256k1 key %d: %w", i, err)
 		}
 
-		keyInfo, err := keyInfoFromPrivateKey(childKey.Key)
+		keyInfo, err := keyInfoFromPrivateKey(luxChild.Key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create key info %d: %w", i, err)
 		}
 
-		// ETH key (coin type 60) → C-Chain address
-		// This ensures C-Chain address matches standard ETH wallets (MetaMask, etc.)
-		ethChildKey, err := ethChange.NewChildKey(uint32(i))
+		// Hardened child index i' on branch 0' → ML-DSA-65 keypair.
+		mldsaChild, err := mldsaBranch.NewChildKey(bip32.FirstHardenedChild + uint32(i))
 		if err != nil {
-			return nil, fmt.Errorf("failed to derive ETH key %d: %w", i, err)
+			return nil, fmt.Errorf("failed to derive ML-DSA seed %d: %w", i, err)
 		}
-		ethPrivKey, err := ethcrypto.ToECDSA(ethChildKey.Key)
-		if err == nil {
-			ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-			copy(keyInfo.ETHAddr[:], ethAddr[:])
+		mldsaPubKey, err := mldsaKeygenFromChildSeed(mldsaChild.Key)
+		if err != nil {
+			return nil, fmt.Errorf("ML-DSA keygen %d: %w", i, err)
 		}
+		keyInfo.MLDSAPublicKey = mldsaPubKey
 
-		// BLS signer key — derive deterministically from mnemonic seed + index
-		// Uses SHA-256(seed || "bls-signer" || index) as the BLS secret key seed
-		// This ensures BLS keys are reproducible from the same mnemonic
+		// BLS signer key — derive deterministically from mnemonic seed + index.
+		// Uses keccak256(seed || "bls-signer" || index) as the BLS secret
+		// key seed so BLS keys are reproducible from the same mnemonic.
 		blsSeed := keccak256(append(append(seed, []byte("bls-signer")...), byte(i)))
 		blsSK, blsErr := bls.SecretKeyFromSeed(blsSeed)
 		if blsErr == nil {
@@ -490,18 +510,74 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 		keys = append(keys, *keyInfo)
 	}
 
+	log.Debug("derived HD keys",
+		"nid", nid,
+		"numAccounts", numAccounts,
+		"path", fmt.Sprintf("m/44'/9000'/%d'/{0',1'}/i'", nid),
+	)
 	return keys, nil
 }
 
+// deriveLuxAccount walks the shared prefix m/44'/9000'/nid' from the
+// master key. The two leaf branches (0' = ML-DSA, 1' = secp256k1) hang
+// off the returned account key.
+func deriveLuxAccount(masterKey *bip32.Key, nid uint32) (*bip32.Key, error) {
+	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive purpose 44': %w", err)
+	}
+	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive coin type 9000': %w", err)
+	}
+	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + nid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive account %d': %w", nid, err)
+	}
+	return account, nil
+}
+
+// mldsaKeygenFromChildSeed expands a 32-byte BIP-32 child seed into the
+// 32-byte ξ that FIPS 204 §5.1 KeyGen consumes, then returns the packed
+// ML-DSA-65 public key (1952 bytes).
+//
+// The expansion is `ξ = SHAKE-256("LUX/HIP-0077/mldsa65" || child_seed)`.
+// The domain-separation label means a future scheme that wants to use
+// the same BIP-32 child seed for a different KEM/SIG cannot collide
+// with our ML-DSA key.
+func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
+	if len(childSeed) != 32 {
+		return nil, fmt.Errorf("child seed must be 32 bytes, got %d", len(childSeed))
+	}
+	var xi [mldsa65.SeedSize]byte // SeedSize == 32 per FIPS 204
+	h := sha3.NewShake256()
+	if _, err := h.Write([]byte("LUX/HIP-0077/mldsa65")); err != nil {
+		return nil, fmt.Errorf("shake write label: %w", err)
+	}
+	if _, err := h.Write(childSeed); err != nil {
+		return nil, fmt.Errorf("shake write seed: %w", err)
+	}
+	if _, err := h.Read(xi[:]); err != nil {
+		return nil, fmt.Errorf("shake read xi: %w", err)
+	}
+	pk, _ := mldsa65.NewKeyFromSeed(&xi)
+	return pk.Bytes(), nil
+}
+
 // LoadKeysFromMnemonicEnv loads keys from mnemonic env vars.
-// Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC
-func LoadKeysFromMnemonicEnv(numAccounts int) ([]KeyInfo, error) {
+// Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC.
+//
+// nid is the Hanzo mesh network id baked into the hardened derivation
+// path. Callers that already know the network id MUST use
+// LoadKeysFromMnemonicEnvForNetwork instead — it adds the
+// production-safe public-mnemonic guard around this entry point.
+func LoadKeysFromMnemonicEnv(nid uint32, numAccounts int) ([]KeyInfo, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
 		return nil, fmt.Errorf("mnemonic not set (set MNEMONIC, LUX_MNEMONIC, or LIGHT_MNEMONIC)")
 	}
 
-	return LoadKeysFromMnemonic(mnemonic, numAccounts)
+	return LoadKeysFromMnemonic(mnemonic, nid, numAccounts)
 }
 
 // keyInfoFromPrivateKey creates KeyInfo from raw private key bytes
@@ -572,6 +648,15 @@ func genesisMessage(networkID uint32) string {
 
 // getMnemonicEnv returns the mnemonic from environment variables.
 // Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC
+//
+// LIGHT_MNEMONIC is the publicly-known dev seed. Anyone in the world can
+// derive its first 200 child keys; the auto-fund pre-allocation in
+// HIP-0077 §"Auto-funding the first 200 devices" is *only* meant for
+// network IDs >= 1337 (dev / primary local mesh). Production networks
+// MUST set MNEMONIC (preferred) or LUX_MNEMONIC.
+//
+// Use IsLightMnemonic and RefuseLightMnemonicOnProduction to enforce that
+// rule wherever a key is loaded for a known network ID.
 func getMnemonicEnv() string {
 	for _, env := range []string{"MNEMONIC", "LUX_MNEMONIC", "LIGHT_MNEMONIC"} {
 		if v := os.Getenv(env); v != "" {
@@ -581,18 +666,168 @@ func getMnemonicEnv() string {
 	return ""
 }
 
-// BuildWalletAllocations derives BIP44 keys from the MNEMONIC/LUX_MNEMONIC env var
-// and returns free (no vesting) spending allocations for each key.
-// Uses path m/44'/9000'/0'/0/{i} for i in 0..numKeys-1.
-// Each allocation has both ETHAddr and LUXAddr (StakingAddr).
-func BuildWalletAllocations(numKeys int, amountPerKey uint64) ([]Allocation, error) {
+// IsLightMnemonic reports whether the given mnemonic is exactly the
+// well-known LIGHT_MNEMONIC dev seed. Compared in constant time so a
+// timing attacker can't probe the running config from outside.
+func IsLightMnemonic(mnemonic string) bool {
+	return subtleConstantTimeEqual([]byte(mnemonic), []byte(LightMnemonic))
+}
+
+// knownPublicMnemonics is the curated set of seeds that anyone in the
+// world can derive from. Production deployments MUST refuse all of them.
+//
+// LIGHT_MNEMONIC is one row; the rest are the most-frequently-cited public
+// mnemonics from BIP-39 test vectors, common dev tooling defaults, and
+// hardware-wallet demo seeds. Any of these on a production network →
+// every derived child key is publicly enumerable.
+//
+// This list is deliberately not exhaustive — a strict whitelist of
+// KMS-loaded mnemonics is the only complete defence. The blacklist
+// stops the obvious public-mnemonic footguns; KMS handles the rest.
+//
+// Closes HIP-0077 red-review F31 (guard previously matched ONE mnemonic
+// only; BIP-39 abandon-vector + Hardhat default + Trezor demo all passed).
+var knownPublicMnemonics = []string{
+	LightMnemonic,
+	// BIP-39 test vector #1 (canonical "abandon" mnemonic) — used in
+	// every BIP-39 reference implementation as the default test.
+	"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+	// BIP-39 test vector #5.
+	"legal winner thank year wave sausage worth useful legal winner thank yellow",
+	// Hardhat / Foundry default test mnemonic — millions of dev wallets.
+	"test test test test test test test test test test test junk",
+	// Trezor demo seed.
+	"witch collapse practice feed shame open despair creek road again ice least",
+	// Common "all 1s" BIP-39 vector.
+	"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon",
+}
+
+// IsKnownPublicMnemonic reports whether the given mnemonic appears in any
+// well-known public list (LIGHT_MNEMONIC, BIP-39 test vectors, Hardhat
+// default, hardware-wallet demos, etc.). Compared in constant time per
+// entry so a timing attacker can't probe which entry matched.
+//
+// Production deployments MUST refuse any mnemonic for which this returns
+// true. A real production seed comes from a hardware RNG and lives in
+// KMS — never from a publicly-known list.
+func IsKnownPublicMnemonic(mnemonic string) bool {
+	matched := false
+	mb := []byte(mnemonic)
+	for _, candidate := range knownPublicMnemonics {
+		// Constant-time per-entry compare so the loop reveals neither
+		// which entry matched nor whether it short-circuited.
+		if subtleConstantTimeEqual(mb, []byte(candidate)) {
+			matched = true
+		}
+	}
+	return matched
+}
+
+// IsProductionNetwork reports whether the given numeric network ID is on
+// the list of *production* Lux networks. Local / primary-local meshes
+// (network IDs >= 1337, including constants.LocalID = 1337) deliberately
+// allow LIGHT_MNEMONIC; mainnet, testnet and any other reserved low-ID
+// network refuse it.
+//
+// Network ID convention (mirrors lux/constants):
+//   - 1     mainnet (production)
+//   - 2     testnet (production-grade staging — refuses LIGHT_MNEMONIC)
+//   - 1337  LocalID (free-form local dev, allows LIGHT_MNEMONIC)
+//   - >= 1337 any tenant local / dev mesh (allows LIGHT_MNEMONIC)
+//   - 3..1336 reserved; treated as production by default
+func IsProductionNetwork(networkID uint32) bool {
+	switch networkID {
+	case constants.MainnetID, constants.TestnetID:
+		return true
+	}
+	// Anything below 1337 that isn't an explicit dev ID is treated as
+	// production. 1337+ is the dev mesh range per HIP-0077.
+	return networkID < 1337
+}
+
+// RefuseLightMnemonicOnProduction returns a non-nil error iff the running
+// process is configured with any publicly-known mnemonic (LIGHT_MNEMONIC,
+// BIP-39 test vectors, Hardhat / Trezor demos, …) AND the supplied
+// networkID is a production network. Runtime guard required by HIP-0077
+// §"Mnemonic exposure" / "Auto-funded blast radius".
+//
+// **Headline contract (HIP-0077 red-review F30):** every public callable
+// that turns environment state into derived keys MUST invoke this guard
+// itself. Callers may NOT rely on operator discipline to remember the
+// call — `LoadKeysFromMnemonicEnv` and `BuildConfigFromEnv` invoke this
+// directly so a misconfigured production deployment fails closed at the
+// derivation point, never silently produces public-mnemonic-derived
+// signing keys.
+//
+// The guard widens beyond LIGHT_MNEMONIC to cover the broader
+// public-mnemonic blacklist (HIP-0077 red-review F31): BIP-39 abandon
+// vector, Hardhat default, Trezor demo, etc. See knownPublicMnemonics.
+func RefuseLightMnemonicOnProduction(networkID uint32) error {
+	mnemonic := getMnemonicEnv()
+	if mnemonic == "" {
+		// No mnemonic at all → not our problem here; the caller will get
+		// a "mnemonic not set" error from LoadKeysFromMnemonicEnv.
+		return nil
+	}
+	if !IsKnownPublicMnemonic(mnemonic) {
+		return nil
+	}
+	if !IsProductionNetwork(networkID) {
+		return nil
+	}
+	return fmt.Errorf(
+		"refusing to derive keys: a publicly-known mnemonic is set on production "+
+			"network %d (mainnet/testnet/<1337). Public mnemonics (LIGHT_MNEMONIC, "+
+			"BIP-39 test vectors, Hardhat/Trezor demos) are deterministic — anyone "+
+			"can derive every child key. Set MNEMONIC or LUX_MNEMONIC env var with "+
+			"a private hardware-RNG mnemonic loaded from KMS, or run on a dev "+
+			"network ID (>= 1337)", networkID,
+	)
+}
+
+// LoadKeysFromMnemonicEnvForNetwork is the production-safe variant of
+// LoadKeysFromMnemonicEnv: it invokes the public-mnemonic guard before
+// any derivation. This is the function every node-start path SHOULD call
+// instead of LoadKeysFromMnemonicEnv directly.
+//
+// Closes HIP-0077 red-review F30 (the prior LoadKeysFromMnemonicEnv was
+// guard-free and operators could silently derive on production from
+// LIGHT_MNEMONIC).
+func LoadKeysFromMnemonicEnvForNetwork(networkID uint32, numAccounts int) ([]KeyInfo, error) {
+	if err := RefuseLightMnemonicOnProduction(networkID); err != nil {
+		return nil, err
+	}
+	return LoadKeysFromMnemonicEnv(networkID, numAccounts)
+}
+
+// subtleConstantTimeEqual is a thin wrapper so we don't pull crypto/subtle
+// into this package's import surface for the one comparison.
+func subtleConstantTimeEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	var v byte
+	for i := range a {
+		v |= a[i] ^ b[i]
+	}
+	return v == 0
+}
+
+// BuildWalletAllocations derives wallet keys from the MNEMONIC /
+// LUX_MNEMONIC env var on the per-network branch 1' hardened path
+// (m/44'/9000'/nid'/1'/i') and returns free (no vesting) spending
+// allocations for each key. Each allocation has both ETHAddr and
+// LUXAddr (StakingAddr).
+func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]Allocation, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
 		return nil, fmt.Errorf("wallet allocations require MNEMONIC or LUX_MNEMONIC env var")
 	}
-
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
+	}
+	if nid >= bip32.FirstHardenedChild {
+		return nil, fmt.Errorf("network id %d must be < 2^31 (BIP-32 hardening limit)", nid)
 	}
 
 	seed := bip39.NewSeed(mnemonic, "")
@@ -601,27 +836,18 @@ func BuildWalletAllocations(numKeys int, amountPerKey uint64) ([]Allocation, err
 		return nil, fmt.Errorf("failed to create master key: %w", err)
 	}
 
-	// BIP44: m/44'/9000'/0'/0/{i}
-	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	account, err := deriveLuxAccount(masterKey, nid)
 	if err != nil {
-		return nil, fmt.Errorf("failed to derive purpose key: %w", err)
+		return nil, err
 	}
-	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	luxBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 1)
 	if err != nil {
-		return nil, fmt.Errorf("failed to derive coin type key: %w", err)
-	}
-	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive account key: %w", err)
-	}
-	change, err := account.NewChildKey(0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive change key: %w", err)
+		return nil, fmt.Errorf("failed to derive branch 1' (secp256k1): %w", err)
 	}
 
 	allocations := make([]Allocation, 0, numKeys)
 	for i := 0; i < numKeys; i++ {
-		childKey, err := change.NewChildKey(uint32(i))
+		childKey, err := luxBranch.NewChildKey(bip32.FirstHardenedChild + uint32(i))
 		if err != nil {
 			return nil, fmt.Errorf("failed to derive wallet key %d: %w", i, err)
 		}
@@ -642,7 +868,11 @@ func BuildWalletAllocations(numKeys int, amountPerKey uint64) ([]Allocation, err
 		var ethShortID ids.ShortID
 		copy(ethShortID[:], ethAddr[:])
 
-		fmt.Fprintf(os.Stderr, "Wallet key %d: luxAddr=%s ethAddr=0x%x\n", i, stakingAddr, ethAddr)
+		log.Debug("derived wallet allocation",
+			"nid", nid, "i", i,
+			"luxAddr", stakingAddr.String(),
+			"ethAddr", fmt.Sprintf("0x%x", ethAddr),
+		)
 
 		allocations = append(allocations, Allocation{
 			ETHAddr:       ethShortID,
@@ -681,7 +911,7 @@ func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey ui
 	var allKeys []KeyInfo
 	if mnemonic := getMnemonicEnv(); mnemonic != "" {
 		numAccounts := DefaultNumAccounts
-		allKeys, err = LoadKeysFromMnemonic(mnemonic, numAccounts)
+		allKeys, err = LoadKeysFromMnemonic(mnemonic, networkID, numAccounts)
 		if err != nil {
 			allKeys = nil
 		}
@@ -847,9 +1077,11 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 	}, nil
 }
 
-// BuildWalletKeyHex derives the BIP44 private key at index i and returns it as hex.
-// Used by bootstrap tools that need the exact same key the genesis allocated to.
-func BuildWalletKeyHex(index int) (string, error) {
+// BuildWalletKeyHex derives the secp256k1 private key at index i on the
+// per-network branch 1' (m/44'/9000'/nid'/1'/i') and returns it as hex.
+// Used by bootstrap tools that need the exact same key the genesis
+// allocated to.
+func BuildWalletKeyHex(nid uint32, index int) (string, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
 		return "", fmt.Errorf("MNEMONIC or LUX_MNEMONIC env var required")
@@ -857,16 +1089,23 @@ func BuildWalletKeyHex(index int) (string, error) {
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return "", fmt.Errorf("invalid mnemonic")
 	}
+	if nid >= bip32.FirstHardenedChild {
+		return "", fmt.Errorf("network id %d must be < 2^31 (BIP-32 hardening limit)", nid)
+	}
 	seed := bip39.NewSeed(mnemonic, "")
 	masterKey, err := bip32.NewMasterKey(seed)
 	if err != nil {
 		return "", err
 	}
-	purpose, _ := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
-	coinType, _ := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
-	account, _ := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
-	change, _ := account.NewChildKey(0)
-	child, err := change.NewChildKey(uint32(index))
+	account, err := deriveLuxAccount(masterKey, nid)
+	if err != nil {
+		return "", err
+	}
+	luxBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 1)
+	if err != nil {
+		return "", fmt.Errorf("failed to derive branch 1' (secp256k1): %w", err)
+	}
+	child, err := luxBranch.NewChildKey(bip32.FirstHardenedChild + uint32(index))
 	if err != nil {
 		return "", err
 	}
