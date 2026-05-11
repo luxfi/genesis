@@ -43,9 +43,9 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      # See ci.yml for why TestGetGenesisLocalnet is skipped.
+      # See ci.yml for why these tests are skipped (broken data + live RPC).
       - name: go test
-        run: go test -count=1 -timeout=10m -skip TestGetGenesisLocalnet ./...
+        run: go test -count=1 -timeout=10m -skip '^(TestGetGenesisLocalnet|TestTransferPChain)$' ./...
 
       - name: Build genesis binary
         env:
