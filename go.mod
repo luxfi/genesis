@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	github.com/luxfi/constants v1.4.6
 	github.com/luxfi/container v0.0.4
-	github.com/luxfi/crypto v1.17.44
+	github.com/luxfi/crypto v1.18.4
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
 	github.com/luxfi/ids v1.2.9
@@ -22,6 +22,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/luxfi/accel v1.0.7 // indirect
 	github.com/luxfi/atomic v1.0.0 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
@@ -38,7 +39,7 @@ require (
 require (
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260311194731-d5b7577c683d // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.6 // indirect
-	github.com/cloudflare/circl v1.6.3
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
 	github.com/gorilla/rpc v1.2.1 // indirect
