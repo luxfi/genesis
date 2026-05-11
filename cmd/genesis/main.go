@@ -153,6 +153,7 @@ func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64
 				config.NetworkID = networkID
 			}
 			config = maybeAddWalletAllocations(config, walletKeys, walletAmount)
+
 			return maybePreserveCChain(config, cchainPath)
 		}
 		// If genesis dir specified but failed, report error
@@ -163,6 +164,7 @@ func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64
 	config, err = genesis.BuildConfigFromEnv(networkID, validators, allocation)
 	if err == nil {
 		config = maybeAddWalletAllocations(config, walletKeys, walletAmount)
+
 		return maybePreserveCChain(config, cchainPath)
 	}
 
@@ -186,7 +188,7 @@ func maybeAddWalletAllocations(config *genesis.Config, walletKeys int, walletAmo
 		return config
 	}
 
-	walletAllocs, err := genesis.BuildWalletAllocations(walletKeys, walletAmountLUX*genesis.Lux)
+	walletAllocs, err := genesis.BuildWalletAllocations(config.NetworkID, walletKeys, walletAmountLUX*genesis.Lux)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to build wallet allocations: %v\n", err)
 		return config
