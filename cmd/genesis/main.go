@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,8 +42,9 @@ func main() {
 		output       = flag.String("output", "", "Output file path (default: stdout)")
 		allocation   = flag.Uint64("allocation", genesis.DefaultAllocationPerValidator, "Allocation per validator in nLUX")
 		validators   = flag.Int("validators", 3, "Number of validators for mnemonic-based genesis")
-		walletKeys   = flag.Int("wallet-keys", 0, "Number of BIP44 mnemonic-derived wallet keys to fund (requires MNEMONIC env)")
-		walletAmount = flag.Uint64("wallet-amount", 10000, "Allocation per wallet key in LUX (default: 10000)")
+		walletKeys      = flag.Int("wallet-keys", 0, "Number of mnemonic-derived wallet keys to fund (Lux-internal hardened path m/44'/9000'/nid'/1'/i'; requires MNEMONIC env)")
+		walletAmount    = flag.Uint64("wallet-amount", 10000, "Allocation per wallet key in LUX (default: 10000)")
+		bip44WalletKeys = flag.Int("bip44-wallet-keys", 0, "Number of canonical BIP44 wallet keys to fund (m/44'/9000'/0'/0/i — matches Lux/Avalanche web wallet & subnet-bootstrap CLIs)")
 		cchainPath   = flag.String("cchain", "", "Path to existing C-Chain genesis (preserves original)")
 		format       = flag.String("format", "pretty", "Output format: json, pretty")
 		showHelp     = flag.Bool("help", false, "Show help")
@@ -70,6 +72,17 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Apply BIP44 wallet allocations (canonical web-wallet path) — these
+	// land on P-Chain (free spendable UTXO) AND on the C-Chain alloc map,
+	// so a subnet-bootstrap CLI that derives via m/44'/9000'/0'/0/i finds
+	// fundable addresses on both fronts.
+	if *bip44WalletKeys > 0 {
+		if err := addBIP44WalletAllocations(config, netID, *bip44WalletKeys, *walletAmount); err != nil {
+			fmt.Fprintf(os.Stderr, "Error adding BIP44 wallet allocations: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// Output result
@@ -197,6 +210,51 @@ func maybeAddWalletAllocations(config *genesis.Config, walletKeys int, walletAmo
 	config.Allocations = append(config.Allocations, walletAllocs...)
 	fmt.Fprintf(os.Stderr, "Added %d wallet allocations (%d LUX each)\n", len(walletAllocs), walletAmountLUX)
 	return config
+}
+
+// addBIP44WalletAllocations appends canonical BIP44 (m/44'/9000'/0'/0/i)
+// allocations to both the P/X-Chain alloc list AND the C-Chain alloc map.
+// Without the C-Chain merge, a tool that calls eth_getBalance for the
+// derived ETH address would see 0 on the EVM side even though the P-Chain
+// UTXO funds it on the native side.
+func addBIP44WalletAllocations(config *genesis.Config, networkID uint32, numKeys int, amountLUX uint64) error {
+	allocs, err := genesis.BuildBIP44WalletAllocations(networkID, numKeys, amountLUX*genesis.Lux)
+	if err != nil {
+		return fmt.Errorf("build bip44 wallet allocations: %w", err)
+	}
+	config.Allocations = append(config.Allocations, allocs...)
+	fmt.Fprintf(os.Stderr, "Added %d BIP44 wallet allocations (%d LUX each)\n", len(allocs), amountLUX)
+
+	// Merge ETH addresses into cChainGenesis alloc.
+	if config.CChainGenesis == "" {
+		return nil
+	}
+	var cchain map[string]any
+	if err := json.Unmarshal([]byte(config.CChainGenesis), &cchain); err != nil {
+		return fmt.Errorf("unmarshal cChainGenesis: %w", err)
+	}
+	alloc, _ := cchain["alloc"].(map[string]any)
+	if alloc == nil {
+		alloc = make(map[string]any)
+		cchain["alloc"] = alloc
+	}
+	// 1 LUX on C-Chain = 1e18 wei (EVM-native 18 decimals); amountLUX is
+	// the operator's chosen per-key allocation in whole LUX. Use the same
+	// scale as the rest of the C-Chain treasury (wei).
+	weiPerLUX := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+	balance := new(big.Int).Mul(new(big.Int).SetUint64(amountLUX), weiPerLUX)
+	balanceHex := fmt.Sprintf("0x%x", balance)
+	for _, a := range allocs {
+		// 20-byte ETH addr in checksummed 0x form.
+		addrHex := fmt.Sprintf("0x%s", a.ETHAddr.Hex())
+		alloc[addrHex] = map[string]any{"balance": balanceHex}
+	}
+	out, err := json.Marshal(cchain)
+	if err != nil {
+		return fmt.Errorf("re-marshal cChainGenesis: %w", err)
+	}
+	config.CChainGenesis = string(out)
+	return nil
 }
 
 func maybePreserveCChain(config *genesis.Config, cchainPath string) (*genesis.Config, error) {
