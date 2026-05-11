@@ -888,6 +888,90 @@ func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]All
 	return allocations, nil
 }
 
+// BuildBIP44WalletAllocations derives wallet keys on the canonical BIP44
+// path m/44'/9000'/0'/0/i (purpose-44' / coin-9000' / account-0' hardened;
+// change-0 / index-i NON-hardened). This is the path the Lux/Avalanche
+// web wallet and any BIP44-conformant client uses. Returns free (no
+// vesting) spending allocations for each key.
+//
+// Use this instead of BuildWalletAllocations when the receiving consumer
+// (e.g. a subnet-bootstrap CLI) expects classical BIP44 web-wallet
+// addresses. BuildWalletAllocations uses a Lux-internal hardened layout
+// (m/44'/9000'/nid'/1'/i') and will not match the web wallet.
+//
+// The networkID parameter is preserved for symmetry with
+// BuildWalletAllocations but is unused — canonical BIP44 is a single
+// tree shared across networks (the same seed produces the same addresses
+// regardless of chain).
+func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uint64) ([]Allocation, error) {
+	_ = networkID // see comment above
+	mnemonic := getMnemonicEnv()
+	if mnemonic == "" {
+		return nil, fmt.Errorf("wallet allocations require MNEMONIC or LUX_MNEMONIC env var")
+	}
+	if !bip39.IsMnemonicValid(mnemonic) {
+		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
+	}
+
+	seed := bip39.NewSeed(mnemonic, "")
+	masterKey, err := bip32.NewMasterKey(seed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create master key: %w", err)
+	}
+	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	if err != nil {
+		return nil, fmt.Errorf("derive purpose 44': %w", err)
+	}
+	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	if err != nil {
+		return nil, fmt.Errorf("derive coin 9000': %w", err)
+	}
+	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
+	if err != nil {
+		return nil, fmt.Errorf("derive account 0': %w", err)
+	}
+	change, err := account.NewChildKey(0) // non-hardened
+	if err != nil {
+		return nil, fmt.Errorf("derive change 0: %w", err)
+	}
+
+	allocations := make([]Allocation, 0, numKeys)
+	for i := 0; i < numKeys; i++ {
+		childKey, err := change.NewChildKey(uint32(i)) // non-hardened
+		if err != nil {
+			return nil, fmt.Errorf("failed to derive wallet key %d: %w", i, err)
+		}
+
+		luxPrivKey, err := luxcrypto.ToPrivateKey(childKey.Key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create secp256k1 key %d: %w", i, err)
+		}
+		stakingAddr := luxPrivKey.Address()
+
+		ethPrivKey, err := ethcrypto.ToECDSA(childKey.Key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create ECDSA key %d: %w", i, err)
+		}
+		ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
+		var ethShortID ids.ShortID
+		copy(ethShortID[:], ethAddr[:])
+
+		log.Debug("derived BIP44 wallet allocation",
+			"i", i,
+			"luxAddr", stakingAddr.String(),
+			"ethAddr", fmt.Sprintf("0x%x", ethAddr),
+		)
+
+		allocations = append(allocations, Allocation{
+			ETHAddr:       ethShortID,
+			LUXAddr:       stakingAddr,
+			InitialAmount: amountPerKey,
+		})
+	}
+
+	return allocations, nil
+}
+
 // BuildConfigFromEnv builds genesis config from environment variables
 // Checks in order: KEYS_DIR, mnemonic (MNEMONIC/LUX_MNEMONIC/LIGHT_MNEMONIC), PRIVATE_KEY
 //
@@ -1027,9 +1111,43 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		})
 	}
 
+	// Track which staking addresses already have an allocation. Validator
+	// addresses that aren't already in allKeys need their own stake
+	// allocation; otherwise PlatformVM rejects the genesis with
+	// "validator has not weight" because there's no UTXO at the
+	// validator's stakedFunds address.
+	allocByAddr := make(map[ids.ShortID]bool, len(allocations))
+	for _, a := range allocations {
+		allocByAddr[a.LUXAddr] = true
+	}
+	// stakeAmount is the locktime-locked stake each validator
+	// contributes. Matches the prior genesis behaviour (3B nLUX across
+	// three future-locktime buckets), so the PlatformVM sees a
+	// non-zero stake for each initial staker.
+	const stakeAmount = uint64(1_000_000_000)
+	now := uint64(time.Now().Unix())
+	stakeUnlockSchedule := []LockedAmount{
+		{Amount: stakeAmount, Locktime: now + 5*365*24*60*60},  // ~5y
+		{Amount: stakeAmount, Locktime: now + 10*365*24*60*60}, // ~10y
+		{Amount: stakeAmount, Locktime: now + 20*365*24*60*60}, // ~20y
+	}
+
 	for _, key := range validatorKeys {
 
 		stakedFunds = append(stakedFunds, key.StakingAddr)
+
+		// Ensure the validator's staking address has a corresponding
+		// allocation. If absent, add one with locked stake so the
+		// PlatformVM can weight the staker.
+		if !allocByAddr[key.StakingAddr] {
+			allocations = append(allocations, Allocation{
+				ETHAddr:        key.ETHAddr,
+				LUXAddr:        key.StakingAddr,
+				InitialAmount:  0,
+				UnlockSchedule: stakeUnlockSchedule,
+			})
+			allocByAddr[key.StakingAddr] = true
+		}
 
 		staker := Staker{
 			NodeID:        key.NodeID,
