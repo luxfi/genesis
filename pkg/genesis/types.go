@@ -42,6 +42,17 @@ type Config struct {
 	// This allows chains (P/X/C/Q/etc.) to have network-specific IDs that
 	// can be migrated/upgraded over time via governance.
 	ChainMapping *ChainMapping `json:"chainMapping,omitempty"`
+
+	// SecurityProfile is the genesis-level pin for this chain's locked
+	// ChainSecurityProfile (consensus/config). Carries the ProfileID
+	// byte plus the SHA3-384 content hash of the canonical profile.
+	// luxfi/node loads this at startup and refuses to boot if the live
+	// canonical profile content doesn't match the pinned hash.
+	//
+	// Optional in JSON so legacy genesis files keep parsing; node
+	// bootstrap warns + refuses strict-PQ features when absent.
+	// Closes red-team finding F102.
+	SecurityProfile *SecurityProfile `json:"securityProfile,omitempty"`
 }
 
 // Allocation represents a genesis allocation
@@ -265,6 +276,7 @@ type ConfigOutput struct {
 	GChainGenesis              string           `json:"gChainGenesis,omitempty"` // G-Chain: Graph VM genesis
 	KChainGenesis              string           `json:"kChainGenesis,omitempty"` // K-Chain: KMS VM genesis
 	Chains                     []ChainEntry     `json:"chains,omitempty"`        // Additional genesis chains
+	SecurityProfile            *SecurityProfile `json:"securityProfile,omitempty"`
 	Message                    string           `json:"message"`
 }
 
@@ -320,6 +332,7 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 		ZChainGenesis:              c.ZChainGenesis,
 		GChainGenesis:              c.GChainGenesis,
 		KChainGenesis:              c.KChainGenesis,
+		SecurityProfile:            c.SecurityProfile,
 		Message:                    c.Message,
 	}
 }
