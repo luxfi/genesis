@@ -3,26 +3,40 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
+	"github.com/luxfi/constants"
 	"github.com/luxfi/genesis/pkg/genesis"
 )
 
 func main() {
-	// Priority: MNEMONIC > MNEMONIC > LIGHT_MNEMONIC
+	// Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC
 	mnemonic := ""
-	for _, env := range []string{"MNEMONIC", "MNEMONIC", "LIGHT_MNEMONIC"} {
+	for _, env := range []string{"MNEMONIC", "LUX_MNEMONIC", "LIGHT_MNEMONIC"} {
 		if v := os.Getenv(env); v != "" {
 			mnemonic = v
 			break
 		}
 	}
 	if mnemonic == "" {
-		fmt.Println("mnemonic not set (set LIGHT_MNEMONIC, MNEMONIC, or MNEMONIC)")
+		fmt.Println("mnemonic not set (set LIGHT_MNEMONIC, MNEMONIC, or LUX_MNEMONIC)")
 		os.Exit(1)
 	}
 
+	// Network id is the hardened branch parameter for the BIP-32 path
+	// m/44'/9000'/nid'/1'/i'. Default to LocalID; override with NETWORK_ID.
+	nid := uint32(constants.LocalID)
+	if v := os.Getenv("NETWORK_ID"); v != "" {
+		parsed, err := strconv.ParseUint(v, 10, 32)
+		if err != nil {
+			fmt.Printf("NETWORK_ID=%q: %v\n", v, err)
+			os.Exit(1)
+		}
+		nid = uint32(parsed)
+	}
+
 	// Derive 10 keys from mnemonic (5 validators + 5 fee reserve)
-	keys, err := genesis.LoadKeysFromMnemonic(mnemonic, 10)
+	keys, err := genesis.LoadKeysFromMnemonic(mnemonic, nid, 10)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
