@@ -31,11 +31,11 @@ type rpcReq struct {
 
 type rpcResp struct {
 	Result struct {
-		Balance        string   `json:"balance"`
-		Unlocked       string   `json:"unlocked"`
-		LockedStakeable string  `json:"lockedStakeable"`
-		LockedNotStakeable string `json:"lockedNotStakeable"`
-		UTXOIDs        []string `json:"utxoIDs"`
+		Balance            string   `json:"balance"`
+		Unlocked           string   `json:"unlocked"`
+		LockedStakeable    string   `json:"lockedStakeable"`
+		LockedNotStakeable string   `json:"lockedNotStakeable"`
+		UTXOIDs            []string `json:"utxoIDs"`
 	} `json:"result"`
 	Error *struct {
 		Message string `json:"message"`

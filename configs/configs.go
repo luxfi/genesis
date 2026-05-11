@@ -65,7 +65,6 @@ const (
 	LocalnetChainID = LocalChainID
 )
 
-
 //go:embed mainnet testnet devnet localnet
 var embeddedGenesis embed.FS
 
