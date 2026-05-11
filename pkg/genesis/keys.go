@@ -76,8 +76,8 @@ type KeyInfo struct {
 	StakerKey            []byte
 	BLSPublicKey         []byte
 	BLSProofOfPossession []byte
-	MLDSAPublicKey       []byte // ML-DSA post-quantum public key (FIPS 204)
-	CoronaPublicKey    []byte // Corona ring signature public key
+	MLDSAPublicKey       []byte      // ML-DSA post-quantum public key (FIPS 204)
+	CoronaPublicKey    []byte      // Corona ring signature public key
 	StakingAddr          ids.ShortID // P-chain address derived from staker key
 	ETHAddr              ids.ShortID // C-chain/X-chain address
 }
