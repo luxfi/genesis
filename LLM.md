@@ -2,6 +2,51 @@
 
 Canonical genesis configurations for all Lux blockchain networks. **This repo is the single source of truth for chain IDs, genesis hashes, state roots, and required precompiles.** Other repos (`~/work/lux/{node,evm,state}`) reference these values; do not duplicate them.
 
+**Latest Tag**: v1.9.6
+
+## Post-E2E-PQ State (current)
+
+Genesis now pins a `ChainSecurityProfile` for every chain it generates,
+and resolves it at load time. The profile hash is committed into the
+chain's bootstrap so a profile-flip is a wrong-network event, not a
+silent classification change.
+
+### Recent significant commits
+
+| SHA | Tag | Impact |
+|-----|-----|--------|
+| `85a8fc8` | v1.9.6 | Pin ChainSecurityProfile into Config + Resolve at load (closes F102 genesis layer) |
+| `1d73c8d` | v1.9.6 | Swap mldsa65 keygen from cloudflare/circl to luxfi/crypto/pq/mldsa |
+| `e698307` | v1.9.5 | HD branch hardening + LIGHT_MNEMONIC production refusal (F12/F30/F31/F35) |
+| `fe4781c` | v1.9.5 | `LUX_DISABLE_CCHAIN=1` omits C-Chain from primary genesis |
+| `2b16f45` | v1.9.5 | Operator-overridable C-Chain genesis via `LUX_CCHAIN_GENESIS_FILE` |
+
+### Active versions
+- Repo: `v1.9.6` (next: `v1.9.7`).
+- Pinned by: `luxfi/node v1.26.10`.
+- Pulls: `luxfi/consensus v1.23.4+` (for `ChainSecurityProfile`
+  definition + `ComputeHash`), `luxfi/crypto v1.18.4+` (mldsa65 keygen).
+
+### Cross-repo dependencies
+- `luxfi/consensus/config` → `ChainSecurityProfile`, `Resolve`,
+  `ComputeHash`.
+- `luxfi/crypto/pq/mldsa/mldsa65` → validator key generation.
+- `luxfi/node/genesis/builder` → consumes this repo's JSON config and
+  converts types (string → ids.NodeID, uint64 → time.Duration).
+
+### Where to look for X
+- ChainSecurityProfile pin: `pkg/genesis/security_profile.go`
+- Profile hash verification: `pkg/genesis/security_profile.go:Resolve`
+- HD branch hardening: `pkg/wallet/hd/*.go`
+- Per-network configs: `configs/{mainnet,testnet,devnet,local}/`
+
+### Open follow-ups
+- Mainnet/testnet/devnet genesis JSONs still reference the
+  `legacy-compat` profile while operators migrate validator keys. The
+  strict-PQ profile is encoded but not yet the default genesis pin.
+
+---
+
 ## Canonical Requirements
 
 Every Lux chain genesis MUST satisfy these, or block import / consensus will fail:
