@@ -40729,7 +40729,7 @@
   "message": "Fiat Lux",
   "networkID": 1337,
   "securityProfile": {
-    "profileHashHex": "93efd103aaf4b85eb2ea37b451da5a8f6e36af0745b80837c1942ffd4be9eead59c22fc191298b381ee0a4b0323bfcd0",
+    "profileHashHex": "cf3f2cd7b54cfc2cb88b741f38514c58aef7f7184379c7ea454e16c3e54f7d5b04aaafd3817db676d96099e1c2e1fd1c",
     "profileID": 1
   },
   "startTime": 1775506037
