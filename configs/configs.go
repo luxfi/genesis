@@ -17,7 +17,9 @@ package configs
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -193,78 +195,23 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		}
 	}
 
-	// Load C-Chain genesis. Three operator paths in precedence order:
+	// Opt-in chains: each is its own JSON shard in the embedded tree.
+	// Shard present → chain baked into primary genesis (a CreateChainTx
+	// is emitted). Shard absent → empty string, builder skips the entry.
+	// Runtime gate is luxd's --track-chains, not bake-time env knobs.
 	//
-	//  1. LUX_DISABLE_CCHAIN=1 — bake NO C-Chain into the primary
-	//     genesis. Used by Liquidity (and any other downstream that
-	//     runs Liquid VMs only on the primary network's P-Chain via
-	//     CreateChainTx, never as a baked-in primary chain). The
-	//     resulting CChainGenesis is empty so builder.FromConfig's
-	//     `if config.CChainGenesis != ""` guard skips the C-Chain
-	//     entry entirely. Without this knob, every fork that doesn't
-	//     want a C-Chain ended up with chainId 31337 silently mounted
-	//     at /ext/bc/C/rpc — confusing for SREs and a foot-gun for
-	//     any service that hard-codes the C alias.
-	//
-	//  2. LUX_CCHAIN_GENESIS_FILE — absolute path to a JSON file that
-	//     replaces the embedded cchain.json verbatim. Lets downstream
-	//     networks (e.g. operator-driven custom chainId) reuse the
-	//     lqd binary without forking the embedded genesis tree.
-	//
-	//  3. Unset → embedded default (per-network, immutable).
-	var cchainData []byte
-	switch {
-	case os.Getenv("LUX_DISABLE_CCHAIN") == "1":
-		// Empty — primary genesis won't include a C-Chain entry.
-	case os.Getenv("LUX_CCHAIN_GENESIS_FILE") != "":
-		override := os.Getenv("LUX_CCHAIN_GENESIS_FILE")
-		body, ferr := os.ReadFile(override)
-		if ferr != nil {
-			return nil, fmt.Errorf("read LUX_CCHAIN_GENESIS_FILE=%q: %w", override, ferr)
-		}
-		cchainData = body
-	default:
-		cchainData, err = embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
-		if err != nil {
-			return nil, fmt.Errorf("failed to read cchain.json: %w", err)
-		}
-	}
-
-	// Load Q-Chain genesis. Mirrors C-Chain three-precedence:
-	//
-	//  1. LUX_DISABLE_QCHAIN=1 — omit Q-Chain (Quantum VM) from the
-	//     primary genesis. Q-Chain is Lux-specific (post-quantum
-	//     primitives chain); downstream forks like Liquidity that run
-	//     only P+X on the primary should set this so qChainGenesis is
-	//     empty in the marshalled config and builder.FromConfig's
-	//     `if config.QChainGenesis != ""` guard skips the entry.
-	//
-	//  2. LUX_QCHAIN_GENESIS_FILE — absolute path to a JSON file used
-	//     verbatim. Lets operators ship a custom Q-Chain genesis
-	//     without forking the binary.
-	//
-	//  3. Unset → DefaultPlaceholderGenesis (matches the lightweight
-	//     placeholder builder.FromConfig has historically substituted
-	//     for specialty chains with no explicit genesis).
-	qchainData := loadSpecialtyChainGenesis("LUX_DISABLE_QCHAIN", "LUX_QCHAIN_GENESIS_FILE")
-	if err := qchainData.err; err != nil {
+	// To run a P+X-only network (Liquidity etc.), ship a config tree
+	// that omits cchain.json / qchain.json / zchain.json. No knob, no hack.
+	cchainData, err := loadOptionalChainShard(networkName, "cchain.json")
+	if err != nil {
 		return nil, err
 	}
-
-	// Load Z-Chain genesis. Mirrors the Q-Chain shape:
-	//
-	//  1. LUX_DISABLE_ZCHAIN=1 — omit Z-Chain (ZK VM) from the primary
-	//     genesis. Z-Chain is Lux-specific (zero-knowledge primitives
-	//     chain); downstream forks like Liquidity that run only P+X on
-	//     the primary should set this so zChainGenesis is empty in the
-	//     marshalled config.
-	//
-	//  2. LUX_ZCHAIN_GENESIS_FILE — absolute path to a JSON file used
-	//     verbatim.
-	//
-	//  3. Unset → DefaultPlaceholderGenesis.
-	zchainData := loadSpecialtyChainGenesis("LUX_DISABLE_ZCHAIN", "LUX_ZCHAIN_GENESIS_FILE")
-	if err := zchainData.err; err != nil {
+	qchainData, err := loadOptionalChainShard(networkName, "qchain.json")
+	if err != nil {
+		return nil, err
+	}
+	zchainData, err := loadOptionalChainShard(networkName, "zchain.json")
+	if err != nil {
 		return nil, err
 	}
 
@@ -283,9 +230,9 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
 		InitialStakedFunds:         pchain.InitialStakedFunds,
 		InitialStakers:             pchain.InitialStakers,
-		CChainGenesis:              string(cchainData),
-		QChainGenesis:              qchainData.value,
-		ZChainGenesis:              zchainData.value,
+		CChainGenesis:              cchainData,
+		QChainGenesis:              qchainData,
+		ZChainGenesis:              zchainData,
 		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
@@ -293,47 +240,40 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	return json.Marshal(config)
 }
 
-// DefaultPlaceholderGenesis is the trivial 1-key placeholder builder.FromConfig
-// substitutes for specialty chains (Q, Z, A, B, T, G, K…) that have no
-// per-network genesis content of their own. We materialise it at the configs
-// layer so the marshalled primary genesis JSON shows the same string the
-// builder would have substituted — making "disabled" (empty) vs "default"
-// (this string) vs "operator-supplied" (file content) distinguishable by a
-// downstream just reading the JSON.
+// loadOptionalChainShard reads a per-network chain genesis shard from the
+// embedded tree. Returns the file contents on success, "" when the file is
+// absent (chain not baked into this network's primary genesis), or an error
+// for any other read failure.
 //
-// Must match builder.DefaultChainGenesis exactly. The two strings agree by
-// construction; CI's TestSpecialtyChainGenesisAgreesWithBuilder would fail
-// loudly if they drift apart.
-const DefaultPlaceholderGenesis = `{"version":1,"message":"Lux Chain Genesis"}`
-
-// specialtyChainResult is the loader's output for a specialty chain. The
-// caller can read err for a fatal load error or value for the chain genesis
-// string (empty when disabled, file body when overridden, placeholder
-// otherwise).
-type specialtyChainResult struct {
-	value string
-	err   error
+// This is the single dispatch point for every opt-in primary-network chain
+// (C, Q, Z, and any future additions). One pattern, one implementation;
+// adding a new chain is one call site in the loader, not a new env knob.
+func loadOptionalChainShard(networkName, filename string) (string, error) {
+	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, filename))
+	if err != nil {
+		// Absent shard means the chain isn't part of this network's primary
+		// genesis. Distinct from a real read error — empty FS embed returns
+		// fs.ErrNotExist via PathError. Treat anything fs-not-exist as "skip
+		// this chain"; surface everything else.
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", fmt.Errorf("read embedded %s/%s: %w", networkName, filename, err)
+	}
+	return string(data), nil
 }
 
-// loadSpecialtyChainGenesis implements the three-precedence pattern for
-// specialty chains (Q, Z). disableEnv toggles the "omit from primary" path;
-// fileEnv points at a JSON file that replaces the placeholder verbatim.
-// Mirrors the inline C-Chain switch above; factored out because Q and Z
-// share the exact shape and copying it twice invites drift.
-func loadSpecialtyChainGenesis(disableEnv, fileEnv string) specialtyChainResult {
-	switch {
-	case os.Getenv(disableEnv) == "1":
-		return specialtyChainResult{value: ""}
-	case os.Getenv(fileEnv) != "":
-		override := os.Getenv(fileEnv)
-		body, err := os.ReadFile(override)
-		if err != nil {
-			return specialtyChainResult{err: fmt.Errorf("read %s=%q: %w", fileEnv, override, err)}
+// readDirShard is the FS-backed counterpart to loadOptionalChainShard. Used by
+// the on-disk fallback loader (~/.lux/genesis/<network>/, etc.).
+func readDirShard(dir, filename string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(dir, filename))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
 		}
-		return specialtyChainResult{value: string(body)}
-	default:
-		return specialtyChainResult{value: DefaultPlaceholderGenesis}
+		return "", fmt.Errorf("read %s/%s: %w", dir, filename, err)
 	}
+	return string(data), nil
 }
 
 // loadSecurityProfilePin reads the per-network securityProfile.json shard if
@@ -479,30 +419,23 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse pchain.json: %w", err)
 	}
 
-	// Load cchain.json - this is the C-Chain genesis as a JSON object.
-	// LUX_DISABLE_CCHAIN=1 short-circuits embedded read so the marshalled
-	// output's cChainGenesis is empty (matches the loader-side semantics
-	// in loadEmbeddedGenesisWithDynamic).
-	var cchainData []byte
-	if os.Getenv("LUX_DISABLE_CCHAIN") != "1" {
-		cchainData, err = embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
-		if err != nil {
-			return nil, fmt.Errorf("failed to read cchain.json: %w", err)
-		}
-	}
-
-	// Q-Chain and Z-Chain: specialty chains with the same three-precedence
-	// (disable / file / placeholder) shape as the dynamic loader path.
-	qchainData := loadSpecialtyChainGenesis("LUX_DISABLE_QCHAIN", "LUX_QCHAIN_GENESIS_FILE")
-	if err := qchainData.err; err != nil {
+	// Opt-in chains via embedded shards. Absent file → empty string →
+	// chain skipped by builder. One pattern across every primary-network
+	// chain.
+	cchainData, err := loadOptionalChainShard(networkName, "cchain.json")
+	if err != nil {
 		return nil, err
 	}
-	zchainData := loadSpecialtyChainGenesis("LUX_DISABLE_ZCHAIN", "LUX_ZCHAIN_GENESIS_FILE")
-	if err := zchainData.err; err != nil {
+	qchainData, err := loadOptionalChainShard(networkName, "qchain.json")
+	if err != nil {
+		return nil, err
+	}
+	zchainData, err := loadOptionalChainShard(networkName, "zchain.json")
+	if err != nil {
 		return nil, err
 	}
 
-	// Build combined genesis config with cChainGenesis as a JSON string
+	// Build combined genesis config
 	config := genesis.ConfigOutput{
 		NetworkID:                  network.NetworkID,
 		Allocations:                pchain.Allocations,
@@ -511,9 +444,9 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
 		InitialStakedFunds:         pchain.InitialStakedFunds,
 		InitialStakers:             pchain.InitialStakers,
-		CChainGenesis:              string(cchainData), // Properly convert object to string
-		QChainGenesis:              qchainData.value,
-		ZChainGenesis:              zchainData.value,
+		CChainGenesis:              cchainData,
+		QChainGenesis:              qchainData,
+		ZChainGenesis:              zchainData,
 		Message:                    network.Message,
 	}
 
@@ -579,32 +512,22 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse pchain.json: %w", err)
 	}
 
-	// Load cchain.json. LUX_DISABLE_CCHAIN=1 short-circuits the read so
-	// the marshalled config's cChainGenesis stays empty — same semantics
-	// as the embedded loader path.
-	var cchainData []byte
-	if os.Getenv("LUX_DISABLE_CCHAIN") != "1" {
-		cchainData, err = os.ReadFile(filepath.Join(dir, "cchain.json"))
-		if err != nil {
-			return nil, fmt.Errorf("failed to read cchain.json: %w", err)
-		}
-	}
-
-	// Q-Chain and Z-Chain: specialty chains with the disable/file/placeholder
-	// pattern. Matches loadEmbeddedGenesisWithDynamic so the FS fallback
-	// honours the same operator knobs as the embedded path.
-	qchainData := loadSpecialtyChainGenesis("LUX_DISABLE_QCHAIN", "LUX_QCHAIN_GENESIS_FILE")
-	if err := qchainData.err; err != nil {
+	// Opt-in chains: read each shard from dir. Missing file → empty string →
+	// builder skips the entry. Same pattern as the embedded loader.
+	cchainData, err := readDirShard(dir, "cchain.json")
+	if err != nil {
 		return nil, err
 	}
-	zchainData := loadSpecialtyChainGenesis("LUX_DISABLE_ZCHAIN", "LUX_ZCHAIN_GENESIS_FILE")
-	if err := zchainData.err; err != nil {
+	qchainData, err := readDirShard(dir, "qchain.json")
+	if err != nil {
+		return nil, err
+	}
+	zchainData, err := readDirShard(dir, "zchain.json")
+	if err != nil {
 		return nil, err
 	}
 
-	// SecurityProfile pin shard — prefer per-dir override (operator-managed),
-	// fall back to the embedded shard keyed by dir basename. Absent = legacy
-	// classical-compat boot.
+	// SecurityProfile pin — per-dir shard, fall back to embedded by basename.
 	var securityProfile *genesis.SecurityProfile
 	if data, ferr := os.ReadFile(filepath.Join(dir, "securityProfile.json")); ferr == nil {
 		var sp genesis.SecurityProfile
@@ -629,9 +552,9 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
 		InitialStakedFunds:         pchain.InitialStakedFunds,
 		InitialStakers:             pchain.InitialStakers,
-		CChainGenesis:              string(cchainData),
-		QChainGenesis:              qchainData.value,
-		ZChainGenesis:              zchainData.value,
+		CChainGenesis:              cchainData,
+		QChainGenesis:              qchainData,
+		ZChainGenesis:              zchainData,
 		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
