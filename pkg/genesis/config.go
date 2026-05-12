@@ -162,6 +162,18 @@ func GetConfigFromDir(dir string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse staked funds: %w", err)
 	}
 
+	// SecurityProfile pin shard — optional. Absent file leaves the pin nil and
+	// the node will boot in classical-compat mode. Present file binds the
+	// chain-wide ChainSecurityProfile and is verified at boot via Resolve().
+	var securityProfile *SecurityProfile
+	if spData, err := os.ReadFile(filepath.Join(dir, "securityProfile.json")); err == nil {
+		var sp SecurityProfile
+		if err := json.Unmarshal(spData, &sp); err != nil {
+			return nil, fmt.Errorf("failed to parse securityProfile.json: %w", err)
+		}
+		securityProfile = &sp
+	}
+
 	return &Config{
 		NetworkID:                  network.NetworkID,
 		Allocations:                allocations,
@@ -171,6 +183,7 @@ func GetConfigFromDir(dir string) (*Config, error) {
 		InitialStakedFunds:         stakedFunds,
 		InitialStakers:             stakers,
 		CChainGenesis:              string(cchainData),
+		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}, nil
 }
