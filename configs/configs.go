@@ -268,6 +268,12 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		return nil, err
 	}
 
+	// SecurityProfile pin shard. Absent = legacy classical-compat boot.
+	securityProfile, err := loadSecurityProfilePin(networkName)
+	if err != nil {
+		return nil, err
+	}
+
 	// Build combined genesis config
 	config := genesis.ConfigOutput{
 		NetworkID:                  network.NetworkID,
@@ -280,6 +286,7 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		CChainGenesis:              string(cchainData),
 		QChainGenesis:              qchainData.value,
 		ZChainGenesis:              zchainData.value,
+		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
 
@@ -327,6 +334,23 @@ func loadSpecialtyChainGenesis(disableEnv, fileEnv string) specialtyChainResult 
 	default:
 		return specialtyChainResult{value: DefaultPlaceholderGenesis}
 	}
+}
+
+// loadSecurityProfilePin reads the per-network securityProfile.json shard if
+// present in the embedded tree. Returns nil with no error when the file is
+// absent (legacy classical-compat boot). The shard layout matches the
+// pkg/genesis.SecurityProfile struct (profileID + profileHashHex), keeping
+// the embedded tree and the on-disk operator file format identical.
+func loadSecurityProfilePin(networkName string) (*genesis.SecurityProfile, error) {
+	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "securityProfile.json"))
+	if err != nil {
+		return nil, nil
+	}
+	var sp genesis.SecurityProfile
+	if err := json.Unmarshal(data, &sp); err != nil {
+		return nil, fmt.Errorf("failed to parse %s/securityProfile.json: %w", networkName, err)
+	}
+	return &sp, nil
 }
 
 // loadEmbeddedPChainConfig loads only the P-Chain config from embedded.
@@ -578,6 +602,24 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		return nil, err
 	}
 
+	// SecurityProfile pin shard — prefer per-dir override (operator-managed),
+	// fall back to the embedded shard keyed by dir basename. Absent = legacy
+	// classical-compat boot.
+	var securityProfile *genesis.SecurityProfile
+	if data, ferr := os.ReadFile(filepath.Join(dir, "securityProfile.json")); ferr == nil {
+		var sp genesis.SecurityProfile
+		if err := json.Unmarshal(data, &sp); err != nil {
+			return nil, fmt.Errorf("failed to parse %s/securityProfile.json: %w", dir, err)
+		}
+		securityProfile = &sp
+	} else {
+		var perr error
+		securityProfile, perr = loadSecurityProfilePin(filepath.Base(dir))
+		if perr != nil {
+			return nil, perr
+		}
+	}
+
 	// Build combined genesis config
 	config := genesis.ConfigOutput{
 		NetworkID:                  network.NetworkID,
@@ -590,6 +632,7 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		CChainGenesis:              string(cchainData),
 		QChainGenesis:              qchainData.value,
 		ZChainGenesis:              zchainData.value,
+		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
 
