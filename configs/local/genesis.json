@@ -40728,9 +40728,11 @@
   ],
   "message": "Fiat Lux",
   "networkID": 1337,
+  "qChainGenesis": "{\"version\":1,\"message\":\"Lux Chain Genesis\"}",
   "securityProfile": {
     "profileHashHex": "cf3f2cd7b54cfc2cb88b741f38514c58aef7f7184379c7ea454e16c3e54f7d5b04aaafd3817db676d96099e1c2e1fd1c",
     "profileID": 1
   },
-  "startTime": 1775506037
+  "startTime": 1775506037,
+  "zChainGenesis": "{\"version\":1,\"message\":\"Lux Chain Genesis\"}"
 }

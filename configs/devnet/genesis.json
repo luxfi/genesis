@@ -40740,9 +40740,11 @@
   ],
   "message": "Lux ex Tenebris",
   "networkID": 3,
+  "qChainGenesis": "{\"version\":1,\"message\":\"Lux Chain Genesis\"}",
   "securityProfile": {
     "profileHashHex": "b06630a5f335e139ccbc2ff23fcd9fcdd2d9b390a92407507f95a295aea6905662c8c9dac98764661f9bc292da799e95",
     "profileID": 2
   },
-  "startTime": 1775506037
+  "startTime": 1775506037,
+  "zChainGenesis": "{\"version\":1,\"message\":\"Lux Chain Genesis\"}"
 }
