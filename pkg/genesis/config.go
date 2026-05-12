@@ -298,6 +298,7 @@ func ParseConfigOutput(output *ConfigOutput, networkID uint32) (*Config, error) 
 		GChainGenesis:              output.GChainGenesis,
 		KChainGenesis:              output.KChainGenesis,
 		Chains:                     output.Chains,
+		SecurityProfile:            output.SecurityProfile,
 		Message:                    output.Message,
 	}, nil
 }
