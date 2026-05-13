@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/luxfi/constants v1.4.6
 	github.com/luxfi/container v0.0.4
-	github.com/luxfi/crypto v1.18.4
+	github.com/luxfi/crypto v1.19.0
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
 	github.com/luxfi/ids v1.2.9
