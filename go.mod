@@ -1,6 +1,6 @@
 module github.com/luxfi/genesis
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/luxfi/constants v1.4.6
