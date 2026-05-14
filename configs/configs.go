@@ -200,17 +200,11 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	// is emitted). Shard absent → empty string, builder skips the entry.
 	// Runtime gate is luxd's --track-chains, not bake-time env knobs.
 	//
-	// To run a P+X-only network (Liquidity etc.), ship a config tree
-	// that omits cchain.json / qchain.json / zchain.json. No knob, no hack.
-	cchainData, err := loadOptionalChainShard(networkName, "cchain.json")
-	if err != nil {
-		return nil, err
-	}
-	qchainData, err := loadOptionalChainShard(networkName, "qchain.json")
-	if err != nil {
-		return nil, err
-	}
-	zchainData, err := loadOptionalChainShard(networkName, "zchain.json")
+	// To run a P-only network (Liquidity L1 etc.), ship a config tree
+	// that omits every {x,c,d,q,a,b,t,z,g,k}chain.json. No knob, no
+	// hack — chain set is purely data-driven by which shards are
+	// present.
+	chainShards, err := loadAllChainShards(networkName)
 	if err != nil {
 		return nil, err
 	}
@@ -230,9 +224,16 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
 		InitialStakedFunds:         pchain.InitialStakedFunds,
 		InitialStakers:             pchain.InitialStakers,
-		CChainGenesis:              cchainData,
-		QChainGenesis:              qchainData,
-		ZChainGenesis:              zchainData,
+		XChainGenesis:              chainShards.X,
+		CChainGenesis:              chainShards.C,
+		DChainGenesis:              chainShards.D,
+		QChainGenesis:              chainShards.Q,
+		AChainGenesis:              chainShards.A,
+		BChainGenesis:              chainShards.B,
+		TChainGenesis:              chainShards.T,
+		ZChainGenesis:              chainShards.Z,
+		GChainGenesis:              chainShards.G,
+		KChainGenesis:              chainShards.K,
 		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
@@ -240,14 +241,79 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	return json.Marshal(config)
 }
 
+// chainShardSet is the full primary-network chain shard set. Each
+// field is the raw JSON content of the corresponding shard file, or
+// "" when the shard is absent. Absent fields produce no chain entry
+// in the builder's chains slice — the operator's filesystem is the
+// declarative source of truth for which primary-network chains exist.
+type chainShardSet struct {
+	X, C, D, Q, A, B, T, Z, G, K string
+}
+
+// primaryChainShardFiles lists every primary-network chain shard
+// filename in canonical order. Order matters: builder.FromConfig
+// preserves it when assembling the chains slice, so changing this
+// list shifts the P-Chain genesis byte layout. Append-only.
+var primaryChainShardFiles = [...]string{
+	"xchain.json",
+	"cchain.json",
+	"dchain.json",
+	"qchain.json",
+	"achain.json",
+	"bchain.json",
+	"tchain.json",
+	"zchain.json",
+	"gchain.json",
+	"kchain.json",
+}
+
+// chainShardSetSlots returns the address-of-field slots for s in the
+// canonical order of primaryChainShardFiles. Used by the embedded and
+// FS loaders to bind shard files to ConfigOutput fields without
+// repeating the per-chain switch.
+func (s *chainShardSet) slots() []*string {
+	return []*string{&s.X, &s.C, &s.D, &s.Q, &s.A, &s.B, &s.T, &s.Z, &s.G, &s.K}
+}
+
+// loadAllChainShards reads every primary-network chain shard from the
+// embedded tree for networkName. Missing shards become empty fields
+// (chain skipped at build time).
+func loadAllChainShards(networkName string) (chainShardSet, error) {
+	var s chainShardSet
+	slots := s.slots()
+	for i, file := range primaryChainShardFiles {
+		v, err := loadOptionalChainShard(networkName, file)
+		if err != nil {
+			return s, err
+		}
+		*slots[i] = v
+	}
+	return s, nil
+}
+
+// readAllChainShards is the FS-backed counterpart used by the on-disk
+// fallback loader (~/.lux/genesis/<network>/, etc.).
+func readAllChainShards(dir string) (chainShardSet, error) {
+	var s chainShardSet
+	slots := s.slots()
+	for i, file := range primaryChainShardFiles {
+		v, err := readDirShard(dir, file)
+		if err != nil {
+			return s, err
+		}
+		*slots[i] = v
+	}
+	return s, nil
+}
+
 // loadOptionalChainShard reads a per-network chain genesis shard from the
 // embedded tree. Returns the file contents on success, "" when the file is
 // absent (chain not baked into this network's primary genesis), or an error
 // for any other read failure.
 //
-// This is the single dispatch point for every opt-in primary-network chain
-// (C, Q, Z, and any future additions). One pattern, one implementation;
-// adding a new chain is one call site in the loader, not a new env knob.
+// One pattern, one implementation; adding a new primary-network chain
+// is one entry in primaryChainShardFiles plus a slot on chainShardSet,
+// not a new env knob and not a new branch in the builder.
 func loadOptionalChainShard(networkName, filename string) (string, error) {
 	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, filename))
 	if err != nil {
@@ -419,18 +485,9 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse pchain.json: %w", err)
 	}
 
-	// Opt-in chains via embedded shards. Absent file → empty string →
-	// chain skipped by builder. One pattern across every primary-network
-	// chain.
-	cchainData, err := loadOptionalChainShard(networkName, "cchain.json")
-	if err != nil {
-		return nil, err
-	}
-	qchainData, err := loadOptionalChainShard(networkName, "qchain.json")
-	if err != nil {
-		return nil, err
-	}
-	zchainData, err := loadOptionalChainShard(networkName, "zchain.json")
+	// Opt-in chains via embedded shards. Same data-driven contract as
+	// the primary loader: shard present → chain emitted; absent → skipped.
+	chainShards, err := loadAllChainShards(networkName)
 	if err != nil {
 		return nil, err
 	}
@@ -444,9 +501,16 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
 		InitialStakedFunds:         pchain.InitialStakedFunds,
 		InitialStakers:             pchain.InitialStakers,
-		CChainGenesis:              cchainData,
-		QChainGenesis:              qchainData,
-		ZChainGenesis:              zchainData,
+		XChainGenesis:              chainShards.X,
+		CChainGenesis:              chainShards.C,
+		DChainGenesis:              chainShards.D,
+		QChainGenesis:              chainShards.Q,
+		AChainGenesis:              chainShards.A,
+		BChainGenesis:              chainShards.B,
+		TChainGenesis:              chainShards.T,
+		ZChainGenesis:              chainShards.Z,
+		GChainGenesis:              chainShards.G,
+		KChainGenesis:              chainShards.K,
 		Message:                    network.Message,
 	}
 
@@ -512,17 +576,9 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse pchain.json: %w", err)
 	}
 
-	// Opt-in chains: read each shard from dir. Missing file → empty string →
-	// builder skips the entry. Same pattern as the embedded loader.
-	cchainData, err := readDirShard(dir, "cchain.json")
-	if err != nil {
-		return nil, err
-	}
-	qchainData, err := readDirShard(dir, "qchain.json")
-	if err != nil {
-		return nil, err
-	}
-	zchainData, err := readDirShard(dir, "zchain.json")
+	// Opt-in chains: read every shard from dir. Same data-driven
+	// contract as the embedded loader.
+	chainShards, err := readAllChainShards(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -552,9 +608,16 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
 		InitialStakedFunds:         pchain.InitialStakedFunds,
 		InitialStakers:             pchain.InitialStakers,
-		CChainGenesis:              cchainData,
-		QChainGenesis:              qchainData,
-		ZChainGenesis:              zchainData,
+		XChainGenesis:              chainShards.X,
+		CChainGenesis:              chainShards.C,
+		DChainGenesis:              chainShards.D,
+		QChainGenesis:              chainShards.Q,
+		AChainGenesis:              chainShards.A,
+		BChainGenesis:              chainShards.B,
+		TChainGenesis:              chainShards.T,
+		ZChainGenesis:              chainShards.Z,
+		GChainGenesis:              chainShards.G,
+		KChainGenesis:              chainShards.K,
 		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
