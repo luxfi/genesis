@@ -111,7 +111,7 @@ Hex:     0x193e5939a08ce9dbd480000000
 configs/
 ├── mainnet/
 │   ├── cchain.json         # C-Chain genesis (chain ID 96369)
-│   ├── pchain.json         # P-Chain genesis (Platform)
+│   ├── pchain.json         # P-Chain genesis (ProtocolVM)
 │   ├── network.json        # Network ID, message, startTime
 │   └── bootstrappers.json  # Bootstrap nodes
 ├── testnet/
@@ -238,7 +238,7 @@ Format: {chain}-{hrp}1{data}{checksum}
 Example: P-lux1ck0t9h5u7jvvzhx29n99guqjsfkpzt67wgx7wg
 
 Chain Prefixes:
-- P-lux1...  (P-Chain/Platform)
+- P-lux1...  (P-Chain — ProtocolVM)
 - X-lux1...  (X-Chain/Exchange)
 - C-0x...    (C-Chain/EVM hex)
 ```

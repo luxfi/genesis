@@ -38,8 +38,10 @@ import (
 )
 
 var (
-	// PChainAliases are the default aliases for the P-Chain
-	PChainAliases = []string{"P", "platform"}
+	// PChainAliases are the default aliases for the P-Chain — the
+	// protocol chain that holds the validator set, chain registry,
+	// and ordering. Served by ProtocolVM (formerly PlatformVM).
+	PChainAliases = []string{"P", "protocol"}
 	// XChainAliases are the default aliases for the X-Chain
 	XChainAliases = []string{"X", "xvm"}
 	// CChainAliases are the default aliases for the C-Chain
@@ -61,12 +63,9 @@ var (
 	// KChainAliases are the default aliases for the K-Chain (KMS)
 	KChainAliases = []string{"K", "kms", "kmsvm"}
 
-	// DefaultChainGenesis provides empty but valid genesis for specialty chains
-	DefaultChainGenesis = `{"version":1,"message":"Lux Chain Genesis"}`
-
 	// VMAliases are the default aliases for VMs
 	VMAliases = map[ids.ID][]string{
-		constants.PlatformVMID:  {"platform"},
+		constants.PlatformVMID:  {"protocol"},
 		constants.XVMID:         {"xvm"},
 		constants.EVMID:         {"evm"},
 		constants.DexVMID:       {"dexvm", "dex"},
@@ -316,72 +315,107 @@ func GetConfig(networkID uint32) *genesiscfg.Config {
 	return genesiscfg.GetConfig(networkID)
 }
 
-// FromConfig builds genesis bytes from a config
+// FromConfig builds genesis bytes from a config.
+//
+// X-Chain is opt-in via config.XChainGenesis. The shard is a small JSON
+// asset descriptor:
+//
+//	{"symbol":"LUX","name":"Lux","denomination":9}
+//
+// When present, the builder constructs an XVM genesis whose primary
+// asset is that descriptor (with initial holders sourced from
+// config.Allocations) and emits a CreateChainTx for the X-Chain.
+// xAssetID returned to the caller is the X-Chain primary asset ID
+// (sha256 over xvmGenesisBytes) — the same ID P-Chain stake UTXOs are
+// denominated in.
+//
+// When absent, no XVM genesis is built, no X-Chain CreateChainTx is
+// emitted, and xAssetID is returned as ids.Empty. The primary network
+// then has no native UTXO asset: validator stakes denominated against
+// ids.Empty have no on-chain asset backing, which is the
+// permissioned-set semantics used by L1s whose value capture lives on
+// an L2 chain ( etc.) with its own asset model. Minting a
+// real primary-network asset requires X — there is no other genesis
+// site for it.
 func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
-	// Build XVM (X-Chain) genesis
-	lux := xgenesis.GenesisAssetDefinition{
-		Name:         "Lux",
-		Symbol:       "LUX",
-		Denomination: 9,
-		InitialState: xgenesis.AssetInitialState{},
-	}
-	memoBytes := []byte{}
-
-	// Sort allocations for deterministic output
-	type allocation struct {
-		ETHAddr       ids.ShortID
-		LUXAddr       ids.ShortID
-		InitialAmount uint64
-	}
-	xAllocations := []allocation{}
-	for _, a := range config.Allocations {
-		if a.InitialAmount > 0 {
-			xAllocations = append(xAllocations, allocation{
-				ETHAddr:       a.ETHAddr,
-				LUXAddr:       a.LUXAddr,
-				InitialAmount: a.InitialAmount,
-			})
-		}
-	}
-
-	// Get HRP for this network to format bech32 addresses
+	// HRP is needed for X-Chain holder addresses, P-Chain protocol
+	// allocations, staker allocations, and reward addresses — define
+	// once, before the X-Chain conditional, so it's available on both
+	// paths.
 	hrp := constants.GetHRP(config.NetworkID)
 
-	for _, a := range xAllocations {
-		// Format address as bech32 for the X-Chain
-		bech32Addr, err := address.FormatBech32(hrp, a.LUXAddr[:])
-		if err != nil {
-			return nil, ids.Empty, fmt.Errorf("failed to format bech32 address: %w", err)
-		}
-		lux.InitialState.FixedCap = append(lux.InitialState.FixedCap, xgenesis.GenesisHolder{
-			Amount:  a.InitialAmount,
-			Address: bech32Addr,
-		})
-		// Add ETH address to memo for reference
-		ethAddrStr := a.ETHAddr.Hex()
-		if len(ethAddrStr) > 2 { // "0x" prefix
-			memoBytes = append(memoBytes, []byte(ethAddrStr[2:])...)
-		}
-	}
-	lux.Memo = memoBytes
-
-	xvmGenesis, err := xgenesis.NewGenesis(
-		config.NetworkID,
-		map[string]xgenesis.GenesisAssetDefinition{
-			"LUX": lux,
-		},
+	var (
+		xvmGenesisBytes []byte
+		xAssetID      = ids.Empty
 	)
-	if err != nil {
-		return nil, ids.Empty, err
-	}
-	xvmGenesisBytes, err := xvmGenesis.Bytes()
-	if err != nil {
-		return nil, ids.Empty, fmt.Errorf("couldn't serialize xvm genesis: %w", err)
-	}
+	if config.XChainGenesis != "" {
+		var asset struct {
+			Symbol       string `json:"symbol"`
+			Name         string `json:"name"`
+			Denomination byte   `json:"denomination"`
+		}
+		if err := json.Unmarshal([]byte(config.XChainGenesis), &asset); err != nil {
+			return nil, ids.Empty, fmt.Errorf("invalid xChainGenesis shard: %w", err)
+		}
+		primary := xgenesis.GenesisAssetDefinition{
+			Name:         asset.Name,
+			Symbol:       asset.Symbol,
+			Denomination: asset.Denomination,
+			InitialState: xgenesis.AssetInitialState{},
+		}
+		memoBytes := []byte{}
 
-	luxAssetID, err := XAssetID(xvmGenesisBytes)
-	if err != nil {
-		return nil, ids.Empty, fmt.Errorf("couldn't generate LUX asset ID: %w", err)
+		// Sort allocations for deterministic output
+		type allocation struct {
+			ETHAddr       ids.ShortID
+			LUXAddr       ids.ShortID
+			InitialAmount uint64
+		}
+		xAllocations := []allocation{}
+		for _, a := range config.Allocations {
+			if a.InitialAmount > 0 {
+				xAllocations = append(xAllocations, allocation{
+					ETHAddr:       a.ETHAddr,
+					LUXAddr:       a.LUXAddr,
+					InitialAmount: a.InitialAmount,
+				})
+			}
+		}
+
+		for _, a := range xAllocations {
+			bech32Addr, err := address.FormatBech32(hrp, a.LUXAddr[:])
+			if err != nil {
+				return nil, ids.Empty, fmt.Errorf("failed to format bech32 address: %w", err)
+			}
+			primary.InitialState.FixedCap = append(primary.InitialState.FixedCap, xgenesis.GenesisHolder{
+				Amount:  a.InitialAmount,
+				Address: bech32Addr,
+			})
+			ethAddrStr := a.ETHAddr.Hex()
+			if len(ethAddrStr) > 2 { // "0x" prefix
+				memoBytes = append(memoBytes, []byte(ethAddrStr[2:])...)
+			}
+		}
+		primary.Memo = memoBytes
+
+		xvmGenesis, err := xgenesis.NewGenesis(
+			config.NetworkID,
+			map[string]xgenesis.GenesisAssetDefinition{
+				asset.Symbol: primary,
+			},
+		)
+		if err != nil {
+			return nil, ids.Empty, err
+		}
+		xvmGenesisBytes, err = xvmGenesis.Bytes()
+		if err != nil {
+			return nil, ids.Empty, fmt.Errorf("couldn't serialize xvm genesis: %w", err)
+		}
+
+		xAssetID, err = XAssetID(xvmGenesisBytes)
+		if err != nil {
+			return nil, ids.Empty, fmt.Errorf("couldn't generate LUX asset ID: %w", err)
+		}
 	}
 
 	genesisTime := time.Unix(int64(config.StartTime), 0)
@@ -395,13 +429,13 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		}
 	}
 
-	// Build platform allocations
+	// Build protocol allocations
 	initiallyStaked := set.Set[ids.ShortID]{}
 	for _, addr := range config.InitialStakedFunds {
 		initiallyStaked.Add(addr)
 	}
 
-	platformAllocations := []genesis.Allocation{}
+	protocolAllocations := []genesis.Allocation{}
 	skippedAllocations := []genesiscfg.Allocation{}
 	for _, a := range config.Allocations {
 		if initiallyStaked.Contains(a.LUXAddr) {
@@ -415,7 +449,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 				if err != nil {
 					return nil, ids.Empty, fmt.Errorf("failed to format bech32 address for P-chain: %w", err)
 				}
-				platformAllocations = append(platformAllocations, genesis.Allocation{
+				protocolAllocations = append(protocolAllocations, genesis.Allocation{
 					Locktime: unlock.Locktime,
 					Amount:   unlock.Amount,
 					Address:  bech32Addr,
@@ -508,87 +542,53 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		})
 	}
 
-	// Helper to get genesis data or default
-	getGenesis := func(data string) []byte {
-		if data == "" {
-			return []byte(DefaultChainGenesis)
-		}
-		return []byte(data)
+	// Primary-network chain registry. Each entry pairs a genesis-data
+	// source with the VM that consumes it. Entries with empty
+	// GenesisData are SKIPPED — luxd will not start a chain manager
+	// for them. This is the data-driven contract: which primary-network
+	// chains exist is a function of which shards the operator shipped,
+	// not a runtime knob.
+	//
+	// Order is fixed (X→C→D→Q→A→B→T→Z→G→K) and preserved across
+	// presence/absence so byte-identical genesis holds when the same
+	// shard set is supplied. Append-only — reordering shifts the
+	// P-Chain genesis byte layout.
+	chainEntries := []struct {
+		GenesisData []byte
+		VMID        ids.ID
+		Name        string
+		FxIDs       []ids.ID // X-Chain only; nil for everything else
+	}{
+		{GenesisData: xvmGenesisBytes, VMID: constants.XVMID, Name: "X-Chain",
+			FxIDs: []ids.ID{secp256k1fx.ID, nftfx.ID, propertyfx.ID}},
+		{GenesisData: []byte(config.CChainGenesis), VMID: constants.EVMID, Name: "C-Chain"},
+		{GenesisData: []byte(config.DChainGenesis), VMID: constants.DexVMID, Name: "D-Chain"},
+		{GenesisData: []byte(config.QChainGenesis), VMID: constants.QuantumVMID, Name: "Q-Chain"},
+		{GenesisData: []byte(config.AChainGenesis), VMID: constants.AIVMID, Name: "A-Chain"},
+		{GenesisData: []byte(config.BChainGenesis), VMID: constants.BridgeVMID, Name: "B-Chain"},
+		{GenesisData: []byte(config.TChainGenesis), VMID: constants.ThresholdVMID, Name: "T-Chain"},
+		{GenesisData: []byte(config.ZChainGenesis), VMID: constants.ZKVMID, Name: "Z-Chain"},
+		{GenesisData: []byte(config.GChainGenesis), VMID: constants.GraphVMID, Name: "G-Chain"},
+		{GenesisData: []byte(config.KChainGenesis), VMID: constants.KeyVMID, Name: "K-Chain"},
 	}
-
-	// Specify all 11 chains
-	chains := []genesis.Chain{
-		{
-			GenesisData: xvmGenesisBytes,
+	chains := []genesis.Chain{}
+	for _, e := range chainEntries {
+		if len(e.GenesisData) == 0 {
+			continue
+		}
+		chains = append(chains, genesis.Chain{
+			GenesisData: e.GenesisData,
 			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.XVMID,
-			FxIDs: []ids.ID{
-				secp256k1fx.ID,
-				nftfx.ID,
-				propertyfx.ID,
-			},
-			Name: "X-Chain",
-		},
-		{
-			GenesisData: []byte(config.CChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.EVMID,
-			Name:        "C-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.DChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.DexVMID,
-			Name:        "D-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.QChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.QuantumVMID,
-			Name:        "Q-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.AChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.AIVMID,
-			Name:        "A-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.BChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.BridgeVMID,
-			Name:        "B-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.TChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.ThresholdVMID,
-			Name:        "T-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.ZChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.ZKVMID,
-			Name:        "Z-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.GChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.GraphVMID,
-			Name:        "G-Chain",
-		},
-		{
-			GenesisData: getGenesis(config.KChainGenesis),
-			ChainID:     constants.PrimaryNetworkID,
-			VMID:        constants.KeyVMID,
-			Name:        "K-Chain",
-		},
+			VMID:        e.VMID,
+			FxIDs:       e.FxIDs,
+			Name:        e.Name,
+		})
 	}
 
 	pChainGenesis, err := genesis.New(
-		luxAssetID,
+		xAssetID,
 		config.NetworkID,
-		platformAllocations,
+		protocolAllocations,
 		validators,
 		chains,
 		config.StartTime,
@@ -596,13 +596,13 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		config.Message,
 	)
 	if err != nil {
-		return nil, ids.Empty, fmt.Errorf("problem while building platform chain's genesis state: %w", err)
+		return nil, ids.Empty, fmt.Errorf("problem while building protocol chain's genesis state: %w", err)
 	}
 	pChainGenesisBytes, err := pChainGenesis.Bytes()
 	if err != nil {
-		return nil, ids.Empty, fmt.Errorf("problem while serializing platform chain's genesis state: %w", err)
+		return nil, ids.Empty, fmt.Errorf("problem while serializing protocol chain's genesis state: %w", err)
 	}
-	return pChainGenesisBytes, luxAssetID, nil
+	return pChainGenesisBytes, xAssetID, nil
 }
 
 // FromFile loads genesis config from file and builds genesis bytes
@@ -685,9 +685,9 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 	apiAliases := map[string][]string{
 		path.Join(constants.ChainAliasPrefix, constants.PlatformChainID.String()): {
 			"P",
-			"platform",
+			"protocol",
 			path.Join(constants.ChainAliasPrefix, "P"),
-			path.Join(constants.ChainAliasPrefix, "platform"),
+			path.Join(constants.ChainAliasPrefix, "protocol"),
 		},
 	}
 	chainAliases := map[ids.ID][]string{
