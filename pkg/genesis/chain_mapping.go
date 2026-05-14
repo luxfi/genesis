@@ -14,7 +14,7 @@ import (
 type ChainRole string
 
 const (
-	RolePlatform  ChainRole = "P" // Platform/staking chain
+	RoleProtocol  ChainRole = "P" // Protocol chain — validator set, chain registry, ordering
 	RoleExchange  ChainRole = "X" // Exchange/asset transfer chain
 	RoleContract  ChainRole = "C" // Contract/EVM chain
 	RoleQuantum   ChainRole = "Q" // Quantum-resistant chain
@@ -185,12 +185,12 @@ func DefaultMainnetMapping() *ChainMapping {
 	return &ChainMapping{
 		Version: 1,
 		Chains: map[ChainRole]*ChainConfig{
-			RolePlatform: {
+			RoleProtocol: {
 				ChainID: ids.PChainID,
-				VMID:    ids.Empty, // Platform VM ID
-				Role:    RolePlatform,
-				Name:    "Platform Chain",
-				Aliases: []string{"P", "platform"},
+				VMID:    ids.Empty, // ProtocolVM ID
+				Role:    RoleProtocol,
+				Name:    "P-Chain",
+				Aliases: []string{"P", "protocol"},
 			},
 			RoleExchange: {
 				ChainID: ids.XChainID,

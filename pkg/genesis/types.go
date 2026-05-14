@@ -21,6 +21,7 @@ type Config struct {
 	InitialStakeDurationOffset uint64        `json:"initialStakeDurationOffset"`
 	InitialStakedFunds         []ids.ShortID `json:"initialStakedFunds"`
 	InitialStakers             []Staker      `json:"initialStakers"`
+	XChainGenesis              string        `json:"xChainGenesis,omitempty"` // X-Chain: UTXO Exchange VM (small JSON: {"symbol":"LUX","name":"Lux","denomination":9}); empty → skip X-Chain
 	CChainGenesis              string        `json:"cChainGenesis"`
 	DChainGenesis              string        `json:"dChainGenesis,omitempty"` // D-Chain: DEX VM genesis
 	QChainGenesis              string        `json:"qChainGenesis,omitempty"` // Q-Chain: Quantum VM genesis
@@ -34,8 +35,8 @@ type Config struct {
 
 	// Chains defines additional chains to include in genesis beyond the
 	// built-in alphabet chains (C, D, Q, B, T, Z, G, K). Each entry becomes
-	// a CreateChainTx in the platform genesis. This allows L1/subnet chains
-	// to be embedded directly in the genesis for automatic bootstrap.
+	// a CreateChainTx in the P-Chain genesis. This allows L1/L2
+	// chains to be embedded directly for automatic bootstrap.
 	Chains []ChainEntry `json:"chains,omitempty"`
 
 	// ChainMapping provides dynamic chain ID configuration per network.
@@ -244,7 +245,7 @@ type WarpConfig struct {
 }
 
 // ChainEntry defines an additional chain to create at genesis.
-// Used for embedding L1/L2 chains directly in the platform genesis.
+// Used for embedding L1/L2 chains directly in the P-Chain genesis.
 type ChainEntry struct {
 	VMID        string `json:"vmID"`        // VM ID (base58 encoded)
 	Name        string `json:"name"`        // Human-readable chain name
@@ -266,6 +267,7 @@ type ConfigOutput struct {
 	InitialStakeDurationOffset uint64           `json:"initialStakeDurationOffset"`
 	InitialStakedFunds         []string         `json:"initialStakedFunds"`
 	InitialStakers             []StakerJSON     `json:"initialStakers"`
+	XChainGenesis              string           `json:"xChainGenesis,omitempty"` // X-Chain: UTXO Exchange VM (small JSON: {"symbol":"LUX","name":"Lux","denomination":9}); empty → skip X-Chain
 	CChainGenesis              string           `json:"cChainGenesis"`
 	DChainGenesis              string           `json:"dChainGenesis,omitempty"` // D-Chain: DEX VM genesis
 	QChainGenesis              string           `json:"qChainGenesis,omitempty"` // Q-Chain: Quantum VM genesis
@@ -323,6 +325,7 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 		InitialStakeDurationOffset: c.InitialStakeDurationOffset,
 		InitialStakedFunds:         stakedFunds,
 		InitialStakers:             stakers,
+		XChainGenesis:              c.XChainGenesis,
 		CChainGenesis:              c.CChainGenesis,
 		DChainGenesis:              c.DChainGenesis,
 		QChainGenesis:              c.QChainGenesis,
