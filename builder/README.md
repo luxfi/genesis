@@ -123,7 +123,7 @@ var LocalValidatorFeeConfig   fee.Config
 
 ```go
 var VMAliases = map[ids.ID][]string{
-    constants.PlatformVMID: {"platform"},
+    constants.PlatformVMID: {"protocol"}, // upstream constant still PlatformVMID; alias is "protocol"
     constants.XVMID:        {"xvm"},
     constants.EVMID:        {"evm"},
     secp256k1fx.ID:         {"secp256k1fx"},
@@ -155,7 +155,7 @@ func main() {
 
     // Build genesis bytes
     config := builder.GetConfig(constants.MainnetID)
-    genesisBytes, luxAssetID, err := builder.FromConfig(config)
+    genesisBytes, xAssetID, err := builder.FromConfig(config)
     if err != nil {
         panic(err)
     }
