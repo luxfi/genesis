@@ -241,12 +241,12 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	return json.Marshal(config)
 }
 
-// chainShardSet is the full primary-network chain shard set. Each
+// chainSet is the full primary-network chain shard set. Each
 // field is the raw JSON content of the corresponding shard file, or
 // "" when the shard is absent. Absent fields produce no chain entry
 // in the builder's chains slice — the operator's filesystem is the
 // declarative source of truth for which primary-network chains exist.
-type chainShardSet struct {
+type chainSet struct {
 	X, C, D, Q, A, B, T, Z, G, K string
 }
 
@@ -267,19 +267,19 @@ var primaryChainShardFiles = [...]string{
 	"kchain.json",
 }
 
-// chainShardSetSlots returns the address-of-field slots for s in the
+// chainSetSlots returns the address-of-field slots for s in the
 // canonical order of primaryChainShardFiles. Used by the embedded and
 // FS loaders to bind shard files to ConfigOutput fields without
 // repeating the per-chain switch.
-func (s *chainShardSet) slots() []*string {
+func (s *chainSet) slots() []*string {
 	return []*string{&s.X, &s.C, &s.D, &s.Q, &s.A, &s.B, &s.T, &s.Z, &s.G, &s.K}
 }
 
 // loadAllChainShards reads every primary-network chain shard from the
 // embedded tree for networkName. Missing shards become empty fields
 // (chain skipped at build time).
-func loadAllChainShards(networkName string) (chainShardSet, error) {
-	var s chainShardSet
+func loadAllChainShards(networkName string) (chainSet, error) {
+	var s chainSet
 	slots := s.slots()
 	for i, file := range primaryChainShardFiles {
 		v, err := loadOptionalChainShard(networkName, file)
@@ -293,8 +293,8 @@ func loadAllChainShards(networkName string) (chainShardSet, error) {
 
 // readAllChainShards is the FS-backed counterpart used by the on-disk
 // fallback loader (~/.lux/genesis/<network>/, etc.).
-func readAllChainShards(dir string) (chainShardSet, error) {
-	var s chainShardSet
+func readAllChainShards(dir string) (chainSet, error) {
+	var s chainSet
 	slots := s.slots()
 	for i, file := range primaryChainShardFiles {
 		v, err := readDirShard(dir, file)
@@ -312,7 +312,7 @@ func readAllChainShards(dir string) (chainShardSet, error) {
 // for any other read failure.
 //
 // One pattern, one implementation; adding a new primary-network chain
-// is one entry in primaryChainShardFiles plus a slot on chainShardSet,
+// is one entry in primaryChainShardFiles plus a slot on chainSet,
 // not a new env knob and not a new branch in the builder.
 func loadOptionalChainShard(networkName, filename string) (string, error) {
 	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, filename))
