@@ -8,7 +8,7 @@ This repository contains the canonical genesis configurations for all Lux networ
 genesis/
 ├── mainnet/           # LUX Mainnet (Chain ID: 96369)
 │   ├── cchain.json    # C-Chain genesis (EVM compatible)
-│   ├── pchain.json    # P-Chain genesis (Platform chain)
+│   ├── pchain.json    # P-Chain genesis (ProtocolVM)
 │   ├── xchain.json    # X-Chain genesis (Exchange chain)
 │   ├── network.json   # Network configuration
 │   └── genesis.json   # Full network genesis
