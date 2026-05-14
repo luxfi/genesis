@@ -890,9 +890,10 @@ func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]All
 
 // BuildBIP44WalletAllocations derives wallet keys on the canonical BIP44
 // path m/44'/9000'/0'/0/i (purpose-44' / coin-9000' / account-0' hardened;
-// change-0 / index-i NON-hardened). This is the path the Lux/Avalanche
-// web wallet and any BIP44-conformant client uses. Returns free (no
-// vesting) spending allocations for each key.
+// change-0 / index-i NON-hardened). 9000 is the SLIP-0044 coin type Lux
+// inherits from its upstream lineage; any BIP44-conformant wallet using
+// that coin type derives the same key set. Returns free (no vesting)
+// spending allocations for each key.
 //
 // Use this instead of BuildWalletAllocations when the receiving consumer
 // (e.g. a subnet-bootstrap CLI) expects classical BIP44 web-wallet
@@ -1113,8 +1114,8 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 
 	// Track which staking addresses already have an allocation. Validator
 	// addresses that aren't already in allKeys need their own stake
-	// allocation; otherwise PlatformVM rejects the genesis with
-	// "validator has not weight" because there's no UTXO at the
+	// allocation; otherwise the ProtocolVM rejects the genesis
+	// with "validator has not weight" because there's no UTXO at the
 	// validator's stakedFunds address.
 	allocByAddr := make(map[ids.ShortID]bool, len(allocations))
 	for _, a := range allocations {
@@ -1122,7 +1123,7 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 	}
 	// stakeAmount is the locktime-locked stake each validator
 	// contributes. Matches the prior genesis behaviour (3B nLUX across
-	// three future-locktime buckets), so the PlatformVM sees a
+	// three future-locktime buckets), so the ProtocolVM sees a
 	// non-zero stake for each initial staker.
 	const stakeAmount = uint64(1_000_000_000)
 	now := uint64(time.Now().Unix())
@@ -1138,7 +1139,7 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 
 		// Ensure the validator's staking address has a corresponding
 		// allocation. If absent, add one with locked stake so the
-		// PlatformVM can weight the staker.
+		// ProtocolVM can weight the staker.
 		if !allocByAddr[key.StakingAddr] {
 			allocations = append(allocations, Allocation{
 				ETHAddr:        key.ETHAddr,

@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/luxfi/constants"
+	"github.com/luxfi/genesis/configs"
+	"github.com/luxfi/ids"
+	pgenesis "github.com/luxfi/protocol/p/genesis"
 )
 
 func TestGetStakingConfig(t *testing.T) {
@@ -169,6 +172,68 @@ func TestChainAliases(t *testing.T) {
 	require.Contains(t, PChainAliases, "P")
 	require.Contains(t, XChainAliases, "X")
 	require.Contains(t, CChainAliases, "C")
+}
+
+// TestFromConfig_ChainSetIsShardDriven exercises the data-driven
+// chain-presence contract end-to-end:
+//
+//   - Lux mainnet ships every primary-network chain shard
+//     (X/C/D/Q/A/B/T/Z/G/K) → FromConfig must emit all 10
+//     CreateChainTx entries and a non-empty xAssetID (X is the home of
+//     the LUX asset).
+//
+//   - Strip every chain shard from the same Config — same allocations,
+//     same validators, same network ID — and FromConfig must succeed,
+//     return ids.Empty for xAssetID, and produce a P-Chain genesis
+//     with zero CreateChainTx entries. This is the L1-from-P-only
+//     boot path: a sovereign L1 (lqd-style) ships only pchain.json +
+//     network.json and gets a primary-network of just P-Chain, with
+//     funded addresses and weighted validators ready to issue
+//     CreateChainTx for whatever L2 chains it wants post-genesis.
+//
+// "Shard set = chain set" is the one-way contract; this test pins it.
+func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
+	cfg, err := configs.GetConfig(constants.MainnetID)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	require.NotEmpty(t, cfg.XChainGenesis, "mainnet ships xchain.json")
+
+	// Full Lux mainnet: 10 chains + real LUX asset ID.
+	bytes, xAssetID, err := FromConfig(cfg)
+	require.NoError(t, err)
+	require.NotEqual(t, ids.Empty, xAssetID, "mainnet has X-Chain → real asset ID")
+
+	full, err := pgenesis.Parse(bytes)
+	require.NoError(t, err)
+	require.Len(t, full.Chains, 10, "mainnet emits all 10 primary chains")
+
+	// Strip every chain shard. Allocations + validators stay intact —
+	// the P-Chain itself is the foundation, not a CreateChainTx entry.
+	cfg.XChainGenesis = ""
+	cfg.CChainGenesis = ""
+	cfg.DChainGenesis = ""
+	cfg.QChainGenesis = ""
+	cfg.AChainGenesis = ""
+	cfg.BChainGenesis = ""
+	cfg.TChainGenesis = ""
+	cfg.ZChainGenesis = ""
+	cfg.GChainGenesis = ""
+	cfg.KChainGenesis = ""
+
+	bytes, xAssetID, err = FromConfig(cfg)
+	require.NoError(t, err, "P-only build must succeed")
+	require.Equal(t, ids.Empty, xAssetID, "no X-Chain → no LUX asset → ids.Empty")
+
+	pOnly, err := pgenesis.Parse(bytes)
+	require.NoError(t, err, "P-only genesis bytes must parse")
+	require.Empty(t, pOnly.Chains, "P-only network has zero CreateChainTx entries")
+
+	// "If wallet/address funded for keys" — the P-Chain still carries
+	// the Lux mainnet allocations (encoded as P-Chain UTXOs) and
+	// validator stakes, so a sovereign L1 booted from this shape has
+	// funded addresses and weighted validators ready to operate.
+	require.NotEmpty(t, pOnly.Validators, "P-only must have validators (funded staker keys)")
+	require.NotEmpty(t, pOnly.UTXOs, "P-only must have funded addresses (UTXOs)")
 }
 
 func TestDefaultFeeConfigs(t *testing.T) {
