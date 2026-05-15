@@ -33,17 +33,24 @@ import (
 )
 
 const (
-	// DefaultAllocationPerAccount is 500M LUX per account per chain (P and X).
-	// 100 accounts × 500M × 2 chains = 100B total.
-	// X-Chain: 500M free (immediately spendable).
-	// P-Chain: 500M vesting 1%/year over 100 years from Jan 1 2020.
-	DefaultAllocationPerAccount = 500_000_000 * Lux
+	// DefaultAllocationPerAccount is 10M LUX per account per chain (P and X).
+	// 1000 accounts × 10M × 2 chains = 20B LUX of UTXOs in genesis (well
+	// under the 2T LUX SupplyCap on every network).
+	// X-Chain: 10M free (immediately spendable from genesis).
+	// P-Chain: 10M free at genesis (no vesting); the long-tail unlock
+	// schedule below adds a separate 10M per account that vests 1%/year
+	// over 100 years from Jan 1 2020 — i.e. each address sees 10M
+	// spendable on X, 10M spendable on P + 10M vesting on P.
+	DefaultAllocationPerAccount = 10_000_000 * Lux
 
 	// DefaultAllocationPerValidator is kept for backward compatibility
 	DefaultAllocationPerValidator = DefaultAllocationPerAccount
 
 	// DefaultNumAccounts is the default number of mnemonic-derived accounts
-	DefaultNumAccounts = 100
+	// Funds 1000 wallet keys at canonical BIP44 m/44'/9000'/0'/0/i so that
+	// any wallet that derives at this path against the SAME mnemonic sees
+	// a fundable address on both P and X.
+	DefaultNumAccounts = 1000
 
 	// StakingStartTime is Jan 1, 2020 00:00:00 UTC
 	StakingStartTime = 1577836800
@@ -888,6 +895,57 @@ func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]All
 	return allocations, nil
 }
 
+// LoadBIP44WalletKeysFromMnemonic derives N spending keys from a BIP39
+// mnemonic on the canonical BIP44 path m/44'/9000'/0'/0/i (purpose 44'
+// / coin 9000' / account 0' hardened; change 0 / index i non-hardened).
+// Returns KeyInfo entries with NodeID, StakingAddr (P/X bech32 base),
+// and ETHAddr populated; no BLS/MLDSA — these are user spending keys,
+// not validator node identities.
+//
+// This is the same derivation that BuildBIP44WalletAllocations uses,
+// reshaped to return KeyInfo so callers (e.g. BuildConfigFromEnv) can
+// flow these straight into buildConfigFromKeyInfos as account holders.
+func LoadBIP44WalletKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
+	if !bip39.IsMnemonicValid(mnemonic) {
+		return nil, fmt.Errorf("invalid mnemonic")
+	}
+	seed := bip39.NewSeed(mnemonic, "")
+	masterKey, err := bip32.NewMasterKey(seed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create master key: %w", err)
+	}
+	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
+	if err != nil {
+		return nil, fmt.Errorf("derive purpose 44': %w", err)
+	}
+	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	if err != nil {
+		return nil, fmt.Errorf("derive coin 9000': %w", err)
+	}
+	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
+	if err != nil {
+		return nil, fmt.Errorf("derive account 0': %w", err)
+	}
+	change, err := account.NewChildKey(0) // non-hardened
+	if err != nil {
+		return nil, fmt.Errorf("derive change 0: %w", err)
+	}
+
+	keys := make([]KeyInfo, 0, numAccounts)
+	for i := 0; i < numAccounts; i++ {
+		child, err := change.NewChildKey(uint32(i)) // non-hardened
+		if err != nil {
+			return nil, fmt.Errorf("derive BIP44 wallet key %d: %w", i, err)
+		}
+		ki, err := keyInfoFromPrivateKey(child.Key)
+		if err != nil {
+			return nil, fmt.Errorf("keyInfo BIP44 wallet %d: %w", i, err)
+		}
+		keys = append(keys, *ki)
+	}
+	return keys, nil
+}
+
 // BuildBIP44WalletAllocations derives wallet keys on the canonical BIP44
 // path m/44'/9000'/0'/0/i (purpose-44' / coin-9000' / account-0' hardened;
 // change-0 / index-i NON-hardened). 9000 is the SLIP-0044 coin type Lux
@@ -996,22 +1054,48 @@ func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey ui
 		}
 	}
 
-	// Load account keys from mnemonic (100 X-Chain accounts for deposits)
+	// Load account keys from mnemonic at the canonical BIP44 path
+	// m/44'/9000'/0'/0/i (the same path the genesis CLI's -bip44-wallet-keys
+	// flag uses, and the same path the derive100 / luxfi wallet UIs use).
+	// This is what every user-facing tool that scans the chain for funded
+	// addresses will expect — derive100 against $LUX_MNEMONIC and the
+	// addresses here must match byte-for-byte.
+	//
+	// NOTE: this is intentionally a SEPARATE concern from
+	// LoadKeysFromMnemonic, which derives Lux-internal validator NODE
+	// identities (NodeID + BLS + ML-DSA-65) on the hardened path
+	// m/44'/9000'/nid'/1'/i'. Wallet keys are user-spending keys;
+	// validator keys are node-signing identities. Don't conflate.
 	var allKeys []KeyInfo
 	if mnemonic := getMnemonicEnv(); mnemonic != "" {
 		numAccounts := DefaultNumAccounts
-		allKeys, err = LoadKeysFromMnemonic(mnemonic, networkID, numAccounts)
+		allKeys, err = LoadBIP44WalletKeysFromMnemonic(mnemonic, numAccounts)
 		if err != nil {
 			allKeys = nil
 		}
 	}
 
-	// Combine: use dir keys for validators, mnemonic keys for X-Chain accounts
+	// Validator NODE identities use the Lux-internal hardened branch
+	// (NodeID + BLS + ML-DSA-65). Separate concern from wallet keys.
+	var validatorNodeKeys []KeyInfo
+	if mnemonic := getMnemonicEnv(); mnemonic != "" {
+		if numValidators == 0 {
+			numValidators = 3
+		}
+		validatorNodeKeys, _ = LoadKeysFromMnemonic(mnemonic, networkID, numValidators)
+	}
+
+	// Combine: use dir keys for validators when present, otherwise the
+	// internal-branch mnemonic-derived node identities. Allocation set is
+	// the canonical BIP44 wallet keys.
 	if len(validatorKeys) > 0 && len(allKeys) > 0 {
 		return buildConfigFromKeyInfos(networkID, validatorKeys, allKeys, allocationPerKey)
 	}
 	if len(validatorKeys) > 0 {
 		return BuildConfigFromKeys(networkID, os.Getenv("KEYS_DIR"), allocationPerKey)
+	}
+	if len(validatorNodeKeys) > 0 && len(allKeys) > 0 {
+		return buildConfigFromKeyInfos(networkID, validatorNodeKeys, allKeys, allocationPerKey)
 	}
 	if len(allKeys) > 0 {
 		if numValidators == 0 {
@@ -1038,13 +1122,15 @@ func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey ui
 // buildConfigFromKeyInfos creates config from KeyInfo slices.
 //
 // Architecture:
-//   - X-Chain: 100 accounts × 500M LUX each, FREE (immediately spendable)
-//   - P-Chain: 100 accounts × 500M LUX each, vesting 1%/year from 2020-01-01
+//   - X-Chain: N accounts × allocationPerKey LUX each, FREE (spendable at genesis)
+//   - P-Chain: N accounts × allocationPerKey LUX each, FREE (spendable at genesis)
 //   - C-Chain: treasury 0x9011...4714 gets 2T LUX
-//   - Total: 100B LUX across 100 accounts (50B X + 50B P) + 2T C-chain treasury
+//   - Validators contribute a long-locked stake allocation so the
+//     ProtocolVM can weight them; that locked-stake allocation is the
+//     ONLY place an UnlockSchedule is attached. User wallets stay free.
 //
 // validatorKeys: first N accounts that become initial stakers
-// allKeys: all accounts that receive X-Chain allocations (typically 100)
+// allKeys: all accounts that receive X-Chain/P-Chain allocations
 func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys []KeyInfo, allocationPerKey uint64) (*Config, error) {
 	if len(validatorKeys) == 0 {
 		return nil, fmt.Errorf("no keys provided")
@@ -1054,61 +1140,22 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		allocationPerKey = DefaultAllocationPerAccount
 	}
 
-	// Each account gets ONE allocation entry with:
-	//   InitialAmount  → X-Chain UTXO (free, immediately spendable)
-	//   UnlockSchedule → P-Chain UTXOs (vesting 1%/year from Jan 1 2020)
-	//
-	// The node builder puts InitialAmount on X-Chain and UnlockSchedule on P-Chain.
-	// InitialAmount ALSO creates a P-Chain UTXO (spendable, no locktime) for
-	// non-staked addresses — so account gets 500M free on both X and P, plus
-	// 500M vesting on P. Total per account: 500M X + 1B P.
-	//
-	// To get exactly 500M X + 500M P: set InitialAmount=500M (→ X free + P free)
-	// and UnlockSchedule=500M total vesting (→ P locked). But the P free from
-	// InitialAmount adds 500M extra. So we set InitialAmount=0 for P-only vesting
-	// and use a separate entry for X-only free.
-	//
-	// Actually: simplest correct approach is ONE entry per account:
-	//   InitialAmount = 500M → goes to X-Chain (free) AND P-Chain (free, spendable)
-	//   UnlockSchedule = 500M → goes to P-Chain (vesting)
-	// Result: X gets 500M free. P gets 500M free + 500M vesting = 1B on P.
-	//
-	// If we want exactly 500M on P (all vesting, no free):
-	//   InitialAmount = 500M (X-chain only — but builder also puts it on P!)
-	//
-	// The builder ALWAYS puts InitialAmount on P-Chain too (line 444-456).
-	// There's no way to give X-only via this genesis format.
-	// So: 500M InitialAmount + 500M UnlockSchedule = 500M X + 1B P per account.
-	//
-	// For clean 500M/500M, we'd need InitialAmount=500M and NO UnlockSchedule,
-	// then P-chain gets 500M free (from InitialAmount). X-chain gets 500M free.
-	// That's 500M on each chain, both free. No vesting.
-	//
-	// OR: InitialAmount=0, UnlockSchedule=500M → P-chain gets 500M vesting,
-	//     X-chain gets 0. Then separate entry: InitialAmount=500M, no schedule
-	//     → X gets 500M free, P gets 500M free. Total: X=500M, P=1B. Still wrong.
-	//
-	// The node builder gives InitialAmount to BOTH chains. We can't avoid it.
-	// Cleanest: one entry, InitialAmount=500M, UnlockSchedule=500M vesting.
-	// Result: X=500M free, P=500M free + 500M vesting = 1B P.
-	// Total per account: 1.5B (500M X + 1B P). Across 100 = 150B.
-	//
-	// This is fine — P-chain needs more funds for staking + subnet operations.
-	pChainUnlockSchedule := buildUnlockSchedule(allocationPerKey, StakingStartTime, UnlockInterval, 100)
-
+	// Wallet allocations are clean: InitialAmount only, no UnlockSchedule.
+	// The node builder puts InitialAmount on BOTH X-Chain and P-Chain as a
+	// free (no locktime) UTXO at the same address, so each account ends up
+	// with `allocationPerKey` spendable on X AND `allocationPerKey`
+	// spendable on P. No vesting decoration — keeps the genesis blob
+	// small enough to fit a single zapdb batch (1000 keys × 100-period
+	// vesting schedules overflows the batch-write limit and bricks boot).
 	allocations := make([]Allocation, 0, len(allKeys)+len(validatorKeys))
 	stakedFunds := make([]ids.ShortID, 0, len(validatorKeys))
 	stakers := make([]Staker, 0, len(validatorKeys))
 
 	for _, key := range allKeys {
-		// Single entry per account:
-		//   X-Chain: 500M free (from InitialAmount)
-		//   P-Chain: 500M free (from InitialAmount) + 500M vesting (from UnlockSchedule)
 		allocations = append(allocations, Allocation{
-			ETHAddr:        key.ETHAddr,
-			LUXAddr:        key.StakingAddr,
-			InitialAmount:  allocationPerKey,
-			UnlockSchedule: pChainUnlockSchedule,
+			ETHAddr:       key.ETHAddr,
+			LUXAddr:       key.StakingAddr,
+			InitialAmount: allocationPerKey,
 		})
 	}
 
