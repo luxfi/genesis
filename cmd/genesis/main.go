@@ -117,8 +117,8 @@ Environment Variables:
   KEYS_DIR       Directory containing node keys
   MNEMONIC       BIP39 mnemonic for key derivation
   PRIVATE_KEY    Single private key (hex)
-  LUX_GENESIS_DIR    Directory containing genesis component files
-  LUX_NETWORK_ID     Network ID
+  GENESIS_DIR        Directory containing genesis component files
+  NETWORK_ID         Network ID
 
 Examples:
   # Generate local genesis from keys in ~/.lux/keys

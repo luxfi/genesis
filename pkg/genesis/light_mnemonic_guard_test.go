@@ -97,7 +97,6 @@ func TestIsKnownPublicMnemonic(t *testing.T) {
 func TestRefuseLightMnemonicOnProduction(t *testing.T) {
 	// 1. No mnemonic set: not our problem at this layer.
 	t.Setenv("MNEMONIC", "")
-	t.Setenv("LUX_MNEMONIC", "")
 	t.Setenv("LIGHT_MNEMONIC", "")
 	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err != nil {
 		t.Fatalf("no-mnemonic case: unexpected error: %v", err)
@@ -140,12 +139,6 @@ func TestRefuseLightMnemonicOnProduction(t *testing.T) {
 		t.Fatalf("real mnemonic on mainnet: unexpected error: %v", err)
 	}
 
-	// 8. Real LUX_MNEMONIC on mainnet: allowed.
-	t.Setenv("MNEMONIC", "")
-	t.Setenv("LUX_MNEMONIC", realMnemonic)
-	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err != nil {
-		t.Fatalf("real LUX_MNEMONIC on mainnet: unexpected error: %v", err)
-	}
 }
 
 // TestLoadKeysFromMnemonicEnvForNetwork — F30 fix. The new entry point
@@ -156,7 +149,6 @@ func TestRefuseLightMnemonicOnProduction(t *testing.T) {
 func TestLoadKeysFromMnemonicEnvForNetwork(t *testing.T) {
 	// Setup: LIGHT_MNEMONIC on mainnet should refuse derivation.
 	t.Setenv("MNEMONIC", "")
-	t.Setenv("LUX_MNEMONIC", "")
 	t.Setenv("LIGHT_MNEMONIC", LightMnemonic)
 	_, err := LoadKeysFromMnemonicEnvForNetwork(constants.MainnetID, 1)
 	if err == nil {
