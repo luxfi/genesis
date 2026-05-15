@@ -576,7 +576,7 @@ func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
 }
 
 // LoadKeysFromMnemonicEnv loads keys from mnemonic env vars.
-// Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC.
+// Priority: MNEMONIC > LIGHT_MNEMONIC.
 //
 // nid is the Hanzo mesh network id baked into the hardened derivation
 // path. Callers that already know the network id MUST use
@@ -585,7 +585,7 @@ func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
 func LoadKeysFromMnemonicEnv(nid uint32, numAccounts int) ([]KeyInfo, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
-		return nil, fmt.Errorf("mnemonic not set (set MNEMONIC, LUX_MNEMONIC, or LIGHT_MNEMONIC)")
+		return nil, fmt.Errorf("mnemonic not set (set MNEMONIC or LIGHT_MNEMONIC)")
 	}
 
 	return LoadKeysFromMnemonic(mnemonic, nid, numAccounts)
@@ -658,18 +658,18 @@ func genesisMessage(networkID uint32) string {
 }
 
 // getMnemonicEnv returns the mnemonic from environment variables.
-// Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC
+// Priority: MNEMONIC > LIGHT_MNEMONIC
 //
 // LIGHT_MNEMONIC is the publicly-known dev seed. Anyone in the world can
 // derive its first 200 child keys; the auto-fund pre-allocation in
 // HIP-0077 §"Auto-funding the first 200 devices" is *only* meant for
 // network IDs >= 1337 (dev / primary local mesh). Production networks
-// MUST set MNEMONIC (preferred) or LUX_MNEMONIC.
+// MUST set MNEMONIC.
 //
 // Use IsLightMnemonic and RefuseLightMnemonicOnProduction to enforce that
 // rule wherever a key is loaded for a known network ID.
 func getMnemonicEnv() string {
-	for _, env := range []string{"MNEMONIC", "LUX_MNEMONIC", "LIGHT_MNEMONIC"} {
+	for _, env := range []string{"MNEMONIC", "LIGHT_MNEMONIC"} {
 		if v := os.Getenv(env); v != "" {
 			return v
 		}
@@ -790,7 +790,7 @@ func RefuseLightMnemonicOnProduction(networkID uint32) error {
 		"refusing to derive keys: a publicly-known mnemonic is set on production "+
 			"network %d (mainnet/testnet/<1337). Public mnemonics (LIGHT_MNEMONIC, "+
 			"BIP-39 test vectors, Hardhat/Trezor demos) are deterministic — anyone "+
-			"can derive every child key. Set MNEMONIC or LUX_MNEMONIC env var with "+
+			"can derive every child key. Set MNEMONIC env var with "+
 			"a private hardware-RNG mnemonic loaded from KMS, or run on a dev "+
 			"network ID (>= 1337)", networkID,
 	)
@@ -824,15 +824,15 @@ func subtleConstantTimeEqual(a, b []byte) bool {
 	return v == 0
 }
 
-// BuildWalletAllocations derives wallet keys from the MNEMONIC /
-// LUX_MNEMONIC env var on the per-network branch 1' hardened path
+// BuildWalletAllocations derives wallet keys from the MNEMONIC env var
+// on the per-network branch 1' hardened path
 // (m/44'/9000'/nid'/1'/i') and returns free (no vesting) spending
 // allocations for each key. Each allocation has both ETHAddr and
 // LUXAddr (StakingAddr).
 func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]Allocation, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
-		return nil, fmt.Errorf("wallet allocations require MNEMONIC or LUX_MNEMONIC env var")
+		return nil, fmt.Errorf("wallet allocations require MNEMONIC env var")
 	}
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
@@ -966,7 +966,7 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 	_ = networkID // see comment above
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
-		return nil, fmt.Errorf("wallet allocations require MNEMONIC or LUX_MNEMONIC env var")
+		return nil, fmt.Errorf("wallet allocations require MNEMONIC env var")
 	}
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
@@ -1032,7 +1032,7 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 }
 
 // BuildConfigFromEnv builds genesis config from environment variables
-// Checks in order: KEYS_DIR, mnemonic (MNEMONIC/LUX_MNEMONIC/LIGHT_MNEMONIC), PRIVATE_KEY
+// Checks in order: KEYS_DIR, mnemonic (MNEMONIC/LIGHT_MNEMONIC), PRIVATE_KEY
 //
 // Architecture:
 //   - X-Chain: 100 accounts × 500M LUX each, FREE
@@ -1058,7 +1058,7 @@ func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey ui
 	// m/44'/9000'/0'/0/i (the same path the genesis CLI's -bip44-wallet-keys
 	// flag uses, and the same path the derive100 / luxfi wallet UIs use).
 	// This is what every user-facing tool that scans the chain for funded
-	// addresses will expect — derive100 against $LUX_MNEMONIC and the
+	// addresses will expect — derive100 against $MNEMONIC and the
 	// addresses here must match byte-for-byte.
 	//
 	// NOTE: this is intentionally a SEPARATE concern from
@@ -1254,7 +1254,7 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 func BuildWalletKeyHex(nid uint32, index int) (string, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
-		return "", fmt.Errorf("MNEMONIC or LUX_MNEMONIC env var required")
+		return "", fmt.Errorf("MNEMONIC env var required")
 	}
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return "", fmt.Errorf("invalid mnemonic")

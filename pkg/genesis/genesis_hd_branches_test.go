@@ -212,7 +212,6 @@ func TestLoadKeysFromMnemonic_BranchesIndependent(t *testing.T) {
 // both an ML-DSA-65 pubkey (1952 B) and a populated secp256k1 ETHAddr.
 func TestLoadKeysFromMnemonicEnvForNetwork_Integration(t *testing.T) {
 	t.Setenv("MNEMONIC", "")
-	t.Setenv("LUX_MNEMONIC", "")
 	t.Setenv("LIGHT_MNEMONIC", hdTestMnemonic)
 
 	const n = 3

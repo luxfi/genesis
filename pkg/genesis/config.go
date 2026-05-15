@@ -191,12 +191,12 @@ func GetConfigFromDir(dir string) (*Config, error) {
 
 // GetConfigFromEnv builds genesis config using environment variables
 // Environment variables:
-//   - LUX_NETWORK_ID: network ID (default: custom)
-//   - LUX_GENESIS_DIR: directory containing genesis files
-//   - LUX_KEYS_DIR: directory containing node keys (default: ~/.lux/keys)
+//   - NETWORK_ID: network ID (default: custom)
+//   - GENESIS_DIR: directory containing genesis files
+//   - KEYS_DIR: directory containing node keys (default: ~/.lux/keys)
 func GetConfigFromEnv() (*Config, error) {
 	networkID := uint32(constants.LocalID)
-	if envID := os.Getenv("LUX_NETWORK_ID"); envID != "" {
+	if envID := os.Getenv("NETWORK_ID"); envID != "" {
 		var id uint32
 		if _, err := fmt.Sscanf(envID, "%d", &id); err == nil {
 			networkID = id
@@ -204,7 +204,7 @@ func GetConfigFromEnv() (*Config, error) {
 	}
 
 	// Get genesis directory from env
-	genesisDir := os.Getenv("LUX_GENESIS_DIR")
+	genesisDir := os.Getenv("GENESIS_DIR")
 	if genesisDir != "" {
 		config, err := GetConfigFromDir(genesisDir)
 		if err == nil {
