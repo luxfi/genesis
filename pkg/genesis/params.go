@@ -61,7 +61,7 @@ var LocalParams = Params{
 	TxFee:             MilliLux,
 	CreateAssetTxFee:  10 * MilliLux,
 	UptimeRequirement: 0.2,
-	MinValidatorStake: 1 * Lux,
+	MinValidatorStake: 1_000_000 * Lux,
 	MaxValidatorStake: 3000000 * Lux,
 	MinDelegatorStake: 1 * Lux,
 	MinDelegationFee:  20000, // 2%
@@ -99,7 +99,7 @@ var TestnetParams = Params{
 	TxFee:             MilliLux,
 	CreateAssetTxFee:  10 * MilliLux,
 	UptimeRequirement: 0.8,
-	MinValidatorStake: 1 * Lux,
+	MinValidatorStake: 1_000_000 * Lux,
 	MaxValidatorStake: 3000000 * Lux,
 	MinDelegatorStake: 1 * Lux,
 	MinDelegationFee:  20000,
@@ -145,7 +145,7 @@ var (
 
 	TestnetStakingConfig = StakingConfig{
 		UptimeRequirement: 0.8,
-		MinValidatorStake: 1 * Lux,
+		MinValidatorStake: 1_000_000 * Lux,
 		MaxValidatorStake: 3000000 * Lux,
 		MinDelegatorStake: 1 * Lux,
 		MinDelegationFee:  20000,
@@ -161,7 +161,7 @@ var (
 
 	LocalStakingConfig = StakingConfig{
 		UptimeRequirement: 0.2,
-		MinValidatorStake: 1 * Lux,
+		MinValidatorStake: 1_000_000 * Lux,
 		MaxValidatorStake: 3000000 * Lux,
 		MinDelegatorStake: 1 * Lux,
 		MinDelegationFee:  20000,
