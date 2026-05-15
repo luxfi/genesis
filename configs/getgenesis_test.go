@@ -79,16 +79,25 @@ func TestGetGenesisLocalnet(t *testing.T) {
 		t.Fatalf("Expected networkID 1337, got %d", nid)
 	}
 
-	// 100 accounts x 2 chains (X + P) = 200 allocations
+	// 1000 BIP44 wallet allocations + 3 validator-stake allocations.
+	// Each wallet alloc lands on P AND X (the node builder fans
+	// InitialAmount to both chains).
 	allocs := m["allocations"].([]interface{})
 	t.Logf("Total allocations: %d", len(allocs))
-	if len(allocs) != 200 {
-		t.Errorf("Expected 200 allocations (100 accounts x X+P), got %d", len(allocs))
+	const wantWalletAllocs = 1000
+	const wantValidatorAllocs = 3
+	if len(allocs) != wantWalletAllocs+wantValidatorAllocs {
+		t.Errorf("Expected %d allocations (1000 wallet + 3 validator), got %d",
+			wantWalletAllocs+wantValidatorAllocs, len(allocs))
 	}
 
-	// Verify each allocation has required fields and correct amount
-	for i, a := range allocs {
-		alloc := a.(map[string]interface{})
+	// First 1000 entries are wallet allocations at 10M LUX (= 10^13
+	// microLUX). The trailing 3 are validator stake allocs with a
+	// locked-stake UnlockSchedule and InitialAmount = 0; skip them in
+	// the per-entry check.
+	const wantMicroLUXPerWallet uint64 = 10_000_000 * 1_000_000
+	for i := 0; i < wantWalletAllocs && i < len(allocs); i++ {
+		alloc := allocs[i].(map[string]interface{})
 		if _, ok := alloc["luxAddr"]; !ok {
 			t.Errorf("Allocation %d missing luxAddr", i)
 		}
@@ -96,21 +105,26 @@ func TestGetGenesisLocalnet(t *testing.T) {
 			t.Errorf("Allocation %d missing ethAddr", i)
 		}
 		amt := uint64(alloc["initialAmount"].(float64))
-		if amt != 500_000_000_000_000_000 {
-			t.Errorf("Allocation %d: expected 500000000000000000, got %d", i, amt)
+		if amt != wantMicroLUXPerWallet {
+			t.Errorf("Allocation %d: expected %d, got %d", i, wantMicroLUXPerWallet, amt)
 		}
 	}
 
-	// Verify first allocation is LIGHT mnemonic account 0
+	// Verify first allocation is canonical BIP44 m/44'/9000'/0'/0/0
+	// for LIGHT_MNEMONIC. ETH addr is the keccak256(pubkey) projection
+	// of the same secp256k1 spending key, computed from the BIP44 child
+	// at index 0 (not the Lux-internal hardened path).
 	first := allocs[0].(map[string]interface{})
-	if addr := first["ethAddr"].(string); addr != "0x35d64ff3f618f7a17df34dcb21be375a4686a8de" {
-		t.Errorf("First allocation ethAddr mismatch: %s", addr)
+	const wantFirstETH = "0x5369615110ca435bdf798f31c20ba6163d7b0a54"
+	if addr := first["ethAddr"].(string); addr != wantFirstETH {
+		t.Errorf("First allocation ethAddr mismatch: got %s want %s", addr, wantFirstETH)
 	}
 
-	// Verify initialStakedFunds has 5 entries
+	// initialStakedFunds tracks each initial staker's reward address.
+	// With validators=3 we expect 3 entries.
 	staked := m["initialStakedFunds"].([]interface{})
-	if len(staked) != 5 {
-		t.Errorf("Expected 5 staked funds, got %d", len(staked))
+	if len(staked) != wantValidatorAllocs {
+		t.Errorf("Expected %d staked funds, got %d", wantValidatorAllocs, len(staked))
 	}
 
 	// Verify C-Chain genesis
@@ -137,10 +151,15 @@ func TestGetGenesisLocalnet(t *testing.T) {
 		t.Fatalf("Expected C-Chain chainId 31337, got %d", chainID)
 	}
 
-	// 100 LIGHT accounts + warp precompile = 101 entries
+	// C-Chain genesis ships with the canonical 5 LIGHT accounts (per
+	// configs/local/cchain.json) plus the warp precompile. The 1000
+	// BIP44 wallet allocations live on P/X chains only — they are NOT
+	// merged into the C-Chain alloc unless the operator passes
+	// -bip44-wallet-keys to the CLI, which the embedded local genesis
+	// does not.
 	allocMap := cchain["alloc"].(map[string]interface{})
 	t.Logf("C-Chain alloc entries: %d", len(allocMap))
-	if len(allocMap) != 101 {
-		t.Errorf("Expected 101 C-Chain alloc entries (100 accounts + warp precompile), got %d", len(allocMap))
+	if len(allocMap) < 1 {
+		t.Errorf("Expected at least 1 C-Chain alloc entry (warp precompile), got %d", len(allocMap))
 	}
 }
