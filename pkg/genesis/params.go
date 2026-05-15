@@ -233,7 +233,7 @@ func GetBootstrappers(networkID uint32) []Bootstrapper {
 		networkName = "devnet"
 	default:
 		// For custom/local networks, check environment variable for bootstrappers path
-		if envPath := os.Getenv("LUX_BOOTSTRAPPERS_FILE"); envPath != "" {
+		if envPath := os.Getenv("BOOTSTRAPPERS_FILE"); envPath != "" {
 			data, err := os.ReadFile(envPath)
 			if err == nil {
 				var bootstrappers []Bootstrapper

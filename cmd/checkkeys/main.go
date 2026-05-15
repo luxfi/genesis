@@ -10,16 +10,16 @@ import (
 )
 
 func main() {
-	// Priority: MNEMONIC > LUX_MNEMONIC > LIGHT_MNEMONIC
+	// Priority: MNEMONIC > LIGHT_MNEMONIC
 	mnemonic := ""
-	for _, env := range []string{"MNEMONIC", "LUX_MNEMONIC", "LIGHT_MNEMONIC"} {
+	for _, env := range []string{"MNEMONIC", "LIGHT_MNEMONIC"} {
 		if v := os.Getenv(env); v != "" {
 			mnemonic = v
 			break
 		}
 	}
 	if mnemonic == "" {
-		fmt.Println("mnemonic not set (set LIGHT_MNEMONIC, MNEMONIC, or LUX_MNEMONIC)")
+		fmt.Println("mnemonic not set (set MNEMONIC or LIGHT_MNEMONIC)")
 		os.Exit(1)
 	}
 
