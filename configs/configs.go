@@ -7,8 +7,8 @@
 //
 // Dynamic P-Chain Allocations:
 // P-Chain allocations can be specified dynamically at runtime via:
-//   - LUX_PCHAIN_ALLOCS: JSON string of allocations
-//   - LUX_PCHAIN_ALLOCS_FILE: Path to allocations JSON file
+//   - PCHAIN_ALLOCS: JSON string of allocations
+//   - PCHAIN_ALLOCS_FILE: Path to allocations JSON file
 //   - ~/.lux/genesis/{network}/pchain.json: Standard override location
 //
 // The C-Chain genesis remains embedded and immutable.
@@ -72,8 +72,8 @@ var embeddedGenesis embed.FS
 
 // GetGenesis returns the genesis JSON bytes for a network ID.
 // It supports dynamic P-Chain allocations via environment variables or files:
-//   - LUX_PCHAIN_ALLOCS: JSON string of allocations
-//   - LUX_PCHAIN_ALLOCS_FILE: Path to allocations JSON file
+//   - PCHAIN_ALLOCS: JSON string of allocations
+//   - PCHAIN_ALLOCS_FILE: Path to allocations JSON file
 //   - ~/.lux/genesis/{network}/pchain.json: Standard override location
 //
 // C-Chain genesis remains embedded and immutable.
@@ -117,16 +117,16 @@ func GetGenesisWithAllocations(networkID uint32, allocations []genesis.Allocatio
 
 // loadDynamicPChainAllocations loads P-Chain allocations from environment or files.
 func loadDynamicPChainAllocations(networkName string) *genesis.PChainConfig {
-	// First, check LUX_PCHAIN_ALLOCS environment variable (JSON string)
-	if allocsJSON := os.Getenv("LUX_PCHAIN_ALLOCS"); allocsJSON != "" {
+	// First, check PCHAIN_ALLOCS environment variable (JSON string)
+	if allocsJSON := os.Getenv("PCHAIN_ALLOCS"); allocsJSON != "" {
 		var pchain genesis.PChainConfig
 		if err := json.Unmarshal([]byte(allocsJSON), &pchain); err == nil {
 			return &pchain
 		}
 	}
 
-	// Second, check LUX_PCHAIN_ALLOCS_FILE environment variable
-	if allocsFile := os.Getenv("LUX_PCHAIN_ALLOCS_FILE"); allocsFile != "" {
+	// Second, check PCHAIN_ALLOCS_FILE environment variable
+	if allocsFile := os.Getenv("PCHAIN_ALLOCS_FILE"); allocsFile != "" {
 		data, err := os.ReadFile(allocsFile)
 		if err == nil {
 			var pchain genesis.PChainConfig
