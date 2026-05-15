@@ -92,17 +92,17 @@ type ProofOfPossession struct {
 }
 
 // PQIdentity binds post-quantum keys to a validator's BLS consensus identity.
-// ML-DSA certificates prove BLS/Ringtail key ownership — if BLS is broken by
+// ML-DSA certificates prove BLS/Corona key ownership — if BLS is broken by
 // a quantum computer, the ML-DSA certificates still prove validator identity.
 type PQIdentity struct {
 	// ML-DSA public key (FIPS 204, Dilithium — 1952 bytes hex-encoded)
 	MLDSAPublicKey string `json:"mldsaPublicKey"`
 	// ML-DSA signature over the BLS public key — proves BLS key belongs to this ML-DSA identity
 	BLSCertificate string `json:"blsCertificate"`
-	// Ringtail public key for ring signatures (33 bytes hex-encoded)
-	RingtailPublicKey string `json:"ringtailPublicKey,omitempty"`
-	// ML-DSA signature over the Ringtail public key
-	RingtailCertificate string `json:"ringtailCertificate,omitempty"`
+	// Corona public key for ring signatures (33 bytes hex-encoded)
+	CoronaPublicKey string `json:"coronaPublicKey,omitempty"`
+	// ML-DSA signature over the Corona public key
+	CoronaCertificate string `json:"coronaCertificate,omitempty"`
 }
 
 // Bootstrapper represents a bootstrap node
