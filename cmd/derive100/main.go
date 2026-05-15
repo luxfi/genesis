@@ -129,7 +129,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: derive100 <hrp> <rpc> <mnemonic-env>")
 		fmt.Fprintln(os.Stderr, "  hrp: test|lux|dev|local")
 		fmt.Fprintln(os.Stderr, "  rpc: http://24.199.71.151:9650")
-		fmt.Fprintln(os.Stderr, "  mnemonic-env: LUX_MNEMONIC|LIGHT_MNEMONIC")
+		fmt.Fprintln(os.Stderr, "  mnemonic-env: MNEMONIC|LIGHT_MNEMONIC")
 		os.Exit(1)
 	}
 	hrp := os.Args[1]
