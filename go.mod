@@ -47,7 +47,7 @@ require (
 	github.com/luxfi/address v1.0.1
 	github.com/luxfi/cache v1.2.1 // indirect
 	github.com/luxfi/codec v1.1.4 // indirect
-	github.com/luxfi/consensus v1.23.5
+	github.com/luxfi/consensus v1.23.25
 	github.com/luxfi/formatting v1.0.1
 	github.com/luxfi/geth v1.16.73 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
