@@ -346,7 +346,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 
 	var (
 		xvmGenesisBytes []byte
-		xAssetID      = ids.Empty
+		xAssetID        = ids.Empty
 	)
 	if config.XChainGenesis != "" {
 		var asset struct {
