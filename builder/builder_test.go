@@ -12,7 +12,7 @@ import (
 	"github.com/luxfi/constants"
 	"github.com/luxfi/genesis/configs"
 	"github.com/luxfi/ids"
-	pgenesis "github.com/luxfi/protocol/p/genesis"
+	pgenesis "github.com/luxfi/proto/p/genesis"
 )
 
 func TestGetStakingConfig(t *testing.T) {
