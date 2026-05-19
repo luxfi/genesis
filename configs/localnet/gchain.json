@@ -1,10 +1,10 @@
 {
-  "chainId": 97070,
+  "chainId": 32107,
   "description": "Graph database (GraphQL/Dgraph)",
   "message": "Lux G-Chain Genesis",
   "name": "G-Chain",
-  "networkId": 3,
-  "timestamp": 1730531602,
+  "networkId": 1337,
+  "timestamp": 1735689600,
   "version": 1,
   "vm": "GraphVM"
 }

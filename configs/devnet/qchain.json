@@ -1,1 +1,12 @@
-{"version":1,"message":"Lux Chain Genesis"}
+{
+  "chainId": 96570,
+  "description": "Post-quantum consensus + signatures (Quasar)",
+  "kemScheme": "mlkem768",
+  "message": "Lux Q-Chain Genesis",
+  "name": "Q-Chain",
+  "networkId": 3,
+  "signatureScheme": "mldsa65",
+  "timestamp": 1730531602,
+  "version": 1,
+  "vm": "QuantumVM"
+}

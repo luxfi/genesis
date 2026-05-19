@@ -1,1 +1,17 @@
-{"version":1,"message":"Lux Chain Genesis"}
+{
+  "chainId": 96469,
+  "description": "Decentralized Exchange \u2014 native CLOB + AMM + perpetuals",
+  "feeConfig": {
+    "makerFeeBps": 2,
+    "takerFeeBps": 5
+  },
+  "liquidityPools": [],
+  "message": "Lux D-Chain Genesis",
+  "name": "D-Chain",
+  "networkId": 1,
+  "perpetualMarkets": [],
+  "timestamp": 1730446786,
+  "tradingPairs": [],
+  "version": 1,
+  "vm": "DexVM"
+}
