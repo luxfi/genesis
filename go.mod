@@ -54,7 +54,7 @@ require (
 	github.com/luxfi/metric v1.5.0 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/p2p v1.18.9 // indirect
-	github.com/luxfi/protocol v0.0.3
+	github.com/luxfi/proto v0.0.0-proto-rename
 	github.com/luxfi/rpc v1.0.0
 	github.com/luxfi/sampler v1.0.0 // indirect
 	github.com/luxfi/utils v1.1.4 // indirect
@@ -73,3 +73,7 @@ require (
 )
 
 replace launchpad.net/gocheck => gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
+
+// Local-dev overlay for the protocol → proto rename.
+// Strip once GitHub admin renames luxfi/protocol → luxfi/proto and a real tag exists.
+replace github.com/luxfi/proto => ../protocol
