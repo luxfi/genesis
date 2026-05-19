@@ -1,1 +1,17 @@
-{"version":1,"message":"Lux Chain Genesis"}
+{
+  "aliases": [
+    "M",
+    "mpc",
+    "mpcvm"
+  ],
+  "chainId": 97169,
+  "description": "KMS \u2014 MPC key management + threshold sigs",
+  "message": "Lux K-Chain Genesis",
+  "mpcParties": 10,
+  "mpcThreshold": 7,
+  "name": "K-Chain",
+  "networkId": 1,
+  "timestamp": 1730446786,
+  "version": 1,
+  "vm": "KeyVM"
+}

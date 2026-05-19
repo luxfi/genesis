@@ -1,1 +1,10 @@
-{"version":1,"message":"Lux Chain Genesis"}
+{
+  "chainId": 96968,
+  "description": "Zero-knowledge proofs + private state",
+  "message": "Lux Z-Chain Genesis",
+  "name": "Z-Chain",
+  "networkId": 2,
+  "timestamp": 1730531602,
+  "version": 1,
+  "vm": "ZKVM"
+}

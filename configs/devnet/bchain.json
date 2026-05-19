@@ -1,1 +1,12 @@
-{"version":1,"message":"Lux Chain Genesis"}
+{
+  "chainId": 96770,
+  "description": "Cross-chain bridge + MPC signing",
+  "initialSigners": [],
+  "message": "Lux B-Chain Genesis",
+  "name": "B-Chain",
+  "networkId": 3,
+  "signerThreshold": 0,
+  "timestamp": 1730531602,
+  "version": 1,
+  "vm": "BridgeVM"
+}

@@ -1,10 +1,10 @@
 {
-  "chainId": 96668,
+  "chainId": 31667,
   "description": "AI verification + attestation",
   "message": "Lux A-Chain Genesis",
   "name": "A-Chain",
-  "networkId": 2,
-  "timestamp": 1730531602,
+  "networkId": 1337,
+  "timestamp": 1735689600,
   "version": 1,
   "vm": "AIVM"
 }
