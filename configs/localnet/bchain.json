@@ -1,5 +1,4 @@
 {
-  "chainId": 31777,
   "description": "Cross-chain bridge + MPC signing",
   "initialSigners": [],
   "message": "Lux B-Chain Genesis",
