@@ -54,14 +54,21 @@ var (
 	AChainAliases = []string{"A", "ai", "aivm"}
 	// BChainAliases are the default aliases for the B-Chain (Bridge)
 	BChainAliases = []string{"B", "bridge", "bridgevm"}
-	// TChainAliases are the default aliases for the T-Chain (Threshold)
-	TChainAliases = []string{"T", "threshold", "thresholdvm"}
+	// TChainAliases are the default aliases for the T-Chain (Threshold-FHE).
+	// "F" / "fhe" alias the threshold-FHE chain since this is the
+	// encrypted-compute chain in conceptual letter-chain taxonomy
+	// (LP-134 / "F-Chain" in user-facing docs). The on-disk shard
+	// stays tchain.json — letter is decomplected from product name.
+	TChainAliases = []string{"T", "threshold", "thresholdvm", "F", "fhe", "fhevm"}
 	// ZChainAliases are the default aliases for the Z-Chain (ZK)
 	ZChainAliases = []string{"Z", "zk", "zkvm"}
 	// GChainAliases are the default aliases for the G-Chain (Graph)
 	GChainAliases = []string{"G", "graph", "graphvm"}
-	// KChainAliases are the default aliases for the K-Chain (KMS)
-	KChainAliases = []string{"K", "kms", "kmsvm"}
+	// KChainAliases are the default aliases for the K-Chain (KMS / MPC).
+	// "M" / "mpc" alias the KMS chain since this is the MPC-topology
+	// chain in conceptual letter-chain taxonomy (LP-134 / "M-Chain"
+	// in user-facing docs). The on-disk shard stays kchain.json.
+	KChainAliases = []string{"K", "kms", "kmsvm", "M", "mpc", "mpcvm"}
 
 	// VMAliases are the default aliases for VMs
 	VMAliases = map[ids.ID][]string{
