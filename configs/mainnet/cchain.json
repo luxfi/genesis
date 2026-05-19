@@ -22,7 +22,7 @@
       }
     },
     "byzantiumBlock": 0,
-    "cancunTime": 253399622400,
+    "cancunTime": 0,
     "chainId": 96369,
     "constantinopleBlock": 0,
     "eip150Block": 0,
@@ -46,7 +46,7 @@
     "mergeNetsplitBlock": 0,
     "muirGlacierBlock": 0,
     "petersburgBlock": 0,
-    "shanghaiTime": 253399622400,
+    "shanghaiTime": 0,
     "terminalTotalDifficulty": 0,
     "warpConfig": {
       "blockTimestamp": 1730446786,
