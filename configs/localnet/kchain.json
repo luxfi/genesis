@@ -4,7 +4,6 @@
     "mpc",
     "mpcvm"
   ],
-  "chainId": 32217,
   "description": "KMS \u2014 MPC key management + threshold sigs",
   "message": "Lux K-Chain Genesis",
   "mpcParties": 10,
