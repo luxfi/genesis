@@ -4,7 +4,6 @@
     "fhe",
     "fhevm"
   ],
-  "chainId": 96870,
   "description": "Threshold FHE encrypted compute (ring N=1024 q=12289)",
   "dkgParties": 10,
   "dkgThreshold": 7,

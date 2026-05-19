@@ -1,5 +1,4 @@
 {
-  "chainId": 96470,
   "description": "Decentralized Exchange \u2014 native CLOB + AMM + perpetuals",
   "feeConfig": {
     "makerFeeBps": 2,
