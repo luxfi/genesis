@@ -4,14 +4,14 @@
     "mpc",
     "mpcvm"
   ],
-  "chainId": 97170,
+  "chainId": 32217,
   "description": "KMS \u2014 MPC key management + threshold sigs",
   "message": "Lux K-Chain Genesis",
   "mpcParties": 10,
   "mpcThreshold": 7,
   "name": "K-Chain",
-  "networkId": 3,
-  "timestamp": 1730531602,
+  "networkId": 1337,
+  "timestamp": 1735689600,
   "version": 1,
   "vm": "KeyVM"
 }
