@@ -4,16 +4,16 @@
     "fhe",
     "fhevm"
   ],
-  "chainId": 96869,
+  "chainId": 31887,
   "description": "Threshold FHE encrypted compute (ring N=1024 q=12289)",
   "dkgParties": 10,
   "dkgThreshold": 7,
   "message": "Lux T-Chain Genesis",
   "name": "T-Chain",
-  "networkId": 1,
+  "networkId": 1337,
   "ringDegreeN": 1024,
   "ringModulusQ": 12289,
-  "timestamp": 1730446786,
+  "timestamp": 1735689600,
   "version": 1,
   "vm": "ThresholdVM"
 }

@@ -74,6 +74,41 @@ If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the litera
 | Devnet | 3 | 96370 | `0x53fe8be293555d20de41847f96081f4e8beca1ee2c206999ffbf7c70e497cf43` | 2T LUX |
 | Local | 1337 | 1337 | - | 2T LUX |
 
+### Primary-Network Letter Chains (all baked into genesis)
+
+Every primary network ships **all 10 letter-chain shards**, so every chain
+spawns at startup — no post-launch `CreateBlockchainTx` required. The shard
+schema is `{x,c,d,q,a,b,t,z,g,k}chain.json` (P-Chain is implicit; it is the
+primary network and carries the validator set + chain registry).
+
+Letter aliases (LP-134 user-facing naming): **F-Chain ≡ T-Chain** (threshold
+FHE encrypted compute), **M-Chain ≡ K-Chain** (KMS + MPC topology). The
+canonical letter on disk and in VM IDs is T / K; F / M are aliases registered
+on the same VM IDs (`builder.TChainAliases`, `builder.KChainAliases`).
+
+| Letter | VM           | Mainnet | Testnet | Devnet | Localnet |
+|--------|--------------|---------|---------|--------|----------|
+| X      | XVM (UTXO)   | —       | —       | —      | —        |
+| C      | EVM          | 96369   | 96368   | 96370  | 31337    |
+| D      | DexVM        | 96469   | 96468   | 96470  | 31447    |
+| Q      | QuantumVM    | 96569   | 96568   | 96570  | 31557    |
+| A      | AIVM         | 96669   | 96668   | 96670  | 31667    |
+| B      | BridgeVM     | 96769   | 96768   | 96770  | 31777    |
+| T (=F) | ThresholdVM  | 96869   | 96868   | 96870  | 31887    |
+| Z      | ZKVM         | 96969   | 96968   | 96970  | 31997    |
+| G      | GraphVM      | 97069   | 97068   | 97070  | 32107    |
+| K (=M) | KeyVM        | 97169   | 97168   | 97170  | 32217    |
+
+Pattern: each letter's mainnet ID is `96369 + 100*Δ_from_C`; testnet = mainnet-1,
+devnet = mainnet+1 (mirrors the C-Chain triple). Localnet uses a separate
+`31337 + 110*Δ` series. All 36 EVM chain IDs are pairwise distinct so a
+misrouted transaction cannot be replayed against the wrong chain.
+
+The contract that every primary network ships all 10 shards is locked by
+`configs.TestGetGenesis_AllPrimaryChainsBakedIn` — removing a chain on
+mainnet/testnet/devnet/localnet is now a load-bearing test edit, not a
+silent operator switch.
+
 ### L2 Chains
 
 | Chain | Mainnet ID | Testnet ID | Devnet ID | Treasury |
