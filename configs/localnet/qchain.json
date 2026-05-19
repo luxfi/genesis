@@ -1,5 +1,4 @@
 {
-  "chainId": 31557,
   "description": "Post-quantum consensus + signatures (Quasar)",
   "kemScheme": "mlkem768",
   "message": "Lux Q-Chain Genesis",
