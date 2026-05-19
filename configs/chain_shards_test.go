@@ -141,3 +141,123 @@ func networkIDFromName(t *testing.T, name string) uint32 {
 		return 0
 	}
 }
+
+// TestGetGenesis_AllPrimaryChainsBakedIn locks the contract that every
+// primary network (mainnet, testnet, devnet, localnet) ships ALL 10
+// primary-network chain shards baked into its genesis. This means the
+// chains spawn at network startup with NO post-launch CreateBlockchainTx —
+// chain set is fully data-driven by which shards are committed.
+//
+// The 10 primary-network chains, in canonical order:
+//
+//	X  XVM         exchange / UTXO asset
+//	C  EVM         contracts
+//	D  DexVM       decentralized exchange (CLOB + AMM + perps)
+//	Q  QuantumVM   post-quantum consensus (Quasar / ML-DSA / ML-KEM)
+//	A  AIVM        AI verification / attestation
+//	B  BridgeVM    cross-chain bridge (MPC signing)
+//	T  ThresholdVM threshold FHE encrypted compute (LP-?? F-chain semantic)
+//	Z  ZKVM        zero-knowledge proofs / private state
+//	G  GraphVM     graph database
+//	K  KeyVM       KMS — MPC topology (LP-?? M-chain semantic)
+//
+// P-Chain is the primary network itself and carries the validator set + chain
+// registry; it has no shard slot because it isn't a CreateChainTx entry.
+//
+// If a future genesis intentionally needs to omit a chain (e.g. a P+X-only
+// Liquidity-shape L1), that's a NEW config-tree, not a regression on the
+// canonical Lux primary networks. Editing this test to drop a chain on
+// mainnet/testnet/devnet is a load-bearing decision — bring it to design
+// review.
+func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
+	required := []string{
+		"xChainGenesis",
+		"cChainGenesis",
+		"dChainGenesis",
+		"qChainGenesis",
+		"aChainGenesis",
+		"bChainGenesis",
+		"tChainGenesis",
+		"zChainGenesis",
+		"gChainGenesis",
+		"kChainGenesis",
+	}
+	for _, name := range []string{"mainnet", "testnet", "devnet", "localnet"} {
+		t.Run(name, func(t *testing.T) {
+			data, err := GetGenesis(networkIDFromName(t, name))
+			if err != nil {
+				t.Fatalf("GetGenesis(%s): %v", name, err)
+			}
+			var m map[string]any
+			if err := json.Unmarshal(data, &m); err != nil {
+				t.Fatalf("parse %s: %v", name, err)
+			}
+			for _, field := range required {
+				got, _ := m[field].(string)
+				if got == "" {
+					t.Fatalf("%s: required chain field %q is empty — primary network must ship every letter-chain shard", name, field)
+				}
+			}
+		})
+	}
+}
+
+// TestPrimaryChainShards_PerChainCanonicalChainID locks the canonical
+// per-letter EVM chainId scheme so any drift between the network configs
+// is caught at test time. Pattern:
+//
+//	letter base = 96369 + 100*(idx_in_alphabet_relative_to_C)
+//	per-network offset: testnet = base-1, devnet = base+1 (mirrors C-Chain)
+//
+// This produces:
+//
+//	C(96369/96368/96370), D(96469/96468/96470), Q(96569/96568/96570),
+//	A(96669/96668/96670), B(96769/96768/96770), T(96869/96868/96870),
+//	Z(96969/96968/96970), G(97069/97068/97070), K(97169/97168/97170)
+//
+// Each ID is unique across {network × letter} so a misrouted tx cannot
+// be replayed against the wrong chain.
+func TestPrimaryChainShards_PerChainCanonicalChainID(t *testing.T) {
+	want := map[string]map[string]int{
+		"mainnet": {
+			"d": 96469, "q": 96569, "a": 96669, "b": 96769,
+			"t": 96869, "z": 96969, "g": 97069, "k": 97169,
+		},
+		"testnet": {
+			"d": 96468, "q": 96568, "a": 96668, "b": 96768,
+			"t": 96868, "z": 96968, "g": 97068, "k": 97168,
+		},
+		"devnet": {
+			"d": 96470, "q": 96570, "a": 96670, "b": 96770,
+			"t": 96870, "z": 96970, "g": 97070, "k": 97170,
+		},
+		"localnet": {
+			"d": 31447, "q": 31557, "a": 31667, "b": 31777,
+			"t": 31887, "z": 31997, "g": 32107, "k": 32217,
+		},
+	}
+	for net, byLetter := range want {
+		net := net
+		t.Run(net, func(t *testing.T) {
+			for letter, wantID := range byLetter {
+				path := filepath.Join("..", "configs", net, letter+"chain.json")
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatalf("%s/%schain.json: %v", net, letter, err)
+				}
+				var shard map[string]any
+				if err := json.Unmarshal(data, &shard); err != nil {
+					t.Fatalf("%s/%schain.json parse: %v", net, letter, err)
+				}
+				// chainId is stored as a JSON number → unmarshals to float64
+				gotF, ok := shard["chainId"].(float64)
+				if !ok {
+					t.Fatalf("%s/%schain.json: chainId missing or wrong type, got %T", net, letter, shard["chainId"])
+				}
+				if int(gotF) != wantID {
+					t.Fatalf("%s/%schain.json: chainId got %d want %d", net, letter, int(gotF), wantID)
+				}
+			}
+		})
+	}
+}

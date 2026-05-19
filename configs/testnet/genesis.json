@@ -1,4 +1,5 @@
 {
+  "aChainGenesis": "{\n  \"chainId\": 96668,\n  \"description\": \"AI verification + attestation\",\n  \"message\": \"Lux A-Chain Genesis\",\n  \"name\": \"A-Chain\",\n  \"networkId\": 2,\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"AIVM\"\n}",
   "allocations": [
     {
       "ethAddr": "0xf785fa547ae9ccf3d3ca5362762a347a4c41051a",
@@ -6058,7 +6059,10 @@
       ]
     }
   ],
-  "cChainGenesis": "{\"config\":{\"chainId\":2,\"homesteadBlock\":0,\"eip150Block\":0,\"eip155Block\":0,\"eip158Block\":0,\"byzantiumBlock\":0,\"constantinopleBlock\":0,\"petersburgBlock\":0,\"istanbulBlock\":0,\"muirGlacierBlock\":0,\"berlinBlock\":0,\"londonBlock\":0,\"feeConfig\":{\"gasLimit\":12000000,\"targetBlockRate\":2,\"minBaseFee\":25000000000,\"targetGas\":60000000,\"baseFeeChangeDenominator\":36,\"minBlockGasCost\":0,\"maxBlockGasCost\":1000000,\"blockGasCostStep\":200000}},\"nonce\":\"0x0\",\"timestamp\":\"0x6a069b33\",\"extraData\":\"0x\",\"gasLimit\":\"0xb71b00\",\"difficulty\":\"0x0\",\"mixHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"coinbase\":\"0x0000000000000000000000000000000000000000\",\"alloc\":{\"0x9011E888251AB053B7bD1cdB598Db4f9DEd94714\":{\"balance\":\"0x193e5939a08ce9dbd480000000\"}},\"number\":\"0x0\",\"gasUsed\":\"0x0\",\"parentHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"}",
+  "bChainGenesis": "{\n  \"chainId\": 96768,\n  \"description\": \"Cross-chain bridge + MPC signing\",\n  \"initialSigners\": [],\n  \"message\": \"Lux B-Chain Genesis\",\n  \"name\": \"B-Chain\",\n  \"networkId\": 2,\n  \"signerThreshold\": 0,\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"BridgeVM\"\n}",
+  "cChainGenesis": "{\n  \"alloc\": {\n    \"0200000000000000000000000000000000000005\": {\n      \"balance\": \"0x0\",\n      \"code\": \"0x01\",\n      \"nonce\": \"0x1\"\n    },\n    \"9011E888251AB053B7bD1cdB598Db4f9DEd94714\": {\n      \"balance\": \"0x193e5939a08ce9dbd480000000\"\n    }\n  },\n  \"baseFeePerGas\": \"0x5d21dba00\",\n  \"coinbase\": \"0x0000000000000000000000000000000000000000\",\n  \"config\": {\n    \"arrowGlacierBlock\": 0,\n    \"berlinBlock\": 0,\n    \"byzantiumBlock\": 0,\n    \"cancunTime\": 0,\n    \"chainId\": 96368,\n    \"constantinopleBlock\": 0,\n    \"eip150Block\": 0,\n    \"eip155Block\": 0,\n    \"eip158Block\": 0,\n    \"evmTimestamp\": 0,\n    \"feeConfig\": {\n      \"baseFeeChangeDenominator\": 36,\n      \"blockGasCostStep\": 200000,\n      \"gasLimit\": 1000000000,\n      \"maxBlockGasCost\": 1000000,\n      \"minBaseFee\": 25000000000,\n      \"minBlockGasCost\": 0,\n      \"targetBlockRate\": 2,\n      \"targetGas\": 500000000\n    },\n    \"grayGlacierBlock\": 0,\n    \"homesteadBlock\": 0,\n    \"istanbulBlock\": 0,\n    \"londonBlock\": 0,\n    \"mergeNetsplitBlock\": 0,\n    \"muirGlacierBlock\": 0,\n    \"petersburgBlock\": 0,\n    \"shanghaiTime\": 0,\n    \"terminalTotalDifficulty\": 0,\n    \"warpConfig\": {\n      \"blockTimestamp\": 0,\n      \"quorumNumerator\": 67,\n      \"requirePrimaryNetworkSigners\": false\n    }\n  },\n  \"difficulty\": \"0x0\",\n  \"extraData\": \"0x\",\n  \"gasLimit\": \"0x3b9aca00\",\n  \"gasUsed\": \"0x0\",\n  \"genesisHash\": \"0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995\",\n  \"mixHash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n  \"nonce\": \"0x0\",\n  \"number\": \"0x0\",\n  \"parentHash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n  \"stateRoot\": \"0x2d1cedac263020c5c56ef962f6abe0da1f5217bdc6468f8c9258a0ea23699e80\",\n  \"timestamp\": \"0x67259912\"\n}",
+  "dChainGenesis": "{\n  \"chainId\": 96468,\n  \"description\": \"Decentralized Exchange \\u2014 native CLOB + AMM + perpetuals\",\n  \"feeConfig\": {\n    \"makerFeeBps\": 2,\n    \"takerFeeBps\": 5\n  },\n  \"liquidityPools\": [],\n  \"message\": \"Lux D-Chain Genesis\",\n  \"name\": \"D-Chain\",\n  \"networkId\": 2,\n  \"perpetualMarkets\": [],\n  \"timestamp\": 1730531602,\n  \"tradingPairs\": [],\n  \"version\": 1,\n  \"vm\": \"DexVM\"\n}",
+  "gChainGenesis": "{\n  \"chainId\": 97068,\n  \"description\": \"Graph database (GraphQL/Dgraph)\",\n  \"message\": \"Lux G-Chain Genesis\",\n  \"name\": \"G-Chain\",\n  \"networkId\": 2,\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"GraphVM\"\n}",
   "initialStakeDuration": 31536000,
   "initialStakeDurationOffset": 5400,
   "initialStakedFunds": [
@@ -6095,7 +6099,12 @@
       }
     }
   ],
+  "kChainGenesis": "{\n  \"aliases\": [\n    \"M\",\n    \"mpc\",\n    \"mpcvm\"\n  ],\n  \"chainId\": 97168,\n  \"description\": \"KMS \\u2014 MPC key management + threshold sigs\",\n  \"message\": \"Lux K-Chain Genesis\",\n  \"mpcParties\": 10,\n  \"mpcThreshold\": 7,\n  \"name\": \"K-Chain\",\n  \"networkId\": 2,\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"KeyVM\"\n}",
   "message": "Lux et Veritas",
   "networkID": 2,
-  "startTime": 1778814243
+  "qChainGenesis": "{\n  \"chainId\": 96568,\n  \"description\": \"Post-quantum consensus + signatures (Quasar)\",\n  \"kemScheme\": \"mlkem768\",\n  \"message\": \"Lux Q-Chain Genesis\",\n  \"name\": \"Q-Chain\",\n  \"networkId\": 2,\n  \"signatureScheme\": \"mldsa65\",\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"QuantumVM\"\n}",
+  "startTime": 1778814243,
+  "tChainGenesis": "{\n  \"aliases\": [\n    \"F\",\n    \"fhe\",\n    \"fhevm\"\n  ],\n  \"chainId\": 96868,\n  \"description\": \"Threshold FHE encrypted compute (ring N=1024 q=12289)\",\n  \"dkgParties\": 10,\n  \"dkgThreshold\": 7,\n  \"message\": \"Lux T-Chain Genesis\",\n  \"name\": \"T-Chain\",\n  \"networkId\": 2,\n  \"ringDegreeN\": 1024,\n  \"ringModulusQ\": 12289,\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"ThresholdVM\"\n}",
+  "xChainGenesis": "{\"symbol\":\"LUX\",\"name\":\"Lux\",\"denomination\":9}",
+  "zChainGenesis": "{\n  \"chainId\": 96968,\n  \"description\": \"Zero-knowledge proofs + private state\",\n  \"message\": \"Lux Z-Chain Genesis\",\n  \"name\": \"Z-Chain\",\n  \"networkId\": 2,\n  \"timestamp\": 1730531602,\n  \"version\": 1,\n  \"vm\": \"ZKVM\"\n}"
 }

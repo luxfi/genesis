@@ -1,1 +1,10 @@
-{"version":1,"message":"Lux Chain Genesis"}
+{
+  "chainId": 96670,
+  "description": "AI verification + attestation",
+  "message": "Lux A-Chain Genesis",
+  "name": "A-Chain",
+  "networkId": 3,
+  "timestamp": 1730531602,
+  "version": 1,
+  "vm": "AIVM"
+}
