@@ -25,11 +25,10 @@
     "cancunTime": 253399622400,
     "chainId": 494949,
     "constantinopleBlock": 0,
-    "durangoTimestamp": 0,
     "eip150Block": 0,
     "eip155Block": 0,
     "eip158Block": 0,
-    "etnaTimestamp": 253399622400,
+    "evmTimestamp": 0,
     "feeConfig": {
       "baseFeeChangeDenominator": 36,
       "blockGasCostStep": 200000,
@@ -40,8 +39,6 @@
       "targetBlockRate": 2,
       "targetGas": 500000000
     },
-    "fortunaTimestamp": 253399622400,
-    "graniteTimestamp": 253399622400,
     "grayGlacierBlock": 0,
     "homesteadBlock": 0,
     "istanbulBlock": 0,
@@ -50,7 +47,6 @@
     "muirGlacierBlock": 0,
     "petersburgBlock": 0,
     "shanghaiTime": 0,
-    "evmTimestamp": 0,
     "terminalTotalDifficulty": 0,
     "warpConfig": {
       "blockTimestamp": 1768946194,
