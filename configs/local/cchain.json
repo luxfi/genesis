@@ -1,5 +1,5 @@
 {
-  "_comment": "Local C-Chain genesis \u2014 5 accounts from 'light light light light light light light light light light light energy' (BIP44 m/44'/9000'/0'/0/{0-4})",
+  "_comment": "Local C-Chain genesis — 5 accounts from 'light light light light light light light light light light light energy' (BIP44 m/44'/9000'/0'/0/{0-4})",
   "alloc": {
     "0200000000000000000000000000000000000005": {
       "balance": "0x0",
@@ -39,7 +39,7 @@
     },
     "byzantiumBlock": 0,
     "cancunTime": 0,
-    "chainId": 1337,
+    "chainId": 31337,
     "constantinopleBlock": 0,
     "eip150Block": 0,
     "eip155Block": 0,
