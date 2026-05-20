@@ -217,21 +217,23 @@ func GetConfigFromEnv() (*Config, error) {
 	return GetConfig(networkID), nil
 }
 
-// parseAllocations converts JSON allocations to internal format
+// parseAllocations converts JSON allocations to internal format.
+// AllocationJSON.UnmarshalJSON has already normalized legacy field names
+// (ethAddr→evmAddr, luxAddr/avaxAddr/xAddr→utxoAddr).
 func parseAllocations(jsonAllocs []AllocationJSON) ([]Allocation, error) {
 	result := make([]Allocation, 0, len(jsonAllocs))
 	for _, ja := range jsonAllocs {
-		ethAddr, err := ParseETHAddress(ja.ETHAddr)
+		evmAddr, err := ParseETHAddress(ja.EVMAddr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid eth address %s: %w", ja.ETHAddr, err)
+			return nil, fmt.Errorf("invalid evm address %s: %w", ja.EVMAddr, err)
 		}
-		luxAddr, err := ParseAddress(ja.LUXAddr)
+		utxoAddr, err := ParseAddress(ja.UTXOAddr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid lux address %s: %w", ja.LUXAddr, err)
+			return nil, fmt.Errorf("invalid utxo address %s: %w", ja.UTXOAddr, err)
 		}
 		result = append(result, Allocation{
-			ETHAddr:        ethAddr,
-			LUXAddr:        luxAddr,
+			EVMAddr:        evmAddr,
+			UTXOAddr:       utxoAddr,
 			InitialAmount:  ja.InitialAmount,
 			UnlockSchedule: ja.UnlockSchedule,
 		})
