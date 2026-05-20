@@ -33,15 +33,26 @@ import (
 )
 
 const (
-	// DefaultAllocationPerAccount is 10M LUX per account per chain (P and X).
-	// 1000 accounts × 10M × 2 chains = 20B LUX of UTXOs in genesis (well
+	// DefaultAllocationPerAccount is 50M LUX per account per chain (P and X).
+	// 1000 accounts × 50M × 2 chains = 100B LUX of UTXOs in genesis (well
 	// under the 2T LUX SupplyCap on every network).
-	// X-Chain: 10M free (immediately spendable from genesis).
-	// P-Chain: 10M free at genesis (no vesting); the long-tail unlock
-	// schedule below adds a separate 10M per account that vests 1%/year
-	// over 100 years from Jan 1 2020 — i.e. each address sees 10M
-	// spendable on X, 10M spendable on P + 10M vesting on P.
-	DefaultAllocationPerAccount = 10_000_000 * Lux
+	// X-Chain: 50M free (immediately spendable from genesis).
+	// P-Chain: 50M free at genesis (no vesting); the long-tail unlock
+	// schedule below adds a separate 50M per account that vests 1%/year
+	// over 100 years from Jan 1 2020 — i.e. each address sees 50M
+	// spendable on X, 50M spendable on P + 50M vesting on P.
+	//
+	// Address scheme — Bitcoin-UTXO-style (more quantum-resistant):
+	//   P-Chain / X-Chain addresses are bech32(ripemd160(sha256(pubkey))).
+	//   The public key is *hidden behind two hash layers* until the
+	//   address is first spent. Until first spend, even a future
+	//   quantum adversary cannot recover the private key — Shor's
+	//   algorithm works against the secp256k1 pubkey, but not against
+	//   sha256+ripemd160. Contrast with C-Chain (Ethereum) addresses,
+	//   which are keccak256(pubkey)[12:] and effectively expose the
+	//   pubkey on every signature (recovery in ECDSA). Long-term holds
+	//   should sit on P/X, not C, for this reason.
+	DefaultAllocationPerAccount = 50_000_000 * Lux
 
 	// DefaultAllocationPerValidator is kept for backward compatibility
 	DefaultAllocationPerValidator = DefaultAllocationPerAccount
@@ -81,7 +92,7 @@ type KeyInfo struct {
 	MLDSAPublicKey       []byte      // ML-DSA post-quantum public key (FIPS 204)
 	CoronaPublicKey      []byte      // Corona ring signature public key
 	StakingAddr          ids.ShortID // P-chain address derived from staker key
-	ETHAddr              ids.ShortID // C-chain/X-chain address
+	EVMAddr              ids.ShortID // C-chain (and other EVM chain) H160 address
 }
 
 // LoadKeysFromDir loads all node keys from a directory
@@ -200,7 +211,7 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 			ethPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
 			if err == nil {
 				ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-				copy(keyInfo.ETHAddr[:], ethAddr[:])
+				copy(keyInfo.EVMAddr[:], ethAddr[:])
 			}
 
 			// Get Lux ShortID (for X/P chain addresses)
@@ -215,7 +226,7 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 		// Fallback: derive from node ID (NOT correct but backward compatible)
 		// WARNING: These addresses won't have usable private keys!
 		copy(keyInfo.StakingAddr[:], nodeID[:])
-		copy(keyInfo.ETHAddr[:], nodeID[:])
+		copy(keyInfo.EVMAddr[:], nodeID[:])
 	}
 
 	// Load ML-DSA public key (post-quantum identity)
@@ -296,7 +307,7 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 
 	return &KeyInfo{
 		StakingAddr: feeAddr,
-		ETHAddr:     ethShortID,
+		EVMAddr:     ethShortID,
 	}, nil
 }
 
@@ -338,7 +349,7 @@ func buildCChainGenesisTreasury(networkID uint32) (string, error) {
 func buildCChainGenesis(networkID uint32, keys []KeyInfo, allocationPerKey uint64) (string, error) {
 	alloc := make(map[string]Balance)
 	for _, key := range keys {
-		addr := fmt.Sprintf("0x%s", key.ETHAddr.Hex())
+		addr := fmt.Sprintf("0x%s", key.EVMAddr.Hex())
 		alloc[addr] = Balance{
 			Balance: fmt.Sprintf("0x%x", allocationPerKey),
 		}
@@ -456,27 +467,38 @@ func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyIn
 		return nil, fmt.Errorf("failed to create master key: %w", err)
 	}
 
-	account, err := deriveLuxAccount(masterKey, nid)
+	// Canonical Avalanche / Lux BIP44 path: m/44'/9000'/0'/0/i.
+	// One mnemonic → same keys for every chain. No <nid> in the path
+	// — per-brand isolation is via different mnemonics, not different
+	// paths. This matches what `lux key derive`, MetaMask (via
+	// network-add), and AvalancheJS produce, so users see the same
+	// addresses in every wallet.
+	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to derive purpose 44': %w", err)
+	}
+	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive coin type 9000': %w", err)
+	}
+	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive account 0': %w", err)
+	}
+	change, err := account.NewChildKey(0) // non-hardened change=0
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive change 0: %w", err)
 	}
 
-	// Branch 1' — Lux secp256k1 account.
-	luxBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive branch 1' (secp256k1): %w", err)
-	}
-
-	// Branch 0' — ML-DSA-65 mesh identity.
-	mldsaBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive branch 0' (ML-DSA): %w", err)
-	}
+	// Suppress the previously-used hardened nid/branch derivation —
+	// kept the helper around for reference but no longer called here.
+	_ = nid
 
 	keys := make([]KeyInfo, 0, numAccounts)
 	for i := 0; i < numAccounts; i++ {
-		// Hardened child index i' on branch 1' → secp256k1 spend key.
-		luxChild, err := luxBranch.NewChildKey(bip32.FirstHardenedChild + uint32(i))
+		// Standard Avalanche/Lux secp256k1 child: m/44'/9000'/0'/0/i
+		// (non-hardened index — matches Core Wallet, MetaMask, cast).
+		luxChild, err := change.NewChildKey(uint32(i)) //nolint:gosec
 		if err != nil {
 			return nil, fmt.Errorf("failed to derive secp256k1 key %d: %w", i, err)
 		}
@@ -486,12 +508,11 @@ func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyIn
 			return nil, fmt.Errorf("failed to create key info %d: %w", i, err)
 		}
 
-		// Hardened child index i' on branch 0' → ML-DSA-65 keypair.
-		mldsaChild, err := mldsaBranch.NewChildKey(bip32.FirstHardenedChild + uint32(i))
-		if err != nil {
-			return nil, fmt.Errorf("failed to derive ML-DSA seed %d: %w", i, err)
-		}
-		mldsaPubKey, err := mldsaKeygenFromChildSeed(mldsaChild.Key)
+		// ML-DSA-65 mesh identity — derive from a separate label so
+		// no collision with the secp256k1 path. Still reproducible
+		// from the same mnemonic + index.
+		mldsaSeed := keccak256(append(append(seed, []byte("LUX/HIP-0077/mldsa65")...), byte(i)))
+		mldsaPubKey, err := mldsaKeygenFromChildSeed(mldsaSeed[:32])
 		if err != nil {
 			return nil, fmt.Errorf("ML-DSA keygen %d: %w", i, err)
 		}
@@ -515,7 +536,7 @@ func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyIn
 	log.Debug("derived HD keys",
 		"nid", nid,
 		"numAccounts", numAccounts,
-		"path", fmt.Sprintf("m/44'/9000'/%d'/{0',1'}/i'", nid),
+		"path", fmt.Sprintf("m/44'/9000'/0'/0/i (canonical Avalanche/Lux path; nid=%d kept for log only)", nid),
 	)
 	return keys, nil
 }
@@ -620,7 +641,7 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 		NodeID:      nodeID,
 		StakerKey:   privKey,
 		StakingAddr: stakingAddr,
-		ETHAddr:     ethAddr,
+		EVMAddr:     ethAddr,
 	}, nil
 }
 
@@ -886,8 +907,8 @@ func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]All
 		)
 
 		allocations = append(allocations, Allocation{
-			ETHAddr:       ethShortID,
-			LUXAddr:       stakingAddr,
+			EVMAddr:       ethShortID,
+			UTXOAddr:       stakingAddr,
 			InitialAmount: amountPerKey,
 		})
 	}
@@ -1022,8 +1043,8 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 		)
 
 		allocations = append(allocations, Allocation{
-			ETHAddr:       ethShortID,
-			LUXAddr:       stakingAddr,
+			EVMAddr:       ethShortID,
+			UTXOAddr:       stakingAddr,
 			InitialAmount: amountPerKey,
 		})
 	}
@@ -1153,8 +1174,8 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 
 	for _, key := range allKeys {
 		allocations = append(allocations, Allocation{
-			ETHAddr:       key.ETHAddr,
-			LUXAddr:       key.StakingAddr,
+			EVMAddr:       key.EVMAddr,
+			UTXOAddr:       key.StakingAddr,
 			InitialAmount: allocationPerKey,
 		})
 	}
@@ -1166,7 +1187,7 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 	// validator's stakedFunds address.
 	allocByAddr := make(map[ids.ShortID]bool, len(allocations))
 	for _, a := range allocations {
-		allocByAddr[a.LUXAddr] = true
+		allocByAddr[a.UTXOAddr] = true
 	}
 	// stakeAmount is the locktime-locked stake each validator
 	// contributes. Matches the prior genesis behaviour (3B nLUX across
@@ -1189,8 +1210,8 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		// ProtocolVM can weight the staker.
 		if !allocByAddr[key.StakingAddr] {
 			allocations = append(allocations, Allocation{
-				ETHAddr:        key.ETHAddr,
-				LUXAddr:        key.StakingAddr,
+				EVMAddr:        key.EVMAddr,
+				UTXOAddr:        key.StakingAddr,
 				InitialAmount:  0,
 				UnlockSchedule: stakeUnlockSchedule,
 			})
