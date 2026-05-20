@@ -56,10 +56,14 @@ type Config struct {
 	SecurityProfile *SecurityProfile `json:"securityProfile,omitempty"`
 }
 
-// Allocation represents a genesis allocation
+// Allocation represents a genesis allocation.
+//
+// EVMAddr is the 20-byte H160 EVM address (C-Chain and other EVM chains).
+// UTXOAddr is the 20-byte ShortID used by both P-Chain and X-Chain UTXOs
+//   (same bytes; bech32 prefix differentiates the chain).
 type Allocation struct {
-	ETHAddr        ids.ShortID    `json:"ethAddr"`
-	LUXAddr        ids.ShortID    `json:"luxAddr"`
+	EVMAddr        ids.ShortID    `json:"evmAddr"`
+	UTXOAddr       ids.ShortID    `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
 }
@@ -153,12 +157,55 @@ type PChainConfig struct {
 	InitialStakers             []StakerJSON     `json:"initialStakers"`
 }
 
-// AllocationJSON is the JSON representation of an allocation
+// AllocationJSON is the JSON representation of an allocation.
+//
+// Address fields use the canonical UTXO/EVM split:
+//   - utxoAddr (bech32, P-/X- prefix interchangeable) — P-Chain + X-Chain UTXO owner
+//   - evmAddr (0x H160) — C-Chain and other EVM chain owner
+//
+// Legacy field names (luxAddr, ethAddr) are accepted for backward compat via
+// UnmarshalJSON.
 type AllocationJSON struct {
-	ETHAddr        string         `json:"ethAddr"`
-	LUXAddr        string         `json:"luxAddr"`
+	EVMAddr        string         `json:"evmAddr"`
+	UTXOAddr       string         `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
+}
+
+// UnmarshalJSON accepts legacy field names (ethAddr, luxAddr, avaxAddr) and
+// remaps them to the canonical (evmAddr, utxoAddr).
+func (a *AllocationJSON) UnmarshalJSON(data []byte) error {
+	type raw struct {
+		EVMAddr        string         `json:"evmAddr"`
+		UTXOAddr       string         `json:"utxoAddr"`
+		ETHAddr        string         `json:"ethAddr"`  // legacy
+		LUXAddr        string         `json:"luxAddr"`  // legacy
+		AVAXAddr       string         `json:"avaxAddr"` // legacy (upstream Avalanche)
+		XAddr          string         `json:"xAddr"`    // transitional
+		InitialAmount  uint64         `json:"initialAmount"`
+		UnlockSchedule []LockedAmount `json:"unlockSchedule"`
+	}
+	var r raw
+	if err := json.Unmarshal(data, &r); err != nil {
+		return err
+	}
+	a.EVMAddr = r.EVMAddr
+	if a.EVMAddr == "" {
+		a.EVMAddr = r.ETHAddr
+	}
+	a.UTXOAddr = r.UTXOAddr
+	if a.UTXOAddr == "" {
+		a.UTXOAddr = r.XAddr
+	}
+	if a.UTXOAddr == "" {
+		a.UTXOAddr = r.LUXAddr
+	}
+	if a.UTXOAddr == "" {
+		a.UTXOAddr = r.AVAXAddr
+	}
+	a.InitialAmount = r.InitialAmount
+	a.UnlockSchedule = r.UnlockSchedule
+	return nil
 }
 
 // UnparsedAllocation is an alias for AllocationJSON (for backward compatibility)
@@ -294,8 +341,8 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 	allocations := make([]AllocationJSON, 0, len(c.Allocations))
 	for _, a := range c.Allocations {
 		allocations = append(allocations, AllocationJSON{
-			ETHAddr:        fmt.Sprintf("0x%s", a.ETHAddr.Hex()),
-			LUXAddr:        formatBech32WithChain("P", hrp, a.LUXAddr),
+			EVMAddr:        fmt.Sprintf("0x%s", a.EVMAddr.Hex()),
+			UTXOAddr:        formatBech32WithChain("P", hrp, a.UTXOAddr),
 			InitialAmount:  a.InitialAmount,
 			UnlockSchedule: a.UnlockSchedule,
 		})
