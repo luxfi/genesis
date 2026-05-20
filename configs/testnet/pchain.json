@@ -6111,8 +6111,8 @@
       "rewardAddress": "P-test1td3hy5rsmua93jehryujm0nfv93jsjjq3jhcre",
       "delegationFee": 20000,
       "signer": {
-        "publicKey": "0xa9503da5b7b1fc48f6f699677ee5ba577b8cae2b6a98faa03fc1c8e33cafb075dd3ea93321fc3c13f8e22524bc25b17b",
-        "proofOfPossession": "0xa1aa833db425af4d323d78be2c497d94a3b7c84de1566c391f4d70f808c336e77cc10f7d7061cf49fdc660899cf96afb14af058eaae03a87c4752fd70a003827748591bd39dfc100546a4d8bf0e504bccb9e6770fc550fc95ce08520c23911ba"
+        "publicKey": "0x95bc37b95050e8f48fa738a479be5b046c01a361b34f63e55d0d896a5741cc8a7c2387aaf8930e726ff57c766d694af1",
+        "proofOfPossession": "0xa6ea2cc2e3bef1576044c82bbc6b6d91fcd0ecf2869c1e6fa917c4fdb96b8ea6a017853cb3ebe1f68db1fb2b74fb431d0f62720510f4345d3b93b05932ec5bf2ae4469e0957b290a8c09dfb093ce5a42fafe01ad95b3a909f089357d33a49602"
       }
     },
     {
@@ -6120,8 +6120,8 @@
       "rewardAddress": "P-test1w3a45kqve820jw302q8yfs0krsq4medr8qg9ms",
       "delegationFee": 20000,
       "signer": {
-        "publicKey": "0x84e20183f945fea4e08eb126338763a0508b15409f5fbb7e525013d5134069b1e1037226dc6bc295ab18d9c7605368cb",
-        "proofOfPossession": "0xa6ae72e7ab56f3b845aecbb08c18aa1b1015d6b6a64a9cd48bd94c09c8ed4c129f7be01c3f868c0163e371821d65cf9d1283d14a49f2c1461a786e8eeba3ca7ea810a3f1427ffdb39e1121841aeccb6679a453b4145cff11caf1e4e67641eceb"
+        "publicKey": "0x9203be4e677a866f51a9f70f5682bcf37371565d52eac9debc12a642e7df01a8d830abb7feccede1732f70e0579679a8",
+        "proofOfPossession": "0xa58894ffa62c73366a3cc9b529cd974813e5774720a88a817a4f257d13a2347fe5e6c7f43e7c064b6e51ccd9e9694c390464194cad72e0bc0497a9e0a1c6684d8828d127dace016c2f358f7f978456f4614e445cb34a769bd1ae0bc1878b3c86"
       }
     },
     {
@@ -6129,8 +6129,26 @@
       "rewardAddress": "P-test18wwfkuup85h62zk55mydhjys23yey57zz7uccs",
       "delegationFee": 20000,
       "signer": {
-        "publicKey": "0x865e60e9d5973af6b0c6d003afa104d337e8bf9ac8b8a711e260626781886073ce79b3efc3a8fd1534a4069c90b88182",
-        "proofOfPossession": "0x8a4470fc6c20abfe26595c2e90726bf337fe040d79c57cdecffa60f639d3803c78edeaf8ecb02ad1dada2c05922b0e2d129bd67876141bcf6cfe1a6bbf887cbefd8e941e381163ee84425f343355b170f667e91ddc65ed4551dfc8e94bd3e895"
+        "publicKey": "0x94c16db64f0e4ac507594f1360ad8799b8ce4edf37b76d1141f1f2c58c27c4e6690d6bf9a355657d428847641d66979b",
+        "proofOfPossession": "0x8eef0522edc47e766ff49c57ca33bd573fc4fa615d992bead40cd36941cbd5cfe7cd7124b6f5775a830c5080572b3e5d13428882872461568a95e286a35d2ee2fc8eea59d28360ccde97b7f03196617c01d003d32010020222b99d0d194aaadf"
+      }
+    },
+    {
+      "nodeID": "NodeID-8mY2fhUehN27v3LCU84BnnKEoeRfd2weC",
+      "rewardAddress": "P-test1td3hy5rsmua93jehryujm0nfv93jsjjq3jhcre",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0x81539aab2b5c41648bbc96228ee69b247f463e42ae4e5f3d88e6019829b76478fbba6c691864482a4e66cbc9323db09c",
+        "proofOfPossession": "0x8458a3893e857fc1d25abfd0452683b69b571dbcf85334561e8db444f4012d9267e8ee162685cec6724b474ecf375ee90676ad2b45bcd07922d63c721d6a60bd4aeeb9da3fdc39aa929151c670a46f423ec48ac53fd86d1edb11d83dc9b839c3"
+      }
+    },
+    {
+      "nodeID": "NodeID-4smuFz5Z9cm8BEyQU1oPQ9nwgXyMgaNqu",
+      "rewardAddress": "P-test1td3hy5rsmua93jehryujm0nfv93jsjjq3jhcre",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0x95ae3ed59d2bfb89c53851cb217a6f26c92bb92f60d9859b0939b8cfaa6fac1595eb3409d45b0df29f66eeb647afa3dd",
+        "proofOfPossession": "0xa512a7be7466ed6b515a56a7c7d124a7b2e983728be4249309e6ed6e24e65f9d183df715dcb8541e981053737b8d005b0c82760218f7edc7ea4140f674090f0b300c7d4e268368b680e62a33f4e80b27e307e1667f6f8b6aa7a3bc52e4d20ebd"
       }
     }
   ]
