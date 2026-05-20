@@ -52,7 +52,7 @@ func main() {
 	}
 
 	for i, key := range keys {
-		ethHex := fmt.Sprintf("%x", key.ETHAddr[:])
+		ethHex := fmt.Sprintf("%x", key.EVMAddr[:])
 		match := ""
 		for addr, label := range genesisETH {
 			if ethHex == addr {
@@ -60,6 +60,6 @@ func main() {
 				break
 			}
 		}
-		fmt.Printf("BIP44 index %d: ETH=0x%x NodeID=%s%s\n", i, key.ETHAddr[:], key.NodeID, match)
+		fmt.Printf("BIP44 index %d: ETH=0x%x NodeID=%s%s\n", i, key.EVMAddr[:], key.NodeID, match)
 	}
 }
