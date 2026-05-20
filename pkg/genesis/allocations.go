@@ -85,8 +85,8 @@ func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 		}
 
 		allocations[i] = AllocationJSON{
-			ETHAddr:        key.EthAddr,
-			LUXAddr:        luxAddr,
+			EVMAddr:        key.EthAddr,
+			UTXOAddr:        luxAddr,
 			InitialAmount:  initialAmount,
 			UnlockSchedule: unlockSchedule,
 		}
