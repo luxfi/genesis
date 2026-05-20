@@ -85,7 +85,7 @@ func TestLoadKeysFromMnemonic_Branch1IsSecp256k1(t *testing.T) {
 
 	var zero [20]byte
 	for i, k := range keys {
-		if bytes.Equal(k.ETHAddr[:], zero[:]) {
+		if bytes.Equal(k.EVMAddr[:], zero[:]) {
 			t.Fatalf("index %d: ETHAddr is zero", i)
 		}
 		if bytes.Equal(k.StakingAddr[:], zero[:]) {
@@ -96,7 +96,7 @@ func TestLoadKeysFromMnemonic_Branch1IsSecp256k1(t *testing.T) {
 	// Distinct indices → distinct addresses.
 	for i := 0; i < n; i++ {
 		for j := i + 1; j < n; j++ {
-			if keys[i].ETHAddr == keys[j].ETHAddr {
+			if keys[i].EVMAddr == keys[j].EVMAddr {
 				t.Fatalf("ETHAddr collision at %d == %d", i, j)
 			}
 			if keys[i].StakingAddr == keys[j].StakingAddr {
@@ -121,7 +121,7 @@ func TestLoadKeysFromMnemonic_NIDHardened(t *testing.T) {
 	}
 
 	for i := 0; i < n; i++ {
-		if keysA[i].ETHAddr == keysB[i].ETHAddr {
+		if keysA[i].EVMAddr == keysB[i].EVMAddr {
 			t.Fatalf("index %d: secp256k1 ETHAddr collides across nids (hardening broken)", i)
 		}
 		if keysA[i].StakingAddr == keysB[i].StakingAddr {
@@ -228,7 +228,7 @@ func TestLoadKeysFromMnemonicEnvForNetwork_Integration(t *testing.T) {
 		if got := len(k.MLDSAPublicKey); got != mldsa65PublicKeySize {
 			t.Fatalf("index %d: MLDSAPublicKey size = %d, want %d", i, got, mldsa65PublicKeySize)
 		}
-		if bytes.Equal(k.ETHAddr[:], zero[:]) {
+		if bytes.Equal(k.EVMAddr[:], zero[:]) {
 			t.Fatalf("index %d: ETHAddr is zero", i)
 		}
 	}
