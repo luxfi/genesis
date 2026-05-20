@@ -374,23 +374,23 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 
 		// Sort allocations for deterministic output
 		type allocation struct {
-			ETHAddr       ids.ShortID
-			LUXAddr       ids.ShortID
+			EVMAddr       ids.ShortID
+			UTXOAddr      ids.ShortID
 			InitialAmount uint64
 		}
 		xAllocations := []allocation{}
 		for _, a := range config.Allocations {
 			if a.InitialAmount > 0 {
 				xAllocations = append(xAllocations, allocation{
-					ETHAddr:       a.ETHAddr,
-					LUXAddr:       a.LUXAddr,
+					EVMAddr:       a.EVMAddr,
+					UTXOAddr:       a.UTXOAddr,
 					InitialAmount: a.InitialAmount,
 				})
 			}
 		}
 
 		for _, a := range xAllocations {
-			bech32Addr, err := address.FormatBech32(hrp, a.LUXAddr[:])
+			bech32Addr, err := address.FormatBech32(hrp, a.UTXOAddr[:])
 			if err != nil {
 				return nil, ids.Empty, fmt.Errorf("failed to format bech32 address: %w", err)
 			}
@@ -398,7 +398,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 				Amount:  a.InitialAmount,
 				Address: bech32Addr,
 			})
-			ethAddrStr := a.ETHAddr.Hex()
+			ethAddrStr := a.EVMAddr.Hex()
 			if len(ethAddrStr) > 2 { // "0x" prefix
 				memoBytes = append(memoBytes, []byte(ethAddrStr[2:])...)
 			}
@@ -445,14 +445,14 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 	protocolAllocations := []genesis.Allocation{}
 	skippedAllocations := []genesiscfg.Allocation{}
 	for _, a := range config.Allocations {
-		if initiallyStaked.Contains(a.LUXAddr) {
+		if initiallyStaked.Contains(a.UTXOAddr) {
 			skippedAllocations = append(skippedAllocations, a)
 			continue
 		}
 		for _, unlock := range a.UnlockSchedule {
 			if unlock.Amount > 0 {
 				// Format address as bech32 for the P-Chain
-				bech32Addr, err := address.FormatBech32(hrp, a.LUXAddr[:])
+				bech32Addr, err := address.FormatBech32(hrp, a.UTXOAddr[:])
 				if err != nil {
 					return nil, ids.Empty, fmt.Errorf("failed to format bech32 address for P-chain: %w", err)
 				}
@@ -460,7 +460,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 					Locktime: unlock.Locktime,
 					Amount:   unlock.Amount,
 					Address:  bech32Addr,
-					Message:  a.ETHAddr.Bytes(),
+					Message:  a.EVMAddr.Bytes(),
 				})
 			}
 		}
@@ -496,7 +496,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		for _, a := range nodeAllocations {
 			for _, unlock := range a.UnlockSchedule {
 				// Format address as bech32 for staker allocations
-				bech32Addr, err := address.FormatBech32(hrp, a.LUXAddr[:])
+				bech32Addr, err := address.FormatBech32(hrp, a.UTXOAddr[:])
 				if err != nil {
 					return nil, ids.Empty, fmt.Errorf("failed to format bech32 address for staker allocation: %w", err)
 				}
@@ -504,7 +504,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 					Locktime: unlock.Locktime,
 					Amount:   unlock.Amount,
 					Address:  bech32Addr,
-					Message:  a.ETHAddr.Bytes(),
+					Message:  a.EVMAddr.Bytes(),
 				})
 			}
 		}
@@ -855,8 +855,8 @@ func ForDevMode(cfg DevModeConfig, stakingCfg *StakingConfig) ([]byte, ids.ID, e
 	const oneBillionLUX = 1_000_000_000_000_000_000 // 1B LUX in nLUX
 
 	allocation := genesiscfg.Allocation{
-		ETHAddr:       cfg.RewardAddress, // Same as LUX addr for simplicity
-		LUXAddr:       cfg.RewardAddress,
+		EVMAddr:       cfg.RewardAddress, // Same as LUX addr for simplicity
+		UTXOAddr:       cfg.RewardAddress,
 		InitialAmount: oneMillionLUX, // Initial unlocked amount
 		UnlockSchedule: []genesiscfg.LockedAmount{
 			{
