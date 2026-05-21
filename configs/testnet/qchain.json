@@ -7,5 +7,6 @@
   "signatureScheme": "mldsa65",
   "timestamp": 1730531602,
   "version": 1,
-  "vm": "QuantumVM"
+  "vm": "QuantumVM",
+  "chainId": 96568
 }
