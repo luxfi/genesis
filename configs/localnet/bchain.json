@@ -7,5 +7,6 @@
   "signerThreshold": 0,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "BridgeVM"
+  "vm": "BridgeVM",
+  "chainId": 31777
 }
