@@ -246,7 +246,7 @@ func addBIP44WalletAllocations(config *genesis.Config, networkID uint32, numKeys
 	balanceHex := fmt.Sprintf("0x%x", balance)
 	for _, a := range allocs {
 		// 20-byte ETH addr in checksummed 0x form.
-		addrHex := fmt.Sprintf("0x%s", a.EVMAddr.Hex())
+		addrHex := fmt.Sprintf("0x%s", a.ETHAddr.Hex())
 		alloc[addrHex] = map[string]any{"balance": balanceHex}
 	}
 	out, err := json.Marshal(cchain)
