@@ -8,13 +8,12 @@ import (
 	"testing"
 
 	"github.com/luxfi/address"
-	"github.com/luxfi/ids"
 )
 
 // TestChainPrefixFormat covers the decomplected entry point: ChainPrefix carries
 // the per-chain identity, hrp carries the per-network identity, and the two
 // compose at the call site. Output must be byte-identical to upstream
-// address.Format and to the deprecated formatBech32WithChain alias.
+// address.Format directly.
 func TestChainPrefixFormat(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -70,13 +69,6 @@ func TestChainPrefixFormat(t *testing.T) {
 				t.Errorf("ChainPrefix.Format diverges from address.Format:\n  got:  %s\n  want: %s", got, up)
 			}
 
-			// Must match the deprecated alias byte-for-byte.
-			var sid ids.ShortID
-			copy(sid[:], raw)
-			old := formatBech32WithChain(string(tc.prefix), tc.hrp, sid)
-			if got != old {
-				t.Errorf("ChainPrefix.Format diverges from deprecated formatBech32WithChain:\n  new: %s\n  old: %s", got, old)
-			}
 		})
 	}
 }
