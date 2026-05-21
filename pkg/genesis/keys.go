@@ -423,42 +423,14 @@ func LoadKeyFromEnv() (*KeyInfo, error) {
 	return keyInfoFromPrivateKey(privKeyBytes)
 }
 
-// LoadKeysFromMnemonic derives multiple keys from a BIP39 mnemonic per
-// HIP-0077 §"Identity". Two hardened branches descend from a per-network
-// account level:
-//
-//	device_pq_key[i]  = m/44'/9000'/nid'/0'/i'  → ML-DSA-65  (FIPS 204)
-//	device_lux_key[i] = m/44'/9000'/nid'/1'/i'  → secp256k1  (Lux account)
-//
-// All five levels are hardened. This gives two guarantees:
-//
-//  1. Per-network isolation — a leaked branch on nid=A does not let an
-//     attacker derive any branch on nid=B for the same mnemonic.
-//  2. Branch independence — leaking the branch-0' (ML-DSA child seed)
-//     reveals nothing about branch-1' (secp256k1 spend key) because
-//     hardened siblings are derived from the parent *private* key, not
-//     the parent xpub (BIP-32 §"Private parent → private child").
-//
-// The ML-DSA-65 keypair is generated from the 32-byte BIP-32 child seed
-// expanded via SHAKE-256 into a 32-byte ξ (per FIPS 204 §5.1 KeyGen).
-// SHAKE-256 expansion of the child seed is the FIPS 204-aligned way to
-// derive ξ from a parent BIP-32 child, and lux/crypto/mldsa MUST adopt
-// the same expansion when it lands (see TODO at the mldsa65 import).
-//
-// Backward-incompatible change vs. the prior layout
-// (m/44'/9000'/0'/0/i): addresses derived under that path will NOT
-// reproduce. The treasury and any keys-on-disk you want to keep MUST be
-// re-derived (or loaded from KEYS_DIR instead of the mnemonic). See
-// genesis/CHANGELOG.md for the migration note.
-func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyInfo, error) {
+// LoadKeysFromMnemonic derives keys from a BIP39 mnemonic using the canonical
+// Avalanche/Lux BIP44 path m/44'/9000'/0'/0/i. The same mnemonic produces the
+// same keys across every Lux network — addresses are stable in MetaMask, Core
+// Wallet, AvalancheJS, and `lux key derive`. Per-network isolation comes from
+// using a different mnemonic per environment, not from path divergence.
+func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic")
-	}
-	if nid >= bip32.FirstHardenedChild {
-		// Hardening folds the high bit; a network id at or above 2^31
-		// would collide with another network id mod 2^31. Refuse rather
-		// than silently producing colliding addresses.
-		return nil, fmt.Errorf("network id %d must be < 2^31 (BIP-32 hardening limit)", nid)
 	}
 
 	seed := bip39.NewSeed(mnemonic, "")
@@ -467,12 +439,6 @@ func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyIn
 		return nil, fmt.Errorf("failed to create master key: %w", err)
 	}
 
-	// Canonical Avalanche / Lux BIP44 path: m/44'/9000'/0'/0/i.
-	// One mnemonic → same keys for every chain. No <nid> in the path
-	// — per-brand isolation is via different mnemonics, not different
-	// paths. This matches what `lux key derive`, MetaMask (via
-	// network-add), and AvalancheJS produce, so users see the same
-	// addresses in every wallet.
 	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive purpose 44': %w", err)
@@ -485,14 +451,10 @@ func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyIn
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive account 0': %w", err)
 	}
-	change, err := account.NewChildKey(0) // non-hardened change=0
+	change, err := account.NewChildKey(0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive change 0: %w", err)
 	}
-
-	// Suppress the previously-used hardened nid/branch derivation —
-	// kept the helper around for reference but no longer called here.
-	_ = nid
 
 	keys := make([]KeyInfo, 0, numAccounts)
 	for i := 0; i < numAccounts; i++ {
@@ -534,30 +496,10 @@ func LoadKeysFromMnemonic(mnemonic string, nid uint32, numAccounts int) ([]KeyIn
 	}
 
 	log.Debug("derived HD keys",
-		"nid", nid,
 		"numAccounts", numAccounts,
-		"path", fmt.Sprintf("m/44'/9000'/0'/0/i (canonical Avalanche/Lux path; nid=%d kept for log only)", nid),
+		"path", "m/44'/9000'/0'/0/i",
 	)
 	return keys, nil
-}
-
-// deriveLuxAccount walks the shared prefix m/44'/9000'/nid' from the
-// master key. The two leaf branches (0' = ML-DSA, 1' = secp256k1) hang
-// off the returned account key.
-func deriveLuxAccount(masterKey *bip32.Key, nid uint32) (*bip32.Key, error) {
-	purpose, err := masterKey.NewChildKey(bip32.FirstHardenedChild + 44)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive purpose 44': %w", err)
-	}
-	coinType, err := purpose.NewChildKey(bip32.FirstHardenedChild + 9000)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive coin type 9000': %w", err)
-	}
-	account, err := coinType.NewChildKey(bip32.FirstHardenedChild + nid)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive account %d': %w", nid, err)
-	}
-	return account, nil
 }
 
 // mldsaKeygenFromChildSeed expands a 32-byte BIP-32 child seed into the
@@ -596,20 +538,16 @@ func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
 	return pk.Bytes(), nil
 }
 
-// LoadKeysFromMnemonicEnv loads keys from mnemonic env vars.
-// Priority: MNEMONIC > LIGHT_MNEMONIC.
-//
-// nid is the Hanzo mesh network id baked into the hardened derivation
-// path. Callers that already know the network id MUST use
-// LoadKeysFromMnemonicEnvForNetwork instead — it adds the
-// production-safe public-mnemonic guard around this entry point.
-func LoadKeysFromMnemonicEnv(nid uint32, numAccounts int) ([]KeyInfo, error) {
+// LoadKeysFromMnemonicEnv loads keys from mnemonic env vars (MNEMONIC > LIGHT_MNEMONIC).
+// Callers that already know the network id MUST use
+// LoadKeysFromMnemonicEnvForNetwork instead — it adds the production-safe
+// public-mnemonic guard around this entry point.
+func LoadKeysFromMnemonicEnv(numAccounts int) ([]KeyInfo, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
 		return nil, fmt.Errorf("mnemonic not set (set MNEMONIC or LIGHT_MNEMONIC)")
 	}
-
-	return LoadKeysFromMnemonic(mnemonic, nid, numAccounts)
+	return LoadKeysFromMnemonic(mnemonic, numAccounts)
 }
 
 // keyInfoFromPrivateKey creates KeyInfo from raw private key bytes
@@ -829,7 +767,7 @@ func LoadKeysFromMnemonicEnvForNetwork(networkID uint32, numAccounts int) ([]Key
 	if err := RefuseLightMnemonicOnProduction(networkID); err != nil {
 		return nil, err
 	}
-	return LoadKeysFromMnemonicEnv(networkID, numAccounts)
+	return LoadKeysFromMnemonicEnv(numAccounts)
 }
 
 // subtleConstantTimeEqual is a thin wrapper so we don't pull crypto/subtle
@@ -843,77 +781,6 @@ func subtleConstantTimeEqual(a, b []byte) bool {
 		v |= a[i] ^ b[i]
 	}
 	return v == 0
-}
-
-// BuildWalletAllocations derives wallet keys from the MNEMONIC env var
-// on the per-network branch 1' hardened path
-// (m/44'/9000'/nid'/1'/i') and returns free (no vesting) spending
-// allocations for each key. Each allocation has both ETHAddr and
-// LUXAddr (StakingAddr).
-func BuildWalletAllocations(nid uint32, numKeys int, amountPerKey uint64) ([]Allocation, error) {
-	mnemonic := getMnemonicEnv()
-	if mnemonic == "" {
-		return nil, fmt.Errorf("wallet allocations require MNEMONIC env var")
-	}
-	if !bip39.IsMnemonicValid(mnemonic) {
-		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
-	}
-	if nid >= bip32.FirstHardenedChild {
-		return nil, fmt.Errorf("network id %d must be < 2^31 (BIP-32 hardening limit)", nid)
-	}
-
-	seed := bip39.NewSeed(mnemonic, "")
-	masterKey, err := bip32.NewMasterKey(seed)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create master key: %w", err)
-	}
-
-	account, err := deriveLuxAccount(masterKey, nid)
-	if err != nil {
-		return nil, err
-	}
-	luxBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive branch 1' (secp256k1): %w", err)
-	}
-
-	allocations := make([]Allocation, 0, numKeys)
-	for i := 0; i < numKeys; i++ {
-		childKey, err := luxBranch.NewChildKey(bip32.FirstHardenedChild + uint32(i))
-		if err != nil {
-			return nil, fmt.Errorf("failed to derive wallet key %d: %w", i, err)
-		}
-
-		// Lux P/X-chain address from secp256k1
-		luxPrivKey, err := luxcrypto.ToPrivateKey(childKey.Key)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create secp256k1 key %d: %w", i, err)
-		}
-		stakingAddr := luxPrivKey.Address()
-
-		// ETH address from keccak256(uncompressed_pubkey)
-		ethPrivKey, err := ethcrypto.ToECDSA(childKey.Key)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create ECDSA key %d: %w", i, err)
-		}
-		ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-		var ethShortID ids.ShortID
-		copy(ethShortID[:], ethAddr[:])
-
-		log.Debug("derived wallet allocation",
-			"nid", nid, "i", i,
-			"luxAddr", stakingAddr.String(),
-			"ethAddr", fmt.Sprintf("0x%x", ethAddr),
-		)
-
-		allocations = append(allocations, Allocation{
-			EVMAddr:       ethShortID,
-			UTXOAddr:       stakingAddr,
-			InitialAmount: amountPerKey,
-		})
-	}
-
-	return allocations, nil
 }
 
 // LoadBIP44WalletKeysFromMnemonic derives N spending keys from a BIP39
@@ -1103,7 +970,7 @@ func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey ui
 		if numValidators == 0 {
 			numValidators = 3
 		}
-		validatorNodeKeys, _ = LoadKeysFromMnemonic(mnemonic, networkID, numValidators)
+		validatorNodeKeys, _ = LoadKeysFromMnemonic(mnemonic, numValidators)
 	}
 
 	// Combine: use dir keys for validators when present, otherwise the
@@ -1268,37 +1135,3 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 	}, nil
 }
 
-// BuildWalletKeyHex derives the secp256k1 private key at index i on the
-// per-network branch 1' (m/44'/9000'/nid'/1'/i') and returns it as hex.
-// Used by bootstrap tools that need the exact same key the genesis
-// allocated to.
-func BuildWalletKeyHex(nid uint32, index int) (string, error) {
-	mnemonic := getMnemonicEnv()
-	if mnemonic == "" {
-		return "", fmt.Errorf("MNEMONIC env var required")
-	}
-	if !bip39.IsMnemonicValid(mnemonic) {
-		return "", fmt.Errorf("invalid mnemonic")
-	}
-	if nid >= bip32.FirstHardenedChild {
-		return "", fmt.Errorf("network id %d must be < 2^31 (BIP-32 hardening limit)", nid)
-	}
-	seed := bip39.NewSeed(mnemonic, "")
-	masterKey, err := bip32.NewMasterKey(seed)
-	if err != nil {
-		return "", err
-	}
-	account, err := deriveLuxAccount(masterKey, nid)
-	if err != nil {
-		return "", err
-	}
-	luxBranch, err := account.NewChildKey(bip32.FirstHardenedChild + 1)
-	if err != nil {
-		return "", fmt.Errorf("failed to derive branch 1' (secp256k1): %w", err)
-	}
-	child, err := luxBranch.NewChildKey(bip32.FirstHardenedChild + uint32(index))
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%x", child.Key), nil
-}
