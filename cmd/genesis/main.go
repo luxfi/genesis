@@ -201,7 +201,7 @@ func maybeAddWalletAllocations(config *genesis.Config, walletKeys int, walletAmo
 		return config
 	}
 
-	walletAllocs, err := genesis.BuildWalletAllocations(config.NetworkID, walletKeys, walletAmountLUX*genesis.Lux)
+	walletAllocs, err := genesis.BuildBIP44WalletAllocations(config.NetworkID, walletKeys, walletAmountLUX*genesis.Lux)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to build wallet allocations: %v\n", err)
 		return config
