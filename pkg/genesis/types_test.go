@@ -11,7 +11,7 @@ import (
 	"github.com/luxfi/ids"
 )
 
-func TestFormatBech32WithChain(t *testing.T) {
+func TestChainPrefixFormat_KnownVectors(t *testing.T) {
 	// Known test addresses from mainnet genesis
 	testCases := []struct {
 		name        string
@@ -81,11 +81,14 @@ func TestFormatBech32WithChain(t *testing.T) {
 			var shortID ids.ShortID
 			copy(shortID[:], addrBytes)
 
-			// Test our formatBech32WithChain function
-			result := formatBech32WithChain(tc.chainPrefix, tc.hrp, shortID)
+			// Test ChainPrefix.Format
+			result, err := ChainPrefix(tc.chainPrefix).Format(tc.hrp, shortID[:])
+			if err != nil {
+				t.Fatalf("ChainPrefix.Format: %v", err)
+			}
 
 			if result != tc.expected {
-				t.Errorf("formatBech32WithChain() = %s, want %s", result, tc.expected)
+				t.Errorf("ChainPrefix.Format = %s, want %s", result, tc.expected)
 			}
 
 			// Verify the address can be parsed back
@@ -140,7 +143,10 @@ func TestBech32ChecksumConsistency(t *testing.T) {
 		copy(shortID[:], addrBytes)
 
 		// Our implementation
-		ourAddr := formatBech32WithChain("P", "lux", shortID)
+		ourAddr, err := PChainPrefix.Format("lux", shortID[:])
+		if err != nil {
+			t.Fatalf("PChainPrefix.Format: %v", err)
+		}
 
 		// Node's implementation
 		nodeAddr, err := address.Format("P", "lux", addrBytes)
