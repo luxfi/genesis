@@ -12,5 +12,6 @@
   "networkId": 1337,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "KeyVM"
+  "vm": "KeyVM",
+  "chainId": 32217
 }

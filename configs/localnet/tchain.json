@@ -14,5 +14,6 @@
   "ringModulusQ": 12289,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "ThresholdVM"
+  "vm": "ThresholdVM",
+  "chainId": 31887
 }

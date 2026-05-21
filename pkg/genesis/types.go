@@ -161,54 +161,12 @@ type PChainConfig struct {
 // Address fields use the canonical UTXO/EVM split:
 //   - utxoAddr (bech32, P-/X- prefix interchangeable) — P-Chain + X-Chain UTXO owner
 //   - evmAddr (0x H160) — C-Chain and other EVM chain owner
-//
-// Legacy field names (luxAddr, ethAddr) are accepted for backward compat via
-// UnmarshalJSON.
 type AllocationJSON struct {
 	EVMAddr        string         `json:"evmAddr"`
 	UTXOAddr       string         `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
 }
-
-// UnmarshalJSON accepts legacy field names (ethAddr, luxAddr, avaxAddr) and
-// remaps them to the canonical (evmAddr, utxoAddr).
-func (a *AllocationJSON) UnmarshalJSON(data []byte) error {
-	type raw struct {
-		EVMAddr        string         `json:"evmAddr"`
-		UTXOAddr       string         `json:"utxoAddr"`
-		ETHAddr        string         `json:"ethAddr"`  // legacy
-		LUXAddr        string         `json:"luxAddr"`  // legacy
-		AVAXAddr       string         `json:"avaxAddr"` // legacy (upstream Avalanche)
-		XAddr          string         `json:"xAddr"`    // transitional
-		InitialAmount  uint64         `json:"initialAmount"`
-		UnlockSchedule []LockedAmount `json:"unlockSchedule"`
-	}
-	var r raw
-	if err := json.Unmarshal(data, &r); err != nil {
-		return err
-	}
-	a.EVMAddr = r.EVMAddr
-	if a.EVMAddr == "" {
-		a.EVMAddr = r.ETHAddr
-	}
-	a.UTXOAddr = r.UTXOAddr
-	if a.UTXOAddr == "" {
-		a.UTXOAddr = r.XAddr
-	}
-	if a.UTXOAddr == "" {
-		a.UTXOAddr = r.LUXAddr
-	}
-	if a.UTXOAddr == "" {
-		a.UTXOAddr = r.AVAXAddr
-	}
-	a.InitialAmount = r.InitialAmount
-	a.UnlockSchedule = r.UnlockSchedule
-	return nil
-}
-
-// UnparsedAllocation is an alias for AllocationJSON (for backward compatibility)
-type UnparsedAllocation = AllocationJSON
 
 // StakerJSON is the JSON representation of a staker
 type StakerJSON struct {
@@ -225,8 +183,6 @@ type StakerJSON struct {
 	EndTime uint64 `json:"endTime,omitempty"`
 }
 
-// UnparsedStaker is an alias for StakerJSON (for backward compatibility)
-type UnparsedStaker = StakerJSON
 
 // CChainConfig is the C-Chain genesis configuration
 type CChainConfig struct {
@@ -395,17 +351,3 @@ func (c *Config) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.ToJSON(hrp))
 }
 
-// formatBech32WithChain formats an address with chain prefix (e.g., "P-lux1...").
-//
-// Deprecated: prefer ChainPrefix.Format, which decomplects the per-chain prefix
-// from the per-network HRP. Kept as a thin alias for callers that haven't yet
-// migrated; falls back to a hex-encoded form if bech32 encoding fails (cannot
-// happen for a well-formed 20-byte ShortID — preserved for byte-identical
-// behavior with the pre-decomplect helper).
-func formatBech32WithChain(chainID, hrp string, addr ids.ShortID) string {
-	out, err := ChainPrefix(chainID).Format(hrp, addr[:])
-	if err != nil {
-		return fmt.Sprintf("%s-%s1%s", chainID, hrp, addr.Hex())
-	}
-	return out
-}
