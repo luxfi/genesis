@@ -3,8 +3,8 @@
     {
       "initialAmount": 2000000000000000000,
       "unlockSchedule": [],
-      "evmAddr": "0xf785fa547ae9ccf3d3ca5362762a347a4c41051a",
-      "utxoAddr": "X-test1qsrd262r5w9dswv2wwzj0un79ncpwvdg4rg0xx"
+      "utxoAddr": "X-test1qsrd262r5w9dswv2wwzj0un79ncpwvdg4rg0xx",
+      "ethAddr": "0xf785fa547ae9ccf3d3ca5362762a347a4c41051a"
     },
     {
       "initialAmount": 0,
@@ -14,14 +14,14 @@
           "locktime": 0
         }
       ],
-      "evmAddr": "0xf785fa547ae9ccf3d3ca5362762a347a4c41051a",
-      "utxoAddr": "P-test1qsrd262r5w9dswv2wwzj0un79ncpwvdg4rg0xx"
+      "utxoAddr": "P-test1qsrd262r5w9dswv2wwzj0un79ncpwvdg4rg0xx",
+      "ethAddr": "0xf785fa547ae9ccf3d3ca5362762a347a4c41051a"
     },
     {
       "initialAmount": 2000000000000000000,
       "unlockSchedule": [],
-      "evmAddr": "0xf4b5be7a6dea583da4cddcda4d9b3afd51684b6e",
-      "utxoAddr": "X-test1x7rtxtkh6538hqdwp624tryu33853phfu9cfpw"
+      "utxoAddr": "X-test1x7rtxtkh6538hqdwp624tryu33853phfu9cfpw",
+      "ethAddr": "0xf4b5be7a6dea583da4cddcda4d9b3afd51684b6e"
     },
     {
       "initialAmount": 0,
@@ -31,14 +31,14 @@
           "locktime": 0
         }
       ],
-      "evmAddr": "0xf4b5be7a6dea583da4cddcda4d9b3afd51684b6e",
-      "utxoAddr": "P-test1x7rtxtkh6538hqdwp624tryu33853phfu9cfpw"
+      "utxoAddr": "P-test1x7rtxtkh6538hqdwp624tryu33853phfu9cfpw",
+      "ethAddr": "0xf4b5be7a6dea583da4cddcda4d9b3afd51684b6e"
     },
     {
       "initialAmount": 2000000000000000000,
       "unlockSchedule": [],
-      "evmAddr": "0x202335dd1c21c9b90277f8bca78db98db0bbc293",
-      "utxoAddr": "X-test184tuwjk0np3n4mm2d7d7y0f397ksmzy0l5z307"
+      "utxoAddr": "X-test184tuwjk0np3n4mm2d7d7y0f397ksmzy0l5z307",
+      "ethAddr": "0x202335dd1c21c9b90277f8bca78db98db0bbc293"
     },
     {
       "initialAmount": 0,
@@ -48,14 +48,14 @@
           "locktime": 0
         }
       ],
-      "evmAddr": "0x202335dd1c21c9b90277f8bca78db98db0bbc293",
-      "utxoAddr": "P-test184tuwjk0np3n4mm2d7d7y0f397ksmzy0l5z307"
+      "utxoAddr": "P-test184tuwjk0np3n4mm2d7d7y0f397ksmzy0l5z307",
+      "ethAddr": "0x202335dd1c21c9b90277f8bca78db98db0bbc293"
     },
     {
       "initialAmount": 2000000000000000000,
       "unlockSchedule": [],
-      "evmAddr": "0xf6e9eae8211e4a4532a480100068783d9cb75c3b",
-      "utxoAddr": "X-test14pfm4k9k3mx30yf2kpd9cvfcs7mzkkn6875l8h"
+      "utxoAddr": "X-test14pfm4k9k3mx30yf2kpd9cvfcs7mzkkn6875l8h",
+      "ethAddr": "0xf6e9eae8211e4a4532a480100068783d9cb75c3b"
     },
     {
       "initialAmount": 0,
@@ -65,14 +65,14 @@
           "locktime": 0
         }
       ],
-      "evmAddr": "0xf6e9eae8211e4a4532a480100068783d9cb75c3b",
-      "utxoAddr": "P-test14pfm4k9k3mx30yf2kpd9cvfcs7mzkkn6875l8h"
+      "utxoAddr": "P-test14pfm4k9k3mx30yf2kpd9cvfcs7mzkkn6875l8h",
+      "ethAddr": "0xf6e9eae8211e4a4532a480100068783d9cb75c3b"
     },
     {
       "initialAmount": 2000000000000000000,
       "unlockSchedule": [],
-      "evmAddr": "0x32712d64011e135a24bb13b5934b53b6d6790812",
-      "utxoAddr": "X-test15953qfaga3w5txjmr0fl4clu37kak0ahk26v9e"
+      "utxoAddr": "X-test15953qfaga3w5txjmr0fl4clu37kak0ahk26v9e",
+      "ethAddr": "0x32712d64011e135a24bb13b5934b53b6d6790812"
     },
     {
       "initialAmount": 0,
@@ -82,8 +82,8 @@
           "locktime": 0
         }
       ],
-      "evmAddr": "0x32712d64011e135a24bb13b5934b53b6d6790812",
-      "utxoAddr": "P-test15953qfaga3w5txjmr0fl4clu37kak0ahk26v9e"
+      "utxoAddr": "P-test15953qfaga3w5txjmr0fl4clu37kak0ahk26v9e",
+      "ethAddr": "0x32712d64011e135a24bb13b5934b53b6d6790812"
     }
   ],
   "cChainGenesis": "{\"alloc\":{\"0200000000000000000000000000000000000005\":{\"balance\":\"0x0\",\"code\":\"0x01\",\"nonce\":\"0x1\"},\"9011E888251AB053B7bD1cdB598Db4f9DEd94714\":{\"balance\":\"0x193e5939a08ce9dbd480000000\"}},\"baseFeePerGas\":\"0x5d21dba00\",\"coinbase\":\"0x0000000000000000000000000000000000000000\",\"config\":{\"arrowGlacierBlock\":0,\"berlinBlock\":0,\"byzantiumBlock\":0,\"cancunTime\":253399622400,\"chainId\":96368,\"constantinopleBlock\":0,\"eip150Block\":0,\"eip155Block\":0,\"eip158Block\":0,\"evmTimestamp\":0,\"feeConfig\":{\"baseFeeChangeDenominator\":36,\"blockGasCostStep\":200000,\"gasLimit\":12000000,\"maxBlockGasCost\":1000000,\"minBaseFee\":25000000000,\"minBlockGasCost\":0,\"targetBlockRate\":2,\"targetGas\":60000000},\"grayGlacierBlock\":0,\"homesteadBlock\":0,\"istanbulBlock\":0,\"londonBlock\":0,\"mergeNetsplitBlock\":0,\"muirGlacierBlock\":0,\"petersburgBlock\":0,\"shanghaiTime\":0,\"terminalTotalDifficulty\":0,\"warpConfig\":{\"blockTimestamp\":0,\"quorumNumerator\":67,\"requirePrimaryNetworkSigners\":false}},\"difficulty\":\"0x0\",\"extraData\":\"0x\",\"gasLimit\":\"0xb71b00\",\"gasUsed\":\"0x0\",\"genesisHash\":\"0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995\",\"mixHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"nonce\":\"0x0\",\"number\":\"0x0\",\"parentHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"stateRoot\":\"0x2d1cedac263020c5c56ef962f6abe0da1f5217bdc6468f8c9258a0ea23699e80\",\"timestamp\":\"0x67259912\"}",
