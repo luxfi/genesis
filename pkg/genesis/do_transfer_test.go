@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -48,6 +49,12 @@ func rpc(url, method string, params interface{}) (json.RawMessage, error) {
 }
 
 func TestTransferPChain(t *testing.T) {
+	// Live-network integration test. Set LUX_LIVE_TESTS=1 to opt in;
+	// otherwise skipped (default for `go test ./...`).
+	if os.Getenv("LUX_LIVE_TESTS") != "1" {
+		t.Skip("set LUX_LIVE_TESTS=1 to run live-network tests")
+	}
+
 	// fee0 private key
 	privKeyHex := "abd51d463510cb17d7ba09e535828383d9c2c817aa386024aacce1660a1ee625"
 
