@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/luxfi/address"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/ids"
 )
@@ -340,9 +339,10 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 
 	allocations := make([]AllocationJSON, 0, len(c.Allocations))
 	for _, a := range c.Allocations {
+		utxoAddr, _ := PChainPrefix.Format(hrp, a.UTXOAddr[:])
 		allocations = append(allocations, AllocationJSON{
 			EVMAddr:        fmt.Sprintf("0x%s", a.EVMAddr.Hex()),
-			UTXOAddr:        formatBech32WithChain("P", hrp, a.UTXOAddr),
+			UTXOAddr:       utxoAddr,
 			InitialAmount:  a.InitialAmount,
 			UnlockSchedule: a.UnlockSchedule,
 		})
@@ -350,14 +350,16 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 
 	stakedFunds := make([]string, 0, len(c.InitialStakedFunds))
 	for _, addr := range c.InitialStakedFunds {
-		stakedFunds = append(stakedFunds, formatBech32WithChain("P", hrp, addr))
+		s, _ := PChainPrefix.Format(hrp, addr[:])
+		stakedFunds = append(stakedFunds, s)
 	}
 
 	stakers := make([]StakerJSON, 0, len(c.InitialStakers))
 	for _, s := range c.InitialStakers {
+		rewardAddr, _ := PChainPrefix.Format(hrp, s.RewardAddress[:])
 		stakers = append(stakers, StakerJSON{
 			NodeID:        s.NodeID.String(),
-			RewardAddress: formatBech32WithChain("P", hrp, s.RewardAddress),
+			RewardAddress: rewardAddr,
 			DelegationFee: s.DelegationFee,
 			Signer:        s.Signer,
 			PQIdentity:    s.PQIdentity,
@@ -393,11 +395,17 @@ func (c *Config) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.ToJSON(hrp))
 }
 
-// formatBech32WithChain formats an address with chain prefix (e.g., "P-lux1...")
+// formatBech32WithChain formats an address with chain prefix (e.g., "P-lux1...").
+//
+// Deprecated: prefer ChainPrefix.Format, which decomplects the per-chain prefix
+// from the per-network HRP. Kept as a thin alias for callers that haven't yet
+// migrated; falls back to a hex-encoded form if bech32 encoding fails (cannot
+// happen for a well-formed 20-byte ShortID — preserved for byte-identical
+// behavior with the pre-decomplect helper).
 func formatBech32WithChain(chainID, hrp string, addr ids.ShortID) string {
-	bech32Addr, err := address.FormatBech32(hrp, addr[:])
+	out, err := ChainPrefix(chainID).Format(hrp, addr[:])
 	if err != nil {
 		return fmt.Sprintf("%s-%s1%s", chainID, hrp, addr.Hex())
 	}
-	return fmt.Sprintf("%s-%s", chainID, bech32Addr)
+	return out
 }
