@@ -299,29 +299,49 @@ func GetBootstrappersFromKeys(keysDir string) ([]Bootstrapper, error) {
 	return bootstrappers, nil
 }
 
-// ParseAddress parses a bech32 address string to ShortID
-// Supports formats: P-lux1xxx, X-lux1xxx, lux1xxx, local1xxx
+// allowedHRPs is the closed set of bech32 HRPs that ParseAddress accepts.
+// Any other HRP (notably "avax"/"fuji" from upstream Avalanche or arbitrary
+// user HRPs) is a wrong-network event — the same 20 bytes silently re-encoded
+// under a foreign HRP must not be admitted into a Lux genesis.
+var allowedHRPs = map[string]struct{}{
+	"lux":   {}, // mainnet:  P-lux1...   / X-lux1...
+	"test":  {}, // testnet:  P-test1...  / X-test1...
+	"dev":   {}, // devnet:   P-dev1...   / X-dev1...
+	"local": {}, // localnet: P-local1... / X-local1...
+}
+
+// ParseAddress parses a bech32 address string to ShortID.
+// Supports formats: P-lux1xxx, X-lux1xxx, lux1xxx, local1xxx.
+// The HRP must be one of the canonical Lux HRPs (lux/test/dev/local).
 func ParseAddress(addrStr string) (ids.ShortID, error) {
 	if addrStr == "" {
 		return ids.ShortID{}, fmt.Errorf("empty address")
 	}
 
+	var (
+		hrp       string
+		addrBytes []byte
+		err       error
+	)
+
 	// Try full format first (P-lux1xxx, X-lux1xxx)
 	if strings.Contains(addrStr, "-") {
-		_, _, addrBytes, err := address.Parse(addrStr)
+		_, hrp, addrBytes, err = address.Parse(addrStr)
 		if err != nil {
 			return ids.ShortID{}, fmt.Errorf("failed to parse address %s: %w", addrStr, err)
 		}
-		var addr ids.ShortID
-		copy(addr[:], addrBytes)
-		return addr, nil
+	} else {
+		// Raw bech32 format (lux1xxx, local1xxx)
+		hrp, addrBytes, err = address.ParseBech32(addrStr)
+		if err != nil {
+			return ids.ShortID{}, fmt.Errorf("failed to parse bech32 address %s: %w", addrStr, err)
+		}
 	}
 
-	// Try raw bech32 format (lux1xxx, local1xxx)
-	_, addrBytes, err := address.ParseBech32(addrStr)
-	if err != nil {
-		return ids.ShortID{}, fmt.Errorf("failed to parse bech32 address %s: %w", addrStr, err)
+	if _, ok := allowedHRPs[hrp]; !ok {
+		return ids.ShortID{}, fmt.Errorf("unsupported HRP %q: only lux/test/dev/local are accepted", hrp)
 	}
+
 	var addr ids.ShortID
 	copy(addr[:], addrBytes)
 	return addr, nil
