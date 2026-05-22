@@ -70,9 +70,17 @@ If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the litera
 | Network | Network ID | Chain ID | Genesis Hash | Treasury |
 |---------|------------|----------|--------------|----------|
 | Mainnet | 1 | 96369 | `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e` | 2T LUX |
-| Testnet | 2 | 96368 | `0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995` | 2T LUX |
-| Devnet | 3 | 96370 | `0x53fe8be293555d20de41847f96081f4e8beca1ee2c206999ffbf7c70e497cf43` | 2T LUX |
+| Testnet | 2 | 96368 | `0xfc909f7e992d9cb91485f114f6d333f3823a12f2c72bbf51ed2c8eea749b2d2e` | 2T LUX |
+| Devnet | 3 | 96370 | `0x836f6053473e4331bb347afc45b641f12075c63a302f4e56e64239a3ba4acd4b` | 2T LUX |
 | Local | 1337 | 1337 | - | 2T LUX |
+
+> **Historical note**: testnet was `0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995`
+> and devnet was `0x53fe8be293555d20de41847f96081f4e8beca1ee2c206999ffbf7c70e497cf43`
+> before commits `2bf1ca3` (Shanghai/Cancun/Prague activated at genesis) and
+> `d3cbd78` (gasLimit bumped to 1B). Both networks were "block 0 fresh"
+> with no committed historical state, so the hash update is intentional;
+> rollouts after 2026-05-21 use the new hashes. Mainnet hash is unchanged
+> (its cChainGenesis is locked by the 1.08M-block historical chain).
 
 ### Primary-Network Letter Chains (all baked into genesis)
 
