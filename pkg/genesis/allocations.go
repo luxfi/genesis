@@ -85,7 +85,7 @@ func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 		}
 
 		allocations[i] = AllocationJSON{
-			EVMAddr:        key.EthAddr,
+			EVMAddr:        key.EVMAddr,
 			UTXOAddr:       luxAddr,
 			InitialAmount:  initialAmount,
 			UnlockSchedule: unlockSchedule,
@@ -106,7 +106,7 @@ func (a *ChainAllocations) CChain() map[string]Balance {
 		new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil),
 	)
 	for _, key := range a.keys {
-		alloc[key.EthAddr] = Balance{
+		alloc[key.EVMAddr] = Balance{
 			Balance: fmt.Sprintf("0x%x", cchainAmount),
 		}
 	}
@@ -124,7 +124,7 @@ func (a *ChainAllocations) CChainMap() map[string]map[string]string {
 	)
 	balanceHex := fmt.Sprintf("0x%x", cchainAmount)
 	for _, key := range a.keys {
-		alloc[key.EthAddr] = map[string]string{"balance": balanceHex}
+		alloc[key.EVMAddr] = map[string]string{"balance": balanceHex}
 	}
 	return alloc
 }
@@ -163,7 +163,7 @@ func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 		}
 
 		allocations[i] = map[string]interface{}{
-			"evmAddr":        key.EthAddr,
+			"evmAddr":        key.EVMAddr,
 			"utxoAddr":        luxAddr,
 			"initialAmount":  initialAmount,
 			"unlockSchedule": unlockSchedule,
