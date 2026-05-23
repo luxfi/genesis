@@ -347,8 +347,8 @@ func ParseAddress(addrStr string) (ids.ShortID, error) {
 	return addr, nil
 }
 
-// ParseETHAddress parses an Ethereum hex address to ShortID
-func ParseETHAddress(addrStr string) (ids.ShortID, error) {
+// ParseEVMAddress parses an Ethereum hex address to ShortID
+func ParseEVMAddress(addrStr string) (ids.ShortID, error) {
 	if addrStr == "" {
 		return ids.ShortID{}, fmt.Errorf("empty address")
 	}

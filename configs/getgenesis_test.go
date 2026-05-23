@@ -102,7 +102,7 @@ func TestGetGenesisLocalnet(t *testing.T) {
 			t.Errorf("Allocation %d missing utxoAddr", i)
 		}
 		if _, ok := alloc["evmAddr"]; !ok {
-			t.Errorf("Allocation %d missing ethAddr", i)
+			t.Errorf("Allocation %d missing evmAddr", i)
 		}
 		amt := uint64(alloc["initialAmount"].(float64))
 		if amt != wantMicroLUXPerWallet {
@@ -117,7 +117,7 @@ func TestGetGenesisLocalnet(t *testing.T) {
 	first := allocs[0].(map[string]interface{})
 	const wantFirstETH = "0x5369615110ca435bdf798f31c20ba6163d7b0a54"
 	if addr := first["evmAddr"].(string); addr != wantFirstETH {
-		t.Errorf("First allocation ethAddr mismatch: got %s want %s", addr, wantFirstETH)
+		t.Errorf("First allocation evmAddr mismatch: got %s want %s", addr, wantFirstETH)
 	}
 
 	// initialStakedFunds tracks each initial staker's reward address.
