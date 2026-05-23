@@ -207,11 +207,11 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 		privKeyHex := strings.TrimSpace(string(ecKeyHex))
 		privKeyBytes, err := hex.DecodeString(privKeyHex)
 		if err == nil {
-			// Get ETH address
-			ethPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
+			// Get EVM address
+			evmPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
 			if err == nil {
-				ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-				copy(keyInfo.EVMAddr[:], ethAddr[:])
+				evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+				copy(keyInfo.EVMAddr[:], evmAddr[:])
 			}
 
 			// Get Lux ShortID (for X/P chain addresses)
@@ -287,14 +287,14 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	feePubKey := feePrivKey.PublicKey()
 	feeAddr := ids.ShortID(feePubKey.Address())
 
-	// Derive ETH address
-	ethPrivKey, err := ethcrypto.ToECDSA(feePrivBytes)
+	// Derive EVM address
+	evmPrivKey, err := ethcrypto.ToECDSA(feePrivBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create fee ETH key: %w", err)
 	}
-	ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-	var ethShortID ids.ShortID
-	copy(ethShortID[:], ethAddr[:])
+	evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+	var evmShortID ids.ShortID
+	copy(evmShortID[:], evmAddr[:])
 
 	// Save fee private key for later use by deploy tools
 	feeKeyDir := filepath.Join(keysDir, fmt.Sprintf("fee%d", index))
@@ -302,12 +302,12 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	feeKeyHex := hex.EncodeToString(feePrivBytes)
 	os.WriteFile(filepath.Join(feeKeyDir, "ec", "private.key"), []byte(feeKeyHex), 0600)
 
-	fmt.Fprintf(os.Stderr, "Fee key %d: addr=%s ethAddr=0x%x saved to %s\n",
-		index, feeAddr, ethAddr, feeKeyDir)
+	fmt.Fprintf(os.Stderr, "Fee key %d: addr=%s evmAddr=0x%x saved to %s\n",
+		index, feeAddr, evmAddr, feeKeyDir)
 
 	return &KeyInfo{
 		StakingAddr: feeAddr,
-		EVMAddr:     ethShortID,
+		EVMAddr:     evmShortID,
 	}, nil
 }
 
@@ -552,8 +552,8 @@ func LoadKeysFromMnemonicEnv(numAccounts int) ([]KeyInfo, error) {
 
 // keyInfoFromPrivateKey creates KeyInfo from raw private key bytes
 func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
-	// Derive ETH address from private key
-	ethAddr, err := privateKeyToEVMAddress(privKey)
+	// Derive EVM address from private key
+	evmAddr, err := privateKeyToEVMAddress(privKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive ETH address: %w", err)
 	}
@@ -579,19 +579,19 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 		NodeID:      nodeID,
 		StakerKey:   privKey,
 		StakingAddr: stakingAddr,
-		EVMAddr:     ethAddr,
+		EVMAddr:     evmAddr,
 	}, nil
 }
 
-// privateKeyToEVMAddress derives an Ethereum address from a private key
+// privateKeyToEVMAddress derives an EVM address (H160 hex) from a private key
 func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
 	key, err := ethcrypto.ToECDSA(privKey)
 	if err != nil {
 		return ids.ShortID{}, fmt.Errorf("invalid secp256k1 private key: %w", err)
 	}
-	ethAddr := ethcrypto.PubkeyToAddress(key.PublicKey)
+	evmAddr := ethcrypto.PubkeyToAddress(key.PublicKey)
 	var addr ids.ShortID
-	copy(addr[:], ethAddr[:])
+	copy(addr[:], evmAddr[:])
 	return addr, nil
 }
 
@@ -895,22 +895,22 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 		}
 		stakingAddr := luxPrivKey.Address()
 
-		ethPrivKey, err := ethcrypto.ToECDSA(childKey.Key)
+		evmPrivKey, err := ethcrypto.ToECDSA(childKey.Key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create ECDSA key %d: %w", i, err)
 		}
-		ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-		var ethShortID ids.ShortID
-		copy(ethShortID[:], ethAddr[:])
+		evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+		var evmShortID ids.ShortID
+		copy(evmShortID[:], evmAddr[:])
 
 		log.Debug("derived BIP44 wallet allocation",
 			"i", i,
 			"utxoAddr", stakingAddr.String(),
-			"evmAddr", fmt.Sprintf("0x%x", ethAddr),
+			"evmAddr", fmt.Sprintf("0x%x", evmAddr),
 		)
 
 		allocations = append(allocations, Allocation{
-			EVMAddr:       ethShortID,
+			EVMAddr:       evmShortID,
 			UTXOAddr:      stakingAddr,
 			InitialAmount: amountPerKey,
 		})

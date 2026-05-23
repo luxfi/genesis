@@ -37,7 +37,7 @@ const (
 // ValidatorKeyInfo contains computed addresses from a validator's private key
 type ValidatorKeyInfo struct {
 	PrivKeyHex string      // Hex-encoded private key
-	EthAddr    string      // C-chain Ethereum address (0x...)
+	EVMAddr    string      // C-chain EVM address (H160 hex) (0x...)
 	ShortID    ids.ShortID // P/X chain address as ShortID
 }
 
@@ -99,12 +99,12 @@ func ComputeValidatorKeyInfo(privKeyHex string) (ValidatorKeyInfo, error) {
 		return ValidatorKeyInfo{}, fmt.Errorf("invalid hex key: %w", err)
 	}
 
-	// Get ETH address
-	ethPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
+	// Get EVM address
+	evmPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
 	if err != nil {
 		return ValidatorKeyInfo{}, fmt.Errorf("invalid ECDSA key: %w", err)
 	}
-	ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
+	evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
 
 	// Get Lux ShortID (for X/P chain addresses)
 	luxPrivKey, err := luxcrypto.ToPrivateKey(privKeyBytes)
@@ -116,7 +116,7 @@ func ComputeValidatorKeyInfo(privKeyHex string) (ValidatorKeyInfo, error) {
 
 	return ValidatorKeyInfo{
 		PrivKeyHex: privKeyHex,
-		EthAddr:    ethAddr.Hex(),
+		EVMAddr:    evmAddr.Hex(),
 		ShortID:    shortID,
 	}, nil
 }
@@ -158,7 +158,7 @@ func GeneratePChainAllocations(keys []ValidatorKeyInfo, hrp string, amountPerKey
 		}
 
 		allocations[i] = AllocationJSON{
-			EVMAddr:        key.EthAddr,
+			EVMAddr:        key.EVMAddr,
 			UTXOAddr:       luxAddr,
 			InitialAmount:  0, // initialAmount is NOT immediately spendable
 			UnlockSchedule: unlockSchedule,
@@ -194,7 +194,7 @@ func GeneratePChainAllocationsWithVesting(keys []ValidatorKeyInfo, hrp string, a
 		unlockSchedule := buildUnlockSchedule(amountPerKey, startTime, interval, periods)
 
 		allocations[i] = AllocationJSON{
-			EVMAddr:        key.EthAddr,
+			EVMAddr:        key.EVMAddr,
 			UTXOAddr:       luxAddr,
 			InitialAmount:  amountPerKey, // X-chain initial amount
 			UnlockSchedule: unlockSchedule,
@@ -211,7 +211,7 @@ func GenerateCChainAlloc(keys []ValidatorKeyInfo, amount uint64) map[string]Bala
 
 	alloc := make(map[string]Balance)
 	for _, key := range keys {
-		alloc[key.EthAddr] = Balance{
+		alloc[key.EVMAddr] = Balance{
 			Balance: fmt.Sprintf("0x%x", amount),
 		}
 	}
@@ -227,7 +227,7 @@ func GenerateCChainAllocMap(keys []ValidatorKeyInfo, amount uint64) map[string]m
 	alloc := make(map[string]map[string]string)
 	balanceHex := fmt.Sprintf("0x%x", amount)
 	for _, key := range keys {
-		alloc[key.EthAddr] = map[string]string{"balance": balanceHex}
+		alloc[key.EVMAddr] = map[string]string{"balance": balanceHex}
 	}
 	return alloc
 }
@@ -255,7 +255,7 @@ func GenerateAllocationsMapForNetrunner(keys []ValidatorKeyInfo, hrp string, amo
 		}
 
 		allocations[i] = map[string]interface{}{
-			"evmAddr":        key.EthAddr,
+			"evmAddr":        key.EVMAddr,
 			"utxoAddr":        luxAddr,
 			"initialAmount":  uint64(0),
 			"unlockSchedule": unlockSchedule,
