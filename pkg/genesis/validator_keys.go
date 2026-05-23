@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/luxfi/address"
-	ethcrypto "github.com/luxfi/crypto"
-	luxcrypto "github.com/luxfi/crypto/secp256k1"
+	"github.com/luxfi/crypto"
+	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/ids"
 )
 
@@ -100,18 +100,18 @@ func ComputeValidatorKeyInfo(privKeyHex string) (ValidatorKeyInfo, error) {
 	}
 
 	// Get EVM address
-	evmPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
+	evmPrivKey, err := crypto.ToECDSA(privKeyBytes)
 	if err != nil {
 		return ValidatorKeyInfo{}, fmt.Errorf("invalid ECDSA key: %w", err)
 	}
-	evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+	evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
 
 	// Get Lux ShortID (for X/P chain addresses)
-	luxPrivKey, err := luxcrypto.ToPrivateKey(privKeyBytes)
+	utxoPrivKey, err := secp256k1.ToPrivateKey(privKeyBytes)
 	if err != nil {
 		return ValidatorKeyInfo{}, fmt.Errorf("invalid Lux key: %w", err)
 	}
-	pubKey := luxPrivKey.PublicKey()
+	pubKey := utxoPrivKey.PublicKey()
 	shortID := ids.ShortID(pubKey.Address())
 
 	return ValidatorKeyInfo{
@@ -144,7 +144,7 @@ func GeneratePChainAllocations(keys []ValidatorKeyInfo, hrp string, amountPerKey
 
 	allocations := make([]AllocationJSON, len(keys))
 	for i, key := range keys {
-		luxAddr, err := FormatChainAddress("P", hrp, key.ShortID)
+		utxoAddr, err := FormatChainAddress("P", hrp, key.ShortID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format address for key %d: %w", i, err)
 		}
@@ -159,7 +159,7 @@ func GeneratePChainAllocations(keys []ValidatorKeyInfo, hrp string, amountPerKey
 
 		allocations[i] = AllocationJSON{
 			EVMAddr:        key.EVMAddr,
-			UTXOAddr:       luxAddr,
+			UTXOAddr:       utxoAddr,
 			InitialAmount:  0, // initialAmount is NOT immediately spendable
 			UnlockSchedule: unlockSchedule,
 		}
@@ -185,7 +185,7 @@ func GeneratePChainAllocationsWithVesting(keys []ValidatorKeyInfo, hrp string, a
 
 	allocations := make([]AllocationJSON, len(keys))
 	for i, key := range keys {
-		luxAddr, err := FormatChainAddress("P", hrp, key.ShortID)
+		utxoAddr, err := FormatChainAddress("P", hrp, key.ShortID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format address for key %d: %w", i, err)
 		}
@@ -195,7 +195,7 @@ func GeneratePChainAllocationsWithVesting(keys []ValidatorKeyInfo, hrp string, a
 
 		allocations[i] = AllocationJSON{
 			EVMAddr:        key.EVMAddr,
-			UTXOAddr:       luxAddr,
+			UTXOAddr:       utxoAddr,
 			InitialAmount:  amountPerKey, // X-chain initial amount
 			UnlockSchedule: unlockSchedule,
 		}
@@ -241,7 +241,7 @@ func GenerateAllocationsMapForNetrunner(keys []ValidatorKeyInfo, hrp string, amo
 
 	allocations := make([]map[string]interface{}, len(keys))
 	for i, key := range keys {
-		luxAddr, err := FormatChainAddress("P", hrp, key.ShortID)
+		utxoAddr, err := FormatChainAddress("P", hrp, key.ShortID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format address for key %d: %w", i, err)
 		}
@@ -256,7 +256,7 @@ func GenerateAllocationsMapForNetrunner(keys []ValidatorKeyInfo, hrp string, amo
 
 		allocations[i] = map[string]interface{}{
 			"evmAddr":        key.EVMAddr,
-			"utxoAddr":        luxAddr,
+			"utxoAddr":        utxoAddr,
 			"initialAmount":  uint64(0),
 			"unlockSchedule": unlockSchedule,
 		}

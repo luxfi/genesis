@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	luxcrypto "github.com/luxfi/crypto/secp256k1"
+	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
@@ -71,7 +71,7 @@ func deriveAddrs(mnemonic, hrp string) []string {
 		if err != nil {
 			panic(err)
 		}
-		priv, err := luxcrypto.ToPrivateKey(child.Key)
+		priv, err := secp256k1.ToPrivateKey(child.Key)
 		if err != nil {
 			panic(err)
 		}
