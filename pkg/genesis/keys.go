@@ -20,10 +20,10 @@ import (
 	// happens at the call site below (mldsaKeygenFromChildSeed) so the
 	// derivation is byte-for-byte reproducible against the prior CIRCL
 	// stop-gap.
-	ethcrypto "github.com/luxfi/crypto"
+	"github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/bls"
 	"github.com/luxfi/crypto/pq/mldsa/mldsa65"
-	luxcrypto "github.com/luxfi/crypto/secp256k1"
+	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
@@ -208,16 +208,16 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 		privKeyBytes, err := hex.DecodeString(privKeyHex)
 		if err == nil {
 			// Get EVM address
-			evmPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
+			evmPrivKey, err := crypto.ToECDSA(privKeyBytes)
 			if err == nil {
-				evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+				evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
 				copy(keyInfo.EVMAddr[:], evmAddr[:])
 			}
 
 			// Get Lux ShortID (for X/P chain addresses)
-			luxPrivKey, err := luxcrypto.ToPrivateKey(privKeyBytes)
+			utxoPrivKey, err := secp256k1.ToPrivateKey(privKeyBytes)
 			if err == nil {
-				pubKey := luxPrivKey.PublicKey()
+				pubKey := utxoPrivKey.PublicKey()
 				shortID := ids.ShortID(pubKey.Address())
 				copy(keyInfo.StakingAddr[:], shortID[:])
 			}
@@ -280,7 +280,7 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	feePrivBytes := keccak256(append([]byte("fee-reserve:"), privKeyBytes...))
 
 	// Derive proper P-chain address using secp256k1
-	feePrivKey, err := luxcrypto.ToPrivateKey(feePrivBytes)
+	feePrivKey, err := secp256k1.ToPrivateKey(feePrivBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create fee private key: %w", err)
 	}
@@ -288,11 +288,11 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	feeAddr := ids.ShortID(feePubKey.Address())
 
 	// Derive EVM address
-	evmPrivKey, err := ethcrypto.ToECDSA(feePrivBytes)
+	evmPrivKey, err := crypto.ToECDSA(feePrivBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create fee ETH key: %w", err)
 	}
-	evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+	evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
 	var evmShortID ids.ShortID
 	copy(evmShortID[:], evmAddr[:])
 
@@ -569,11 +569,11 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 	}
 
 	// Derive Lux P/X-Chain address (SHA256+RIPEMD160, like Bitcoin)
-	luxKey, err := luxcrypto.ToPrivateKey(privKey)
+	secpKey, err := secp256k1.ToPrivateKey(privKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive lux key: %w", err)
 	}
-	stakingAddr := luxKey.Address()
+	stakingAddr := secpKey.Address()
 
 	return &KeyInfo{
 		NodeID:      nodeID,
@@ -585,11 +585,11 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 
 // privateKeyToEVMAddress derives an EVM address (H160 hex) from a private key
 func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
-	key, err := ethcrypto.ToECDSA(privKey)
+	key, err := crypto.ToECDSA(privKey)
 	if err != nil {
 		return ids.ShortID{}, fmt.Errorf("invalid secp256k1 private key: %w", err)
 	}
-	evmAddr := ethcrypto.PubkeyToAddress(key.PublicKey)
+	evmAddr := crypto.PubkeyToAddress(key.PublicKey)
 	var addr ids.ShortID
 	copy(addr[:], evmAddr[:])
 	return addr, nil
@@ -889,17 +889,17 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 			return nil, fmt.Errorf("failed to derive wallet key %d: %w", i, err)
 		}
 
-		luxPrivKey, err := luxcrypto.ToPrivateKey(childKey.Key)
+		utxoPrivKey, err := secp256k1.ToPrivateKey(childKey.Key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create secp256k1 key %d: %w", i, err)
 		}
-		stakingAddr := luxPrivKey.Address()
+		stakingAddr := utxoPrivKey.Address()
 
-		evmPrivKey, err := ethcrypto.ToECDSA(childKey.Key)
+		evmPrivKey, err := crypto.ToECDSA(childKey.Key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create ECDSA key %d: %w", i, err)
 		}
-		evmAddr := ethcrypto.PubkeyToAddress(evmPrivKey.PublicKey)
+		evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
 		var evmShortID ids.ShortID
 		copy(evmShortID[:], evmAddr[:])
 

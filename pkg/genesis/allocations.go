@@ -65,7 +65,7 @@ func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 	allocations := make([]AllocationJSON, len(a.keys))
 
 	for i, key := range a.keys {
-		luxAddr, err := FormatChainAddress("P", a.hrp, key.ShortID)
+		utxoAddr, err := FormatChainAddress("P", a.hrp, key.ShortID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format P-chain address for key %d: %w", i, err)
 		}
@@ -86,7 +86,7 @@ func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 
 		allocations[i] = AllocationJSON{
 			EVMAddr:        key.EVMAddr,
-			UTXOAddr:       luxAddr,
+			UTXOAddr:       utxoAddr,
 			InitialAmount:  initialAmount,
 			UnlockSchedule: unlockSchedule,
 		}
@@ -134,7 +134,7 @@ func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 	allocations := make([]map[string]interface{}, len(a.keys))
 
 	for i, key := range a.keys {
-		luxAddr, err := FormatChainAddress("P", a.hrp, key.ShortID)
+		utxoAddr, err := FormatChainAddress("P", a.hrp, key.ShortID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format P-chain address for key %d: %w", i, err)
 		}
@@ -164,7 +164,7 @@ func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 
 		allocations[i] = map[string]interface{}{
 			"evmAddr":        key.EVMAddr,
-			"utxoAddr":        luxAddr,
+			"utxoAddr":        utxoAddr,
 			"initialAmount":  initialAmount,
 			"unlockSchedule": unlockSchedule,
 		}
