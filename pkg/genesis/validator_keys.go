@@ -256,7 +256,7 @@ func GenerateAllocationsMapForNetrunner(keys []ValidatorKeyInfo, hrp string, amo
 
 		allocations[i] = map[string]interface{}{
 			"evmAddr":        key.EthAddr,
-			"luxAddr":        luxAddr,
+			"utxoAddr":        luxAddr,
 			"initialAmount":  uint64(0),
 			"unlockSchedule": unlockSchedule,
 		}
