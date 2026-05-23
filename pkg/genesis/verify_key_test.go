@@ -16,7 +16,7 @@ func TestFee0Key(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("ETH address: %s\n", keyInfo.EthAddr)
+	fmt.Printf("ETH address: %s\n", keyInfo.EVMAddr)
 	fmt.Printf("ShortID (hex): %s\n", hex.EncodeToString(keyInfo.ShortID[:]))
 
 	pAddr, err := genesis.FormatChainAddress("P", "dev", keyInfo.ShortID)
