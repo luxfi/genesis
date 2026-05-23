@@ -398,9 +398,9 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 				Amount:  a.InitialAmount,
 				Address: bech32Addr,
 			})
-			ethAddrStr := a.EVMAddr.Hex()
-			if len(ethAddrStr) > 2 { // "0x" prefix
-				memoBytes = append(memoBytes, []byte(ethAddrStr[2:])...)
+			evmAddrStr := a.EVMAddr.Hex()
+			if len(evmAddrStr) > 2 { // "0x" prefix
+				memoBytes = append(memoBytes, []byte(evmAddrStr[2:])...)
 			}
 		}
 		primary.Memo = memoBytes
