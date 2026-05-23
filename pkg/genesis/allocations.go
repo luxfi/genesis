@@ -163,7 +163,7 @@ func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 		}
 
 		allocations[i] = map[string]interface{}{
-			"ethAddr":        key.EthAddr,
+			"evmAddr":        key.EthAddr,
 			"luxAddr":        luxAddr,
 			"initialAmount":  initialAmount,
 			"unlockSchedule": unlockSchedule,
