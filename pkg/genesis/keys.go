@@ -92,7 +92,7 @@ type KeyInfo struct {
 	MLDSAPublicKey       []byte      // ML-DSA post-quantum public key (FIPS 204)
 	CoronaPublicKey      []byte      // Corona ring signature public key
 	StakingAddr          ids.ShortID // P-chain address derived from staker key
-	ETHAddr              ids.ShortID // C-chain (and other EVM chain) H160 address
+	EVMAddr              ids.ShortID // C-chain (and other EVM chain) H160 address
 }
 
 // LoadKeysFromDir loads all node keys from a directory
@@ -211,7 +211,7 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 			ethPrivKey, err := ethcrypto.ToECDSA(privKeyBytes)
 			if err == nil {
 				ethAddr := ethcrypto.PubkeyToAddress(ethPrivKey.PublicKey)
-				copy(keyInfo.ETHAddr[:], ethAddr[:])
+				copy(keyInfo.EVMAddr[:], ethAddr[:])
 			}
 
 			// Get Lux ShortID (for X/P chain addresses)
@@ -226,7 +226,7 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 		// Fallback: derive from node ID (NOT correct but backward compatible)
 		// WARNING: These addresses won't have usable private keys!
 		copy(keyInfo.StakingAddr[:], nodeID[:])
-		copy(keyInfo.ETHAddr[:], nodeID[:])
+		copy(keyInfo.EVMAddr[:], nodeID[:])
 	}
 
 	// Load ML-DSA public key (post-quantum identity)
@@ -307,7 +307,7 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 
 	return &KeyInfo{
 		StakingAddr: feeAddr,
-		ETHAddr:     ethShortID,
+		EVMAddr:     ethShortID,
 	}, nil
 }
 
@@ -349,7 +349,7 @@ func buildCChainGenesisTreasury(networkID uint32) (string, error) {
 func buildCChainGenesis(networkID uint32, keys []KeyInfo, allocationPerKey uint64) (string, error) {
 	alloc := make(map[string]Balance)
 	for _, key := range keys {
-		addr := fmt.Sprintf("0x%s", key.ETHAddr.Hex())
+		addr := fmt.Sprintf("0x%s", key.EVMAddr.Hex())
 		alloc[addr] = Balance{
 			Balance: fmt.Sprintf("0x%x", allocationPerKey),
 		}
@@ -553,7 +553,7 @@ func LoadKeysFromMnemonicEnv(numAccounts int) ([]KeyInfo, error) {
 // keyInfoFromPrivateKey creates KeyInfo from raw private key bytes
 func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 	// Derive ETH address from private key
-	ethAddr, err := privateKeyToETHAddress(privKey)
+	ethAddr, err := privateKeyToEVMAddress(privKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive ETH address: %w", err)
 	}
@@ -579,12 +579,12 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 		NodeID:      nodeID,
 		StakerKey:   privKey,
 		StakingAddr: stakingAddr,
-		ETHAddr:     ethAddr,
+		EVMAddr:     ethAddr,
 	}, nil
 }
 
-// privateKeyToETHAddress derives an Ethereum address from a private key
-func privateKeyToETHAddress(privKey []byte) (ids.ShortID, error) {
+// privateKeyToEVMAddress derives an Ethereum address from a private key
+func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
 	key, err := ethcrypto.ToECDSA(privKey)
 	if err != nil {
 		return ids.ShortID{}, fmt.Errorf("invalid secp256k1 private key: %w", err)
@@ -787,7 +787,7 @@ func subtleConstantTimeEqual(a, b []byte) bool {
 // mnemonic on the canonical BIP44 path m/44'/9000'/0'/0/i (purpose 44'
 // / coin 9000' / account 0' hardened; change 0 / index i non-hardened).
 // Returns KeyInfo entries with NodeID, StakingAddr (P/X bech32 base),
-// and ETHAddr populated; no BLS/MLDSA — these are user spending keys,
+// and EVMAddr populated; no BLS/MLDSA — these are user spending keys,
 // not validator node identities.
 //
 // This is the same derivation that BuildBIP44WalletAllocations uses,
@@ -910,7 +910,7 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 		)
 
 		allocations = append(allocations, Allocation{
-			ETHAddr:       ethShortID,
+			EVMAddr:       ethShortID,
 			UTXOAddr:      stakingAddr,
 			InitialAmount: amountPerKey,
 		})
@@ -1041,7 +1041,7 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 
 	for _, key := range allKeys {
 		allocations = append(allocations, Allocation{
-			ETHAddr:       key.ETHAddr,
+			EVMAddr:       key.EVMAddr,
 			UTXOAddr:      key.StakingAddr,
 			InitialAmount: allocationPerKey,
 		})
@@ -1077,7 +1077,7 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		// ProtocolVM can weight the staker.
 		if !allocByAddr[key.StakingAddr] {
 			allocations = append(allocations, Allocation{
-				ETHAddr:        key.ETHAddr,
+				EVMAddr:        key.EVMAddr,
 				UTXOAddr:       key.StakingAddr,
 				InitialAmount:  0,
 				UnlockSchedule: stakeUnlockSchedule,
