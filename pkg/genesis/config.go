@@ -223,16 +223,16 @@ func GetConfigFromEnv() (*Config, error) {
 func parseAllocations(jsonAllocs []AllocationJSON) ([]Allocation, error) {
 	result := make([]Allocation, 0, len(jsonAllocs))
 	for _, ja := range jsonAllocs {
-		ethAddr, err := ParseETHAddress(ja.ETHAddr)
+		ethAddr, err := ParseETHAddress(ja.EVMAddr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid eth address %s: %w", ja.ETHAddr, err)
+			return nil, fmt.Errorf("invalid eth address %s: %w", ja.EVMAddr, err)
 		}
 		utxoAddr, err := ParseAddress(ja.UTXOAddr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid utxo address %s: %w", ja.UTXOAddr, err)
 		}
 		result = append(result, Allocation{
-			ETHAddr:        ethAddr,
+			EVMAddr:        ethAddr,
 			UTXOAddr:       utxoAddr,
 			InitialAmount:  ja.InitialAmount,
 			UnlockSchedule: ja.UnlockSchedule,
