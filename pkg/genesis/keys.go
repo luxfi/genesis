@@ -905,7 +905,7 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 
 		log.Debug("derived BIP44 wallet allocation",
 			"i", i,
-			"luxAddr", stakingAddr.String(),
+			"utxoAddr", stakingAddr.String(),
 			"evmAddr", fmt.Sprintf("0x%x", ethAddr),
 		)
 
