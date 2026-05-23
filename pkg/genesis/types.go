@@ -57,11 +57,11 @@ type Config struct {
 
 // Allocation represents a genesis allocation.
 //
-// ETHAddr is the 20-byte H160 EVM address (C-Chain and other EVM chains).
+// EVMAddr is the 20-byte H160 EVM address (C-Chain and other EVM chains).
 // UTXOAddr is the 20-byte ShortID used by both P-Chain and X-Chain UTXOs
 //   (same bytes; bech32 prefix differentiates the chain).
 type Allocation struct {
-	ETHAddr        ids.ShortID    `json:"evmAddr"`
+	EVMAddr        ids.ShortID    `json:"evmAddr"`
 	UTXOAddr       ids.ShortID    `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
@@ -162,7 +162,7 @@ type PChainConfig struct {
 //   - utxoAddr (bech32, P-/X- prefix interchangeable) — P-Chain + X-Chain UTXO owner
 //   - ethAddr (0x H160) — C-Chain and other EVM chain owner
 type AllocationJSON struct {
-	ETHAddr        string         `json:"evmAddr"`
+	EVMAddr        string         `json:"evmAddr"`
 	UTXOAddr       string         `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
@@ -297,7 +297,7 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 	for _, a := range c.Allocations {
 		utxoAddr, _ := PChainPrefix.Format(hrp, a.UTXOAddr[:])
 		allocations = append(allocations, AllocationJSON{
-			ETHAddr:        fmt.Sprintf("0x%s", a.ETHAddr.Hex()),
+			EVMAddr:        fmt.Sprintf("0x%s", a.EVMAddr.Hex()),
 			UTXOAddr:       utxoAddr,
 			InitialAmount:  a.InitialAmount,
 			UnlockSchedule: a.UnlockSchedule,

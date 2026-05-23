@@ -158,7 +158,7 @@ func GeneratePChainAllocations(keys []ValidatorKeyInfo, hrp string, amountPerKey
 		}
 
 		allocations[i] = AllocationJSON{
-			ETHAddr:        key.EthAddr,
+			EVMAddr:        key.EthAddr,
 			UTXOAddr:       luxAddr,
 			InitialAmount:  0, // initialAmount is NOT immediately spendable
 			UnlockSchedule: unlockSchedule,
@@ -194,7 +194,7 @@ func GeneratePChainAllocationsWithVesting(keys []ValidatorKeyInfo, hrp string, a
 		unlockSchedule := buildUnlockSchedule(amountPerKey, startTime, interval, periods)
 
 		allocations[i] = AllocationJSON{
-			ETHAddr:        key.EthAddr,
+			EVMAddr:        key.EthAddr,
 			UTXOAddr:       luxAddr,
 			InitialAmount:  amountPerKey, // X-chain initial amount
 			UnlockSchedule: unlockSchedule,
