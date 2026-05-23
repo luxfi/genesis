@@ -21,6 +21,47 @@ silent classification change.
 | `fe4781c` | v1.9.5 | `LUX_DISABLE_CCHAIN=1` omits C-Chain from primary genesis |
 | `2b16f45` | v1.9.5 | Operator-overridable C-Chain genesis via `LUX_CCHAIN_GENESIS_FILE` |
 
+### Zoo testnet/devnet 39-char alloc address bug (May 2026)
+
+`configs/zoo-{testnet,devnet}/genesis.json` shipped six alloc addresses with
+only 39 hex chars instead of 40 — the leading `0` nibble was stripped at
+genesis-generation time (commit `2b46a8b`, "regenerate all network configs").
+The six bad addresses on both files were:
+
+| Truncated (39ch, shipped) | Correct (40ch, present in C-chain alloc) |
+|---|---|
+| `2aCB0ee16fd2B1bF465F85D7Ee112fA80C055FC` | `02aCB0ee16fd2B1bF465F85D7Ee112fA80C055FC` |
+| `3B8Bd0A20b05AADC9E457A4c967f45eEeC163c4` | `03B8Bd0A20b05AADC9E457A4c967f45eEeC163c4` |
+| `54D2e1dA5A1B5b9Da158acbA42Aed1d45F5CF02` | `054D2e1dA5A1B5b9Da158acbA42Aed1d45F5CF02` |
+| `5CAE5842A08165d4d736dA9E49438574283aaE9` | `05CAE5842A08165d4d736dA9E49438574283aaE9` |
+| `698495959f5570420BAA955dae5eA2864933ACf` | `0698495959f5570420BAA955dae5eA2864933ACf` |
+| `7283AA2c30523E9190A17b9598ff65599BAAe17` | `07283AA2c30523E9190A17b9598ff65599BAAe17` |
+
+Symptom: subnet-evm refused to bootstrap the chain — `parsing genesis:
+hex string of odd length`. The original CreateChainTx (`ZAKw...` on
+testnet, `2nLY...` on devnet) carries the broken genesis bytes
+immutably, so we had to re-issue under a new chain name and rewrite the
+gateway. The 39→40-char fix applied in genesis is now the SAME content
+subnet-evm expects.
+
+Operators bootstrapping a fresh zoo subnet should pin the post-fix
+checksums in this file (see `### Verify Checksum`). Mainnet zoo
+(`zoo-mainnet/genesis.json`) was *not* affected — it has only the
+treasury account plus the `0x0200…0005` precompile.
+
+### Subnet bootstrap: chain-name collision (P-chain)
+
+`platform.IsChainNameTaken` is case-insensitive and global across all
+subnets. A failed CreateChainTx (e.g. the broken zoo above) still
+permanently squats its `BlockchainName` on the P-chain ledger — you
+cannot reuse the name even after fixing the genesis. Work-around used
+on zoo testnet/devnet: issue under a throwaway name (`ZOOTEST123` /
+`ZOODEVTEST123`), then rewrite the krakend gateway endpoint so
+`/ext/bc/zoo/rpc` → `/ext/bc/<new-bcID>/rpc`. The route
+`/ext/bc/<name>/rpc` is registered by `luxfi/node/chains/manager.go`
+*only* on successful VM init — broken chains never claim the route, so
+gateway-side rewrite is sufficient.
+
 ### Active versions
 - Repo: `v1.9.6` (next: `v1.9.7`).
 - Pinned by: `luxfi/node v1.26.10`.
@@ -464,8 +505,8 @@ These checksums are the canonical reference - if they don't match, the file has 
 | `mainnet/cchain.json` | `968e9f3cd19a9b88ca157db3894622272ded02f0f184b5386493ff55897001be` |
 | `testnet/cchain.json` | `ba211e1bbbd7807c2224d240628facb2dfb6c2d6cde2e274eb881a57609ed038` |
 | `zoo-mainnet/genesis.json` | `14c01e8bb5ac13144a3730c695847d53506647efbaada3f3240a16e7b10684f7` |
-| `zoo-testnet/genesis.json` | `74357b85e6968ca70d8907b2e940e5e234fd6b288749865d91ab69a6083e6dae` |
-| `zoo-devnet/genesis.json` | `dd604fee5c78f7367b314a9a7d7ee1d5f8c42839165164262368afc7dd91fc5e` |
+| `zoo-testnet/genesis.json` | `b8eea8c6b3276ebadce7e8ef9296bc14b56990ae04cd200a4663f5af21193534` |
+| `zoo-devnet/genesis.json` | `4890a40fe7891722c90efb728f11b14aeef9795c2b897eb0140e1e0ae3b6254c` |
 | `spc-mainnet/genesis.json` | `9c01115559556fc245d4993b193889370bd99edd22a7fa1e9e3d7ddafbb63535` |
 | `spc-testnet/genesis.json` | `af12bb81dd9abce26b7a311f00fa2ac7f5adfb996e698b9f473252199f747b2c` |
 | `spc-devnet/genesis.json` | `317d54ac7846b0f174964552b4949d858072f6ffbc37f6c10092e01d595ce46f` |
