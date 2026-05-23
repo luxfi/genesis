@@ -265,30 +265,25 @@ type Staker struct {
 
 // Allocation - Genesis allocation
 type Allocation struct {
-    ETHAddr        ids.ShortID    `json:"evmAddr"`
+    EVMAddr        ids.ShortID    `json:"evmAddr"`
     UTXOAddr       ids.ShortID    `json:"utxoAddr"`
     InitialAmount  uint64         `json:"initialAmount"`
     UnlockSchedule []LockedAmount `json:"unlockSchedule"`
 }
 ```
 
-**Naming convention (hybrid)**:
-- **Go identifier** = format-name. `ETHAddr` describes the byte format
-  (20-byte H160 = Ethereum's address spec; we're wire-compatible). `UTXOAddr`
-  is the 20-byte ShortID used by P/X (Bitcoin-derived UTXO model).
-- **JSON tag** = chain-model name. `evmAddr` (address on our EVM-modeled chain)
-  pairs symmetrically with `utxoAddr` (address on our UTXO-modeled chain).
-  This is the user-facing name; it doesn't brand us as Ethereum.
+**Address naming — `EVMAddr` + `UTXOAddr`. Always.**
 
-Rename history (do NOT regress):
-1. `ETHAddr + LUXAddr` (legacy)
-2. `EVMAddr + UTXOAddr` (genesis commit `d7dbc3b`, "uniform UTXO/EVM split")
-3. `ETHAddr + UTXOAddr` (session 2026-05-21, ETH branding interpretation)
-4. **`ETHAddr (Go) + evmAddr (JSON) + UTXOAddr/utxoAddr` (current, hybrid)**
+- `EVMAddr` (Go) ↔ `evmAddr` (JSON) — address on EVM-modeled chains (C and other EVM letter chains).
+- `UTXOAddr` (Go) ↔ `utxoAddr` (JSON) — address on UTXO-modeled chains (P, X; share the same 20-byte ShortID; bech32 prefix differentiates chain).
 
-The hybrid lands the symmetry where users see it (JSON) while the Go
-type-name correctly describes the byte format. Do not collapse one side
-or the other without explicit reason — and document it here if you do.
+Never use `ETHAddr` / `LUXAddr` / `ethAddr` / `luxAddr` in new code. The
+fields name the *chain model* (EVM, UTXO), not a specific implementation
+we happen to be wire-compatible with.
+
+The one exception is `ParseETHAddress(string) ids.ShortID` — that's the
+*input* description (parses an Ethereum-format hex string like `0x...`).
+The function output binds to `EVMAddr`.
 
 ### Bech32 Address Format
 
