@@ -61,7 +61,7 @@ type Config struct {
 // UTXOAddr is the 20-byte ShortID used by both P-Chain and X-Chain UTXOs
 //   (same bytes; bech32 prefix differentiates the chain).
 type Allocation struct {
-	ETHAddr        ids.ShortID    `json:"ethAddr"`
+	ETHAddr        ids.ShortID    `json:"evmAddr"`
 	UTXOAddr       ids.ShortID    `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
@@ -162,7 +162,7 @@ type PChainConfig struct {
 //   - utxoAddr (bech32, P-/X- prefix interchangeable) — P-Chain + X-Chain UTXO owner
 //   - ethAddr (0x H160) — C-Chain and other EVM chain owner
 type AllocationJSON struct {
-	ETHAddr        string         `json:"ethAddr"`
+	ETHAddr        string         `json:"evmAddr"`
 	UTXOAddr       string         `json:"utxoAddr"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
