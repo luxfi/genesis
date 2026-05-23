@@ -218,12 +218,12 @@ func GetConfigFromEnv() (*Config, error) {
 }
 
 // parseAllocations converts JSON allocations to internal format.
-// JSON field names are canonical: ethAddr (H160 EVM) + utxoAddr (P/X
+// JSON field names are canonical: evmAddr (H160 EVM) + utxoAddr (P/X
 // ShortID bech32). No aliasing.
 func parseAllocations(jsonAllocs []AllocationJSON) ([]Allocation, error) {
 	result := make([]Allocation, 0, len(jsonAllocs))
 	for _, ja := range jsonAllocs {
-		ethAddr, err := ParseETHAddress(ja.EVMAddr)
+		evmAddr, err := ParseEVMAddress(ja.EVMAddr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid eth address %s: %w", ja.EVMAddr, err)
 		}
@@ -232,7 +232,7 @@ func parseAllocations(jsonAllocs []AllocationJSON) ([]Allocation, error) {
 			return nil, fmt.Errorf("invalid utxo address %s: %w", ja.UTXOAddr, err)
 		}
 		result = append(result, Allocation{
-			EVMAddr:        ethAddr,
+			EVMAddr:        evmAddr,
 			UTXOAddr:       utxoAddr,
 			InitialAmount:  ja.InitialAmount,
 			UnlockSchedule: ja.UnlockSchedule,
