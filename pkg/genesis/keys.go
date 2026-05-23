@@ -22,7 +22,7 @@ import (
 	// stop-gap.
 	"github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/bls"
-	"github.com/luxfi/crypto/keccak"
+	"github.com/luxfi/crypto/keccak256"
 	"github.com/luxfi/crypto/pq/mldsa/mldsa65"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/go-bip32"
@@ -602,14 +602,14 @@ func keccakAddr(pubX, pubY *big.Int) (out [20]byte) {
 	buf := make([]byte, 64)
 	pubX.FillBytes(buf[:32])
 	pubY.FillBytes(buf[32:])
-	h := keccak.Sum256(buf)
+	h := keccak256.Sum(buf)
 	copy(out[:], h[12:])
 	return
 }
 
 // keccak256 computes the Keccak-256 hash via the canonical luxfi/crypto/keccak.
 func keccak256(data []byte) []byte {
-	h := keccak.Sum256(data)
+	h := keccak256.Sum(data)
 	return h[:]
 }
 
