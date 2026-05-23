@@ -101,7 +101,7 @@ func TestGetGenesisLocalnet(t *testing.T) {
 		if _, ok := alloc["utxoAddr"]; !ok {
 			t.Errorf("Allocation %d missing utxoAddr", i)
 		}
-		if _, ok := alloc["ethAddr"]; !ok {
+		if _, ok := alloc["evmAddr"]; !ok {
 			t.Errorf("Allocation %d missing ethAddr", i)
 		}
 		amt := uint64(alloc["initialAmount"].(float64))
@@ -116,7 +116,7 @@ func TestGetGenesisLocalnet(t *testing.T) {
 	// at index 0 (not the Lux-internal hardened path).
 	first := allocs[0].(map[string]interface{})
 	const wantFirstETH = "0x5369615110ca435bdf798f31c20ba6163d7b0a54"
-	if addr := first["ethAddr"].(string); addr != wantFirstETH {
+	if addr := first["evmAddr"].(string); addr != wantFirstETH {
 		t.Errorf("First allocation ethAddr mismatch: got %s want %s", addr, wantFirstETH)
 	}
 

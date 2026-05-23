@@ -11,7 +11,7 @@
         }
       ],
       "utxoAddr": "X-dev1kazfeaqjtu2a6w3s4kt9qutw5up3jfygthl240",
-      "ethAddr": "0x35D64Ff3f618f7a17DF34DCb21be375A4686a8de"
+      "evmAddr": "0x35D64Ff3f618f7a17DF34DCb21be375A4686a8de"
     },
     {
       "_comment": "Account 0 (treasury) - P-Chain stake (1.1B)",
@@ -23,7 +23,7 @@
         }
       ],
       "utxoAddr": "P-dev1kazfeaqjtu2a6w3s4kt9qutw5up3jfygthl240",
-      "ethAddr": "0x35D64Ff3f618f7a17DF34DCb21be375A4686a8de"
+      "evmAddr": "0x35D64Ff3f618f7a17DF34DCb21be375A4686a8de"
     },
     {
       "_comment": "Account 1 - X-Chain 1B LUX",
@@ -35,7 +35,7 @@
         }
       ],
       "utxoAddr": "X-dev16wzm6wh4cr3qfcgnuxcjt0rxyq26c508g5vgjk",
-      "ethAddr": "0xdAF82928dE0ABBAE133322020B253283d335d3A8"
+      "evmAddr": "0xdAF82928dE0ABBAE133322020B253283d335d3A8"
     },
     {
       "_comment": "Account 1 - P-Chain stake (1.1B)",
@@ -47,7 +47,7 @@
         }
       ],
       "utxoAddr": "P-dev16wzm6wh4cr3qfcgnuxcjt0rxyq26c508g5vgjk",
-      "ethAddr": "0xdAF82928dE0ABBAE133322020B253283d335d3A8"
+      "evmAddr": "0xdAF82928dE0ABBAE133322020B253283d335d3A8"
     },
     {
       "_comment": "Account 2 - X-Chain 1B LUX",
@@ -59,7 +59,7 @@
         }
       ],
       "utxoAddr": "X-dev169tr6276y5lthgxk9qlzpdh97h2y2vnex4j8vh",
-      "ethAddr": "0xBb5D7C55DbbB353f9e7667dbCC43B228B857998a"
+      "evmAddr": "0xBb5D7C55DbbB353f9e7667dbCC43B228B857998a"
     },
     {
       "_comment": "Account 2 - P-Chain stake (1.1B)",
@@ -71,7 +71,7 @@
         }
       ],
       "utxoAddr": "P-dev169tr6276y5lthgxk9qlzpdh97h2y2vnex4j8vh",
-      "ethAddr": "0xBb5D7C55DbbB353f9e7667dbCC43B228B857998a"
+      "evmAddr": "0xBb5D7C55DbbB353f9e7667dbCC43B228B857998a"
     },
     {
       "_comment": "Account 3 - X-Chain 1B LUX",
@@ -83,7 +83,7 @@
         }
       ],
       "utxoAddr": "X-dev14ex0w5epwtj4ddlq7e7yzmkcyqyxf6feztq75c",
-      "ethAddr": "0x6828eAa708F40c11C121C25BdbB4a6fd1415fB24"
+      "evmAddr": "0x6828eAa708F40c11C121C25BdbB4a6fd1415fB24"
     },
     {
       "_comment": "Account 3 - P-Chain stake (1.1B)",
@@ -95,7 +95,7 @@
         }
       ],
       "utxoAddr": "P-dev14ex0w5epwtj4ddlq7e7yzmkcyqyxf6feztq75c",
-      "ethAddr": "0x6828eAa708F40c11C121C25BdbB4a6fd1415fB24"
+      "evmAddr": "0x6828eAa708F40c11C121C25BdbB4a6fd1415fB24"
     },
     {
       "_comment": "Account 4 - X-Chain 1B LUX",
@@ -107,7 +107,7 @@
         }
       ],
       "utxoAddr": "X-dev1f8yf38fr82sz6adlaev7l7gxlyxydstf7xeclg",
-      "ethAddr": "0xa238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37"
+      "evmAddr": "0xa238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37"
     },
     {
       "_comment": "Account 4 - P-Chain stake (1.1B)",
@@ -119,7 +119,7 @@
         }
       ],
       "utxoAddr": "P-dev1f8yf38fr82sz6adlaev7l7gxlyxydstf7xeclg",
-      "ethAddr": "0xa238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37"
+      "evmAddr": "0xa238C9E15C4AD9b10441fe9f7afFa6A131F4Cc37"
     }
   ],
   "initialStakeDuration": 31536000,
