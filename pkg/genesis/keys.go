@@ -278,7 +278,7 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	}
 
 	// Derive fee private key: keccakBytes("fee-reserve:" || ecPrivKey)
-	feePrivBytes := keccak256.Sum(append([]byte("fee-reserve:"), privKeyBytes...))[:]
+	feePrivBytes := keccakBytes(append([]byte("fee-reserve:"), privKeyBytes...))
 
 	// Derive proper P-chain address using secp256k1
 	feePrivKey, err := secp256k1.ToPrivateKey(feePrivBytes)
@@ -474,7 +474,7 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 		// ML-DSA-65 mesh identity — derive from a separate label so
 		// no collision with the secp256k1 path. Still reproducible
 		// from the same mnemonic + index.
-		mldsaSeed := keccak256.Sum(append(append(seed, []byte("LUX/HIP-0077/mldsa65")...), byte(i)))[:]
+		mldsaSeed := keccakBytes(append(append(seed, []byte("LUX/HIP-0077/mldsa65")...), byte(i)))
 		mldsaPubKey, err := mldsaKeygenFromChildSeed(mldsaSeed[:32])
 		if err != nil {
 			return nil, fmt.Errorf("ML-DSA keygen %d: %w", i, err)
@@ -484,7 +484,7 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 		// BLS signer key — derive deterministically from mnemonic seed + index.
 		// Uses keccakBytes(seed || "bls-signer" || index) as the BLS secret
 		// key seed so BLS keys are reproducible from the same mnemonic.
-		blsSeed := keccak256.Sum(append(append(seed, []byte("bls-signer")...), byte(i)))[:]
+		blsSeed := keccakBytes(append(append(seed, []byte("bls-signer")...), byte(i)))
 		blsSK, blsErr := bls.SecretKeyFromSeed(blsSeed)
 		if blsErr == nil {
 			blsPK := bls.PublicFromSecretKey(blsSK)
@@ -560,7 +560,7 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 	}
 
 	// Generate a deterministic node ID from the private key
-	nodeIDBytes := keccak256.Sum(append([]byte("node-id:"), privKey...))[:]
+	nodeIDBytes := keccakBytes(append([]byte("node-id:"), privKey...))
 	nodeID, err := ids.ToNodeID(nodeIDBytes[:20])
 	if err != nil {
 		// Fallback to generating from hash
