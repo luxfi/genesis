@@ -104,7 +104,7 @@ func ComputeValidatorKeyInfo(privKeyHex string) (ValidatorKeyInfo, error) {
 	if err != nil {
 		return ValidatorKeyInfo{}, fmt.Errorf("invalid ECDSA key: %w", err)
 	}
-	evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
+	evmAddr := keccakAddr(evmPrivKey.PublicKey.X, evmPrivKey.PublicKey.Y)
 
 	// Get Lux ShortID (for X/P chain addresses)
 	utxoPrivKey, err := secp256k1.ToPrivateKey(privKeyBytes)
@@ -116,7 +116,7 @@ func ComputeValidatorKeyInfo(privKeyHex string) (ValidatorKeyInfo, error) {
 
 	return ValidatorKeyInfo{
 		PrivKeyHex: privKeyHex,
-		EVMAddr:    evmAddr.Hex(),
+		EVMAddr:    fmt.Sprintf("0x%x", evmAddr[:]),
 		ShortID:    shortID,
 	}, nil
 }

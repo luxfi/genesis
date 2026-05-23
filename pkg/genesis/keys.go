@@ -22,6 +22,7 @@ import (
 	// stop-gap.
 	"github.com/luxfi/crypto"
 	"github.com/luxfi/crypto/bls"
+	"github.com/luxfi/crypto/keccak"
 	"github.com/luxfi/crypto/pq/mldsa/mldsa65"
 	"github.com/luxfi/crypto/secp256k1"
 	"github.com/luxfi/go-bip32"
@@ -210,7 +211,7 @@ func loadNodeKey(nodeDir string) (*KeyInfo, error) {
 			// Get EVM address
 			evmPrivKey, err := crypto.ToECDSA(privKeyBytes)
 			if err == nil {
-				evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
+				evmAddr := keccakAddr(evmPrivKey.PublicKey.X, evmPrivKey.PublicKey.Y)
 				copy(keyInfo.EVMAddr[:], evmAddr[:])
 			}
 
@@ -292,7 +293,7 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	if err != nil {
 		return nil, fmt.Errorf("failed to create fee ETH key: %w", err)
 	}
-	evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
+	evmAddr := keccakAddr(evmPrivKey.PublicKey.X, evmPrivKey.PublicKey.Y)
 	var evmShortID ids.ShortID
 	copy(evmShortID[:], evmAddr[:])
 
@@ -589,17 +590,27 @@ func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
 	if err != nil {
 		return ids.ShortID{}, fmt.Errorf("invalid secp256k1 private key: %w", err)
 	}
-	evmAddr := crypto.PubkeyToAddress(key.PublicKey)
+	evmAddr := keccakAddr(key.PublicKey.X, key.PublicKey.Y)
 	var addr ids.ShortID
 	copy(addr[:], evmAddr[:])
 	return addr, nil
 }
 
-// keccak256 computes the Keccak-256 hash
+// keccakAddr returns Keccak256(pub.X || pub.Y)[12:] — the EVM-format
+// 20-byte H160 address used on C-Chain and other EVM letter chains.
+func keccakAddr(pubX, pubY *big.Int) (out [20]byte) {
+	buf := make([]byte, 64)
+	pubX.FillBytes(buf[:32])
+	pubY.FillBytes(buf[32:])
+	h := keccak.Sum256(buf)
+	copy(out[:], h[12:])
+	return
+}
+
+// keccak256 computes the Keccak-256 hash via the canonical luxfi/crypto/keccak.
 func keccak256(data []byte) []byte {
-	h := sha3.NewLegacyKeccak256()
-	h.Write(data)
-	return h.Sum(nil)
+	h := keccak.Sum256(data)
+	return h[:]
 }
 
 // genesisMessage returns the Latin genesis message for a network.
@@ -899,7 +910,7 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 		if err != nil {
 			return nil, fmt.Errorf("failed to create ECDSA key %d: %w", i, err)
 		}
-		evmAddr := crypto.PubkeyToAddress(evmPrivKey.PublicKey)
+		evmAddr := keccakAddr(evmPrivKey.PublicKey.X, evmPrivKey.PublicKey.Y)
 		var evmShortID ids.ShortID
 		copy(evmShortID[:], evmAddr[:])
 
