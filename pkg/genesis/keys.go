@@ -50,7 +50,7 @@ const (
 	//   quantum adversary cannot recover the private key — Shor's
 	//   algorithm works against the secp256k1 pubkey, but not against
 	//   sha256+ripemd160. Contrast with C-Chain (Ethereum) addresses,
-	//   which are keccak256(pubkey)[12:] and effectively expose the
+	//   which are keccakBytes(pubkey)[12:] and effectively expose the
 	//   pubkey on every signature (recovery in ECDSA). Long-term holds
 	//   should sit on P/X, not C, for this reason.
 	DefaultAllocationPerAccount = 50_000_000 * Lux
@@ -262,7 +262,7 @@ func BuildConfigFromKeys(networkID uint32, keysDir string, allocationPerKey uint
 }
 
 // deriveFeeKey derives a fee reserve key from a validator's EC private key
-// The fee key is keccak256("fee-reserve:" || ecPrivKey) which gives a different
+// The fee key is keccakBytes("fee-reserve:" || ecPrivKey) which gives a different
 // secp256k1 private key with a different P-chain address
 func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, error) {
 	// Read the validator's EC private key
@@ -277,8 +277,8 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 		return nil, fmt.Errorf("invalid EC key hex: %w", err)
 	}
 
-	// Derive fee private key: keccak256("fee-reserve:" || ecPrivKey)
-	feePrivBytes := keccak256(append([]byte("fee-reserve:"), privKeyBytes...))
+	// Derive fee private key: keccakBytes("fee-reserve:" || ecPrivKey)
+	feePrivBytes := keccak256.Sum(append([]byte("fee-reserve:"), privKeyBytes...))[:]
 
 	// Derive proper P-chain address using secp256k1
 	feePrivKey, err := secp256k1.ToPrivateKey(feePrivBytes)
@@ -474,7 +474,7 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 		// ML-DSA-65 mesh identity — derive from a separate label so
 		// no collision with the secp256k1 path. Still reproducible
 		// from the same mnemonic + index.
-		mldsaSeed := keccak256(append(append(seed, []byte("LUX/HIP-0077/mldsa65")...), byte(i)))
+		mldsaSeed := keccak256.Sum(append(append(seed, []byte("LUX/HIP-0077/mldsa65")...), byte(i)))[:]
 		mldsaPubKey, err := mldsaKeygenFromChildSeed(mldsaSeed[:32])
 		if err != nil {
 			return nil, fmt.Errorf("ML-DSA keygen %d: %w", i, err)
@@ -482,9 +482,9 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 		keyInfo.MLDSAPublicKey = mldsaPubKey
 
 		// BLS signer key — derive deterministically from mnemonic seed + index.
-		// Uses keccak256(seed || "bls-signer" || index) as the BLS secret
+		// Uses keccakBytes(seed || "bls-signer" || index) as the BLS secret
 		// key seed so BLS keys are reproducible from the same mnemonic.
-		blsSeed := keccak256(append(append(seed, []byte("bls-signer")...), byte(i)))
+		blsSeed := keccak256.Sum(append(append(seed, []byte("bls-signer")...), byte(i)))[:]
 		blsSK, blsErr := bls.SecretKeyFromSeed(blsSeed)
 		if blsErr == nil {
 			blsPK := bls.PublicFromSecretKey(blsSK)
@@ -560,7 +560,7 @@ func keyInfoFromPrivateKey(privKey []byte) (*KeyInfo, error) {
 	}
 
 	// Generate a deterministic node ID from the private key
-	nodeIDBytes := keccak256(append([]byte("node-id:"), privKey...))
+	nodeIDBytes := keccak256.Sum(append([]byte("node-id:"), privKey...))[:]
 	nodeID, err := ids.ToNodeID(nodeIDBytes[:20])
 	if err != nil {
 		// Fallback to generating from hash
@@ -596,6 +596,15 @@ func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
 	return addr, nil
 }
 
+
+// keccakBytes returns Keccak256(data) as a []byte slice (saves the
+// two-step assignment-then-slice that Go requires for function-returned
+// arrays).
+func keccakBytes(data []byte) []byte {
+	h := keccak256.Sum(data)
+	return h[:]
+}
+
 // keccakAddr returns Keccak256(pub.X || pub.Y)[12:] — the EVM-format
 // 20-byte H160 address used on C-Chain and other EVM letter chains.
 func keccakAddr(pubX, pubY *big.Int) (out [20]byte) {
@@ -605,12 +614,6 @@ func keccakAddr(pubX, pubY *big.Int) (out [20]byte) {
 	h := keccak256.Sum(buf)
 	copy(out[:], h[12:])
 	return
-}
-
-// keccak256 computes the Keccak-256 hash via the canonical luxfi/crypto/keccak.
-func keccak256(data []byte) []byte {
-	h := keccak256.Sum(data)
-	return h[:]
 }
 
 // genesisMessage returns the Latin genesis message for a network.
