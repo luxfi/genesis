@@ -160,7 +160,7 @@ type PChainConfig struct {
 //
 // Address fields use the canonical UTXO/ETH split:
 //   - utxoAddr (bech32, P-/X- prefix interchangeable) — P-Chain + X-Chain UTXO owner
-//   - ethAddr (0x H160) — C-Chain and other EVM chain owner
+//   - evmAddr (0x H160) — C-Chain and other EVM chain owner
 type AllocationJSON struct {
 	EVMAddr        string         `json:"evmAddr"`
 	UTXOAddr       string         `json:"utxoAddr"`
