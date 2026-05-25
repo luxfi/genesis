@@ -113,8 +113,21 @@ func GetConfigFile(filepath string) (*Config, error) {
 	}, nil
 }
 
-// GetConfigFromDir builds genesis config from component files in a directory
-// Expects: network.json, pchain.json, cchain.json
+// GetConfigFromDir builds genesis config from component files in a directory.
+//
+// Required files:
+//   - network.json (top-level identity + start time)
+//   - pchain.json (P-Chain allocations + initial stakers)
+//   - cchain.json (C-Chain EVM genesis, embedded as JSON string)
+//
+// Optional opt-in chain shards — each present file produces a CreateChainTx
+// in the primary-network genesis; missing files cause the chain to be
+// skipped (the canonical data-driven pattern, mirrored from
+// configs.loadAllChainShards). Add a new primary-network chain by
+// extending the table in optionalChainShards, not by branching here.
+//
+// X-Chain matters here: without xchain.json loaded the builder's
+// X-Chain holders loop never runs and X-Chain ends up with zero UTXOs.
 func GetConfigFromDir(dir string) (*Config, error) {
 	// Load network config
 	networkPath := filepath.Join(dir, "network.json")
@@ -175,7 +188,7 @@ func GetConfigFromDir(dir string) (*Config, error) {
 		securityProfile = &sp
 	}
 
-	return &Config{
+	cfg := &Config{
 		NetworkID:                  network.NetworkID,
 		Allocations:                allocations,
 		StartTime:                  network.StartTime,
@@ -186,7 +199,57 @@ func GetConfigFromDir(dir string) (*Config, error) {
 		CChainGenesis:              string(cchainData),
 		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
-	}, nil
+	}
+
+	// Opt-in chain shards — one read per chain, missing file is "skip".
+	// Same data-driven contract as configs.loadAllChainShards: a shard
+	// present in dir is baked into the Config; an absent shard leaves the
+	// matching XChainGenesis/.. field empty, which the builder treats as
+	// "do not emit a CreateChainTx for this chain".
+	for _, sh := range optionalChainShards {
+		v, err := readOptionalShard(dir, sh.file)
+		if err != nil {
+			return nil, err
+		}
+		*sh.dst(cfg) = v
+	}
+
+	return cfg, nil
+}
+
+// optionalChainShards is the canonical opt-in primary-network chain shard
+// table. Order matches configs.primaryChainShardFiles (sans cchain.json,
+// which is loaded explicitly above) so the two loaders stay byte-for-byte
+// equivalent. Adding a new primary-network chain is one entry here plus
+// one field on Config — no branching, no env knob.
+var optionalChainShards = []struct {
+	file string
+	dst  func(*Config) *string
+}{
+	{"xchain.json", func(c *Config) *string { return &c.XChainGenesis }},
+	{"dchain.json", func(c *Config) *string { return &c.DChainGenesis }},
+	{"qchain.json", func(c *Config) *string { return &c.QChainGenesis }},
+	{"achain.json", func(c *Config) *string { return &c.AChainGenesis }},
+	{"bchain.json", func(c *Config) *string { return &c.BChainGenesis }},
+	{"tchain.json", func(c *Config) *string { return &c.TChainGenesis }},
+	{"zchain.json", func(c *Config) *string { return &c.ZChainGenesis }},
+	{"gchain.json", func(c *Config) *string { return &c.GChainGenesis }},
+	{"kchain.json", func(c *Config) *string { return &c.KChainGenesis }},
+}
+
+// readOptionalShard reads filename from dir, returning the file contents on
+// success or empty string when the file is absent. Distinguishes "not
+// present" (skip this chain) from "unreadable" (configuration error) by
+// checking os.IsNotExist on the read error.
+func readOptionalShard(dir, filename string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(dir, filename))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("read %s/%s: %w", dir, filename, err)
+	}
+	return string(data), nil
 }
 
 // GetConfigFromEnv builds genesis config using environment variables
