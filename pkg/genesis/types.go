@@ -161,11 +161,66 @@ type PChainConfig struct {
 // Address fields use the canonical UTXO/ETH split:
 //   - utxoAddr (bech32, P-/X- prefix interchangeable) — P-Chain + X-Chain UTXO owner
 //   - evmAddr (0x H160) — C-Chain and other EVM chain owner
+//
+// JSON wire format emits BOTH the canonical names (utxoAddr/evmAddr) and the
+// legacy luxd-compat aliases (luxAddr/ethAddr) so the same genesis file boots
+// luxd v1.23.x (reads luxAddr/ethAddr) and luxd v1.27+ (reads either). The
+// trunk field names are the source of truth; the aliases live only in the
+// wire representation. Removing the aliases requires every consumer to be on
+// the renamed luxfi/genesis dep, which is a separate cascade.
 type AllocationJSON struct {
-	EVMAddr        string         `json:"evmAddr"`
-	UTXOAddr       string         `json:"utxoAddr"`
+	EVMAddr        string         `json:"-"`
+	UTXOAddr       string         `json:"-"`
 	InitialAmount  uint64         `json:"initialAmount"`
 	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
+}
+
+// allocationJSONWire is the dual-name wire shape used for marshal/unmarshal.
+// New + legacy names are sibling fields in the JSON object so older luxd
+// builds (which read ethAddr/luxAddr) and newer code (which reads
+// evmAddr/utxoAddr) both find the address.
+type allocationJSONWire struct {
+	EVMAddr        string         `json:"evmAddr,omitempty"`
+	UTXOAddr       string         `json:"utxoAddr,omitempty"`
+	ETHAddr        string         `json:"ethAddr,omitempty"`
+	LUXAddr        string         `json:"luxAddr,omitempty"`
+	InitialAmount  uint64         `json:"initialAmount"`
+	UnlockSchedule []LockedAmount `json:"unlockSchedule"`
+}
+
+// MarshalJSON emits both the canonical (evmAddr/utxoAddr) and legacy
+// (ethAddr/luxAddr) name pairs so the same genesis JSON is consumed
+// unchanged by luxd v1.23.x and v1.27+.
+func (a AllocationJSON) MarshalJSON() ([]byte, error) {
+	return json.Marshal(allocationJSONWire{
+		EVMAddr:        a.EVMAddr,
+		UTXOAddr:       a.UTXOAddr,
+		ETHAddr:        a.EVMAddr,
+		LUXAddr:        a.UTXOAddr,
+		InitialAmount:  a.InitialAmount,
+		UnlockSchedule: a.UnlockSchedule,
+	})
+}
+
+// UnmarshalJSON accepts either the canonical (evmAddr/utxoAddr) or legacy
+// (ethAddr/luxAddr) field pair, preferring the canonical names when both
+// are present. Both pairs map to the same conceptual address space.
+func (a *AllocationJSON) UnmarshalJSON(data []byte) error {
+	var w allocationJSONWire
+	if err := json.Unmarshal(data, &w); err != nil {
+		return err
+	}
+	a.EVMAddr = w.EVMAddr
+	if a.EVMAddr == "" {
+		a.EVMAddr = w.ETHAddr
+	}
+	a.UTXOAddr = w.UTXOAddr
+	if a.UTXOAddr == "" {
+		a.UTXOAddr = w.LUXAddr
+	}
+	a.InitialAmount = w.InitialAmount
+	a.UnlockSchedule = w.UnlockSchedule
+	return nil
 }
 
 // StakerJSON is the JSON representation of a staker
