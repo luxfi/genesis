@@ -341,7 +341,7 @@ func GetConfig(networkID uint32) *genesiscfg.Config {
 // then has no native UTXO asset: validator stakes denominated against
 // ids.Empty have no on-chain asset backing, which is the
 // permissioned-set semantics used by L1s whose value capture lives on
-// an L2 chain ( etc.) with its own asset model. Minting a
+// an L2 chain (downstream EVM etc.) with its own asset model. Minting a
 // real primary-network asset requires X — there is no other genesis
 // site for it.
 func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
