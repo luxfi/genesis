@@ -5,8 +5,8 @@
       "code": "0x01",
       "nonce": "0x1"
     },
-    "0x9011E888251AB053B7bD1cdB598Db4f9DEd94714": {
-      "balance": "0x169e43a85eb381aa58000000"
+    "9011E888251AB053B7bD1cdB598Db4f9DEd94714": {
+      "balance": "0x193e5939a08ce9dbd480000000"
     }
   },
   "baseFeePerGas": "0x5d21dba00",
@@ -49,7 +49,7 @@
     "shanghaiTime": 0,
     "terminalTotalDifficulty": 0,
     "warpConfig": {
-      "blockTimestamp": 1768946194,
+      "blockTimestamp": 0,
       "quorumNumerator": 67,
       "requirePrimaryNetworkSigners": false
     }
@@ -62,5 +62,5 @@
   "nonce": "0x0",
   "number": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "timestamp": "0x696ffa12"
+  "timestamp": "0x0"
 }
