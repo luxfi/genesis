@@ -6,7 +6,7 @@
       "nonce": "0x1"
     },
     "9011E888251AB053B7bD1cdB598Db4f9DEd94714": {
-      "balance": "0x193e5939a08ce9dbd480000000"
+      "balance": "0x169e43a85eb381aa58000000"
     }
   },
   "baseFeePerGas": "0x5d21dba00",
@@ -23,7 +23,7 @@
     },
     "byzantiumBlock": 0,
     "cancunTime": 0,
-    "chainId": 494949,
+    "chainId": 7070,
     "constantinopleBlock": 0,
     "eip150Block": 0,
     "eip155Block": 0,
