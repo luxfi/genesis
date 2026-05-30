@@ -856,7 +856,7 @@ func LoadBIP44WalletKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInf
 // spending allocations for each key.
 //
 // Use this instead of BuildWalletAllocations when the receiving consumer
-// (e.g. a subnet-bootstrap CLI) expects classical BIP44 web-wallet
+// (e.g. a chain-bootstrap CLI) expects classical BIP44 web-wallet
 // addresses. BuildWalletAllocations uses a Lux-internal hardened layout
 // (m/44'/9000'/nid'/1'/i') and will not match the web wallet.
 //
