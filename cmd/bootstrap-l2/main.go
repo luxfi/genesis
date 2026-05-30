@@ -4,8 +4,7 @@
 // Command bootstrap-l2 creates one or more chains on a luxd network using the
 // canonical BIP44 m/44'/9000'/0'/0/<idx> derivation. For each chain it:
 //
-//  1. IssueCreateNetworkTx (upstream P-chain CreateSubnetTx, exposed in our
-//     wallet as a chain-namespace operation) — owner threshold=1
+//  1. IssueCreateNetworkTx — chain-owner network with threshold=1
 //  2. IssueCreateChainTx — vmID=<--vm-id>, genesis read from the configs dir
 //  3. IssueAddChainValidatorTx — adds every primary network validator
 //  4. Probes eth_blockNumber and info.isBootstrapped — fails if either is bad
@@ -20,9 +19,15 @@
 // only probed for liveness, never re-created.
 //
 // Vocabulary: this tool speaks "chain" — the polymorphic primitive produced
-// by CreateChainTx, irrespective of L1/L2/L3 level. Upstream luxfi/node API
-// names (e.g. ConvertSubnetToL1Tx) keep their literal types as imported but
-// are wrapped here under chain-namespace naming.
+// by CreateChainTx, irrespective of L1/L2/L3 level. Three IDs, three roles,
+// never aliased:
+//
+//   - `networkID` — identifies a validator network. Comes in two scopes:
+//       * primary networkID (uint32: 1=mainnet, 2=fuji, 3=local, 1337=dev)
+//       * per-chain networkID (ids.ID 32 bytes) — the CreateNetworkTx ID
+//         that owns one or more chains.
+//   - `chainID` — the blockchain's own globally unique ID (ids.ID 32 bytes).
+//   - `evmChainID` — EIP-155 chain ID (uint64). EVM JSON-RPC only.
 //
 // Usage:
 //
@@ -76,10 +81,15 @@ import (
 const defaultEVMID = "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6"
 
 // resultChain is the per-chain output written to --output.
+//
+// NetworkID is the CreateNetworkTx ID — the per-chain validator network
+// that owns the blockchain. ChainID is the blockchain's own globally
+// unique ID. EVMChainID is the EIP-155 chain ID for EVM JSON-RPC.
+// Three distinct concepts; never alias.
 type resultChain struct {
 	Name           string `json:"name"`
-	ChainOwnerID   string `json:"chainOwnerId"`  // upstream "subnetID" — the CreateNetwork tx id
-	BlockchainID   string `json:"blockchainId"`
+	NetworkID      string `json:"networkId"`
+	ChainID        string `json:"chainId"`
 	EVMChainID     uint64 `json:"evmChainId"`
 	FirstBlockHex  string `json:"firstBlockHex"`
 	BootstrappedAt string `json:"bootstrappedAt"`
@@ -160,9 +170,8 @@ func main() {
 
 	// Pre-flight: load every genesis up front. A bad path is fatal before
 	// we burn any P-chain LUX on a CreateNetwork that we can't follow with
-	// a CreateChain. The loader also validates 0x-prefixing on alloc keys
-	// and auto-fixes in-memory (without rewriting the file on disk) so a
-	// historical 0x-less file doesn't block live work.
+	// a CreateChain. The loader validates 0x-prefixing on alloc keys
+	// (auto-fixes in memory, never rewrites the file on disk).
 	type chainSpec struct {
 		Name       string
 		GenesisRaw []byte
@@ -195,11 +204,10 @@ func main() {
 			log.Fatalf("genesis %s: .config.chainId not a number (got %T)", path, v)
 		}
 		// Defensive 0x prefix + hex shape validation on alloc keys.
-		// The EVM genesis loader rejects unprefixed keys, but historical
-		// configs forgot the prefix. We normalize-and-log for missing
-		// prefixes (recoverable), and fail loudly for genuinely malformed
-		// keys (non-hex chars, wrong length) — never silently mutate
-		// something we can't prove is just a missing prefix.
+		// The EVM genesis loader rejects unprefixed keys. We normalize
+		// and log for missing prefixes (recoverable), and fail loudly for
+		// malformed keys (non-hex chars, wrong length) — never silently
+		// mutate something we can't prove is just a missing prefix.
 		//
 		// Acceptance shape after this block:
 		//   - every alloc key matches /^0x[0-9a-fA-F]{40}$/
@@ -271,8 +279,8 @@ func main() {
 	// This removes the operator burden of maintaining a --existing-X flag
 	// in lockstep with cluster reality.
 	existingByName := map[string]struct {
-		ChainOwnerID ids.ID // upstream "subnetID"
-		BlockchainID ids.ID
+		NetworkID ids.ID // parent validator-network (CreateNetworkTx ID)
+		ChainID   ids.ID // the blockchain's own ID
 	}{}
 	{
 		blockchains, perr := platformGetBlockchains(ctx, *uri)
@@ -286,11 +294,11 @@ func main() {
 			for _, spec := range specs {
 				if b, ok := byName[strings.ToLower(spec.Name)]; ok {
 					existingByName[spec.Name] = struct {
-						ChainOwnerID ids.ID
-						BlockchainID ids.ID
-					}{ChainOwnerID: b.SubnetID, BlockchainID: b.ID}
-					log.Printf("[%s/%s] pre-existing chain found via platform.getBlockchains: blockchainID=%s ownerID=%s",
-						*networkLabel, spec.Name, b.ID, b.SubnetID)
+						NetworkID ids.ID
+						ChainID   ids.ID
+					}{NetworkID: b.NetworkID, ChainID: b.ID}
+					log.Printf("[%s/%s] pre-existing chain found via platform.getBlockchains: chainID=%s networkID=%s",
+						*networkLabel, spec.Name, b.ID, b.NetworkID)
 				}
 			}
 		}
@@ -366,24 +374,24 @@ func main() {
 	for _, spec := range specs {
 		log.Printf("[%s] === bootstrapping %s ===", *networkLabel, spec.Name)
 
-		var chainOwnerID ids.ID
-		var bcID ids.ID
+		var networkID ids.ID // chain-owner validator network (CreateNetworkTx ID)
+		var chainID ids.ID   // the blockchain's own ID
 		reused := false
 
 		if ec, ok := existingByName[spec.Name]; ok {
-			chainOwnerID = ec.ChainOwnerID
-			bcID = ec.BlockchainID
+			networkID = ec.NetworkID
+			chainID = ec.ChainID
 			reused = true
-			log.Printf("[%s/%s] REUSE: ownerID=%s blockchainID=%s (skipping both CreateNetworkTx and CreateChainTx)",
-				*networkLabel, spec.Name, chainOwnerID, bcID)
+			log.Printf("[%s/%s] REUSE: networkID=%s chainID=%s (skipping both CreateNetworkTx and CreateChainTx)",
+				*networkLabel, spec.Name, networkID, chainID)
 		} else {
 			log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Name)
 			createNetTx, err := w.P().IssueCreateNetworkTx(owner)
 			if err != nil {
 				log.Fatalf("[%s] create network: %v", spec.Name, err)
 			}
-			chainOwnerID = createNetTx.ID()
-			log.Printf("[%s/%s] chain owner ID = %s", *networkLabel, spec.Name, chainOwnerID)
+			networkID = createNetTx.ID()
+			log.Printf("[%s/%s] network ID = %s", *networkLabel, spec.Name, networkID)
 			time.Sleep(*chainSettleDelay)
 
 			// Re-sync wallet with the new chain-owner tx fetched, so the
@@ -394,7 +402,7 @@ func main() {
 					URI:              *uri,
 					LUXKeychain:      kc,
 					EVMKeychain:      kc,
-					PChainTxsToFetch: set.Of(chainOwnerID),
+					PChainTxsToFetch: set.Of(networkID),
 				})
 				if err == nil {
 					break
@@ -407,12 +415,12 @@ func main() {
 			}
 
 			log.Printf("[%s/%s] IssueCreateChainTx (vmID=%s)", *networkLabel, spec.Name, vmID)
-			createChainTx, err := w2.P().IssueCreateChainTx(chainOwnerID, spec.GenesisRaw, vmID, nil, spec.Name)
+			createChainTx, err := w2.P().IssueCreateChainTx(networkID, spec.GenesisRaw, vmID, nil, spec.Name)
 			if err != nil {
 				log.Fatalf("[%s] create chain: %v", spec.Name, err)
 			}
-			bcID = createChainTx.ID()
-			log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Name, bcID)
+			chainID = createChainTx.ID()
+			log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Name, chainID)
 		}
 
 		if !*skipValidators && len(nodeIDs) > 0 && !reused {
@@ -421,7 +429,7 @@ func main() {
 				URI:              *uri,
 				LUXKeychain:      kc,
 				EVMKeychain:      kc,
-				PChainTxsToFetch: set.Of(chainOwnerID),
+				PChainTxsToFetch: set.Of(networkID),
 			})
 			if err != nil {
 				log.Printf("[%s] WARN validator wallet sync failed: %v", spec.Name, err)
@@ -443,7 +451,7 @@ func main() {
 							End:    uint64(endTime.Unix()),
 							Wght:   20,
 						},
-						Chain: chainOwnerID,
+						Chain: networkID,
 					})
 					if err != nil {
 						log.Printf("[%s] WARN add validator %s: %v", spec.Name, nid, err)
@@ -473,14 +481,14 @@ func main() {
 		// Wait for bootstrap, send heartbeat if configured, then probe.
 		// Bootstrap-only probe is required before sending a tx — otherwise
 		// eth_sendRawTransaction returns "chain not bootstrapped".
-		if err := waitBootstrap(ctx, *uri, bcID.String(), *probeTimeout, *probeInterval); err != nil {
+		if err := waitBootstrap(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval); err != nil {
 			log.Fatalf("[%s] wait-bootstrap failed: %v", spec.Name, err)
 		}
 		log.Printf("[%s/%s] isBootstrapped=true", *networkLabel, spec.Name)
 
 		if *evmHeartbeatKeyHex != "" {
 			log.Printf("[%s/%s] sending EVM heartbeat tx to roll block 1", *networkLabel, spec.Name)
-			if err := evmHeartbeat(ctx, *uri, bcID.String(), spec.EVMChainID, *evmHeartbeatKeyHex); err != nil {
+			if err := evmHeartbeat(ctx, *uri, chainID.String(), spec.EVMChainID, *evmHeartbeatKeyHex); err != nil {
 				// Heartbeat failure on a reused chain is non-fatal: the
 				// chain may already have blocks. Log and continue.
 				if reused {
@@ -493,7 +501,7 @@ func main() {
 
 		firstBlock := "0x0"
 		if !*probeBootstrapOnly {
-			firstBlock, err = probeChain(ctx, *uri, bcID.String(), *probeTimeout, *probeInterval)
+			firstBlock, err = probeChain(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval)
 			if err != nil {
 				log.Fatalf("[%s] probe failed: %v", spec.Name, err)
 			}
@@ -503,7 +511,7 @@ func main() {
 			// eth_blockNumber currently reports; the caller knows it may
 			// be 0x0.
 			httpc := &http.Client{Timeout: 5 * time.Second}
-			if blk, berr := ethBlockNumber(ctx, httpc, *uri, bcID.String()); berr == nil {
+			if blk, berr := ethBlockNumber(ctx, httpc, *uri, chainID.String()); berr == nil {
 				firstBlock = blk
 			}
 			log.Printf("[%s/%s] BOOTSTRAP-ONLY mode: eth_blockNumber=%s (heartbeat will roll block 1 out-of-band)", *networkLabel, spec.Name, firstBlock)
@@ -511,8 +519,8 @@ func main() {
 
 		out.Chains = append(out.Chains, resultChain{
 			Name:           spec.Name,
-			ChainOwnerID:   chainOwnerID.String(),
-			BlockchainID:   bcID.String(),
+			NetworkID:      networkID.String(),
+			ChainID:        chainID.String(),
 			EVMChainID:     spec.EVMChainID,
 			FirstBlockHex:  firstBlock,
 			BootstrappedAt: time.Now().UTC().Format(time.RFC3339),
@@ -540,11 +548,18 @@ func main() {
 }
 
 // platformBlockchain is the subset of platform.getBlockchains we care about.
+//
+// `NetworkID` is the validator-network (CreateNetworkTx ID) that owns the
+// blockchain. `ID` is the blockchain's own globally unique chain ID. Both
+// are 32-byte hashes; they identify different things and never alias.
+//
+// Wire field name `networkID` matches the canonical upstream lux/node
+// shape (see lux/node/vms/platformvm/service.go::APIBlockchain).
 type platformBlockchain struct {
-	ID       ids.ID `json:"id"`
-	Name     string `json:"name"`
-	SubnetID ids.ID `json:"subnetID"` // upstream wire field — semantically "chain owner"
-	VMID     ids.ID `json:"vmID"`
+	ID        ids.ID `json:"id"`
+	Name      string `json:"name"`
+	NetworkID ids.ID `json:"networkID"`
+	VMID      ids.ID `json:"vmID"`
 }
 
 // platformGetBlockchains queries the P-chain for the current set of

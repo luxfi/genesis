@@ -76,7 +76,7 @@ func main() {
 
 	// Apply BIP44 wallet allocations (canonical web-wallet path) — these
 	// land on P-Chain (free spendable UTXO) AND on the C-Chain alloc map,
-	// so a subnet-bootstrap CLI that derives via m/44'/9000'/0'/0/i finds
+	// so a chain-bootstrap CLI that derives via m/44'/9000'/0'/0/i finds
 	// fundable addresses on both fronts.
 	if *bip44WalletKeys > 0 {
 		if err := addBIP44WalletAllocations(config, netID, *bip44WalletKeys, *walletAmount); err != nil {
