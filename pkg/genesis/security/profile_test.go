@@ -1,7 +1,7 @@
 // Copyright (C) 2019-2026, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-package genesis
+package security
 
 import (
 	"encoding/hex"
@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	consensusconfig "github.com/luxfi/consensus/config"
+	"github.com/luxfi/genesis/pkg/genesis"
 )
 
 // TestSecurityProfile_Resolve_StrictPQ proves a genesis pin for the
@@ -25,11 +26,11 @@ func TestSecurityProfile_Resolve_StrictPQ(t *testing.T) {
 		t.Fatalf("StrictPQ().ComputeHash() returned error: %v", err)
 	}
 
-	pin := &SecurityProfile{
+	pin := &genesis.SecurityProfile{
 		ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 		ProfileHashHex: hex.EncodeToString(live[:]),
 	}
-	got, err := pin.Resolve()
+	got, err := ResolveProfile(pin)
 	if err != nil {
 		t.Fatalf("Resolve() returned error: %v", err)
 	}
@@ -52,11 +53,11 @@ func TestSecurityProfile_Resolve_StrictPQ(t *testing.T) {
 // boot.
 func TestSecurityProfile_Resolve_HashMismatchRejected(t *testing.T) {
 	// Pin a wrong hash for StrictPQ.
-	pin := &SecurityProfile{
+	pin := &genesis.SecurityProfile{
 		ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 		ProfileHashHex: strings.Repeat("00", 48), // 96 hex zeros
 	}
-	_, err := pin.Resolve()
+	_, err := ResolveProfile(pin)
 	if err == nil {
 		t.Fatal("Resolve() accepted a wrong-hash pin")
 	}
@@ -68,11 +69,11 @@ func TestSecurityProfile_Resolve_HashMismatchRejected(t *testing.T) {
 // TestSecurityProfile_Resolve_UnknownProfileIDRejected proves the
 // pin refuses an unknown ProfileID byte.
 func TestSecurityProfile_Resolve_UnknownProfileIDRejected(t *testing.T) {
-	pin := &SecurityProfile{
+	pin := &genesis.SecurityProfile{
 		ProfileID:      0xFE, // unregistered
 		ProfileHashHex: strings.Repeat("ab", 48),
 	}
-	_, err := pin.Resolve()
+	_, err := ResolveProfile(pin)
 	if err == nil {
 		t.Fatal("Resolve() accepted an unknown ProfileID")
 	}
@@ -93,11 +94,11 @@ func TestSecurityProfile_Resolve_InvalidHashHexRejected(t *testing.T) {
 		"wrong padding": "0x" + strings.Repeat("ab", 48), // hex.DecodeString refuses 0x prefix
 	}
 	for name, hashHex := range cases {
-		pin := &SecurityProfile{
+		pin := &genesis.SecurityProfile{
 			ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 			ProfileHashHex: hashHex,
 		}
-		_, err := pin.Resolve()
+		_, err := ResolveProfile(pin)
 		if err == nil {
 			t.Errorf("%s: Resolve() accepted an invalid hash hex %q", name, hashHex)
 			continue
@@ -111,15 +112,15 @@ func TestSecurityProfile_Resolve_InvalidHashHexRejected(t *testing.T) {
 // TestSecurityProfile_Resolve_NilRejected proves a missing pin is
 // detected at the API boundary.
 func TestSecurityProfile_Resolve_NilRejected(t *testing.T) {
-	var pin *SecurityProfile
-	_, err := pin.Resolve()
+	var pin *genesis.SecurityProfile
+	_, err := ResolveProfile(pin)
 	if !errors.Is(err, ErrSecurityProfileMissing) {
 		t.Errorf("nil pin: Resolve() returned %v; want ErrSecurityProfileMissing", err)
 	}
 }
 
 // TestConfig_SecurityProfile_JSONRoundtrip proves the SecurityProfile
-// field survives a Config → ConfigOutput → JSON → ConfigOutput round
+// field survives a Config → genesis.ConfigOutput → JSON → genesis.ConfigOutput round
 // trip. Closes the wire-form half of F102.
 func TestConfig_SecurityProfile_JSONRoundtrip(t *testing.T) {
 	canonical := consensusconfig.StrictPQ()
@@ -127,12 +128,12 @@ func TestConfig_SecurityProfile_JSONRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ComputeHash: %v", err)
 	}
-	pin := &SecurityProfile{
+	pin := &genesis.SecurityProfile{
 		ProfileID:      uint8(consensusconfig.ProfileStrictPQ),
 		ProfileHashHex: hex.EncodeToString(live[:]),
 	}
 
-	out := &ConfigOutput{
+	out := &genesis.ConfigOutput{
 		NetworkID:       12345,
 		Message:         "test",
 		SecurityProfile: pin,
@@ -145,7 +146,7 @@ func TestConfig_SecurityProfile_JSONRoundtrip(t *testing.T) {
 		t.Fatalf("marshalled output missing securityProfile field: %s", raw)
 	}
 
-	var got ConfigOutput
+	var got genesis.ConfigOutput
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatalf("json.Unmarshal: %v", err)
 	}
@@ -158,7 +159,7 @@ func TestConfig_SecurityProfile_JSONRoundtrip(t *testing.T) {
 	if got.SecurityProfile.ProfileHashHex != pin.ProfileHashHex {
 		t.Errorf("ProfileHashHex = %q; want %q", got.SecurityProfile.ProfileHashHex, pin.ProfileHashHex)
 	}
-	if _, err := got.SecurityProfile.Resolve(); err != nil {
-		t.Errorf("Resolve() after round-trip returned %v", err)
+	if _, err := ResolveProfile(got.SecurityProfile); err != nil {
+		t.Errorf("ResolveProfile() after round-trip returned %v", err)
 	}
 }
