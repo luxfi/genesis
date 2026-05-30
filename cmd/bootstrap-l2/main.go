@@ -29,11 +29,13 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -44,6 +46,8 @@ import (
 	luxbip39 "github.com/luxfi/go-bip39"
 
 	"github.com/luxfi/crypto/secp256k1"
+	gethcommon "github.com/luxfi/geth/common"
+	gethtypes "github.com/luxfi/geth/core/types"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	"github.com/luxfi/node/utils/formatting/address"
@@ -100,6 +104,8 @@ func main() {
 	subnetSettleDelay := flag.Duration("subnet-settle-delay", 10*time.Second, "delay after IssueCreateNetworkTx before re-syncing wallet")
 	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from MNEMONIC, print the P-chain address, exit")
 	existingSubnetIDs := flag.String("existing-subnet-ids", "", "comma-separated <chain>:<subnetID> mappings — skip CreateNetworkTx for these chains and reuse the supplied subnet")
+	evmHeartbeatKeyHex := flag.String("evm-heartbeat-key", "", "hex-encoded secp256k1 key funded on every L2 EVM (LUX_PRIVATE_KEY). If set, the tool sends a 0-value self-tx after CreateChainTx to roll block 1 before probing eth_blockNumber>0")
+	probeBootstrapOnly := flag.Bool("probe-bootstrap-only", false, "accept the chain as healthy if info.isBootstrapped=true regardless of eth_blockNumber; use when --evm-heartbeat-key is unavailable and the operator will trigger heartbeats out-of-band")
 	flag.Parse()
 
 	if *printAddrOnly {
@@ -372,12 +378,37 @@ func main() {
 			log.Fatalf("[%s] post-chain wallet re-sync: %v", spec.Name, err)
 		}
 
-		// Probe loop — chain must report isBootstrapped + eth_blockNumber>0.
-		firstBlock, err := probeChain(ctx, *uri, bcID.String(), *probeTimeout, *probeInterval)
-		if err != nil {
-			log.Fatalf("[%s] probe failed: %v", spec.Name, err)
+		// Wait for bootstrap, send heartbeat if configured, then probe.
+		// Bootstrap-only probe is required before sending a tx — otherwise
+		// eth_sendRawTransaction returns "chain not bootstrapped".
+		if err := waitBootstrap(ctx, *uri, bcID.String(), *probeTimeout, *probeInterval); err != nil {
+			log.Fatalf("[%s] wait-bootstrap failed: %v", spec.Name, err)
 		}
-		log.Printf("[%s/%s] PROBE OK: first eth_blockNumber=%s", *networkLabel, spec.Name, firstBlock)
+		log.Printf("[%s/%s] isBootstrapped=true", *networkLabel, spec.Name)
+
+		if *evmHeartbeatKeyHex != "" {
+			log.Printf("[%s/%s] sending EVM heartbeat tx to roll block 1", *networkLabel, spec.Name)
+			if err := evmHeartbeat(ctx, *uri, bcID.String(), spec.EVMChainID, *evmHeartbeatKeyHex); err != nil {
+				log.Fatalf("[%s] heartbeat failed: %v", spec.Name, err)
+			}
+		}
+
+		firstBlock := "0x0"
+		if !*probeBootstrapOnly {
+			firstBlock, err = probeChain(ctx, *uri, bcID.String(), *probeTimeout, *probeInterval)
+			if err != nil {
+				log.Fatalf("[%s] probe failed: %v", spec.Name, err)
+			}
+			log.Printf("[%s/%s] PROBE OK: first eth_blockNumber=%s", *networkLabel, spec.Name, firstBlock)
+		} else {
+			// In bootstrap-only mode we still capture whatever eth_blockNumber
+			// currently reports; the caller knows it may be 0x0.
+			httpc := &http.Client{Timeout: 5 * time.Second}
+			if blk, berr := ethBlockNumber(ctx, httpc, *uri, bcID.String()); berr == nil {
+				firstBlock = blk
+			}
+			log.Printf("[%s/%s] BOOTSTRAP-ONLY mode: eth_blockNumber=%s (heartbeat will roll block 1 out-of-band)", *networkLabel, spec.Name, firstBlock)
+		}
 
 		out.Chains = append(out.Chains, resultChain{
 			Name:           spec.Name,
@@ -449,6 +480,129 @@ func formatPAddr(hrp string, a ids.ShortID) string {
 		return ""
 	}
 	return "P-" + b32
+}
+
+// waitBootstrap polls /ext/info.isBootstrapped(chain=<id>) until true or timeout.
+func waitBootstrap(ctx context.Context, uri, chainID string, timeout, interval time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	httpc := &http.Client{Timeout: 10 * time.Second}
+	for {
+		ok, err := infoIsBootstrapped(ctx, httpc, uri, chainID)
+		if ok {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("not bootstrapped within %s: %v", timeout, err)
+		}
+		time.Sleep(interval)
+	}
+}
+
+// evmHeartbeat sends a 0-value self-transfer using the supplied secp256k1 key.
+// Signs with the EVM chainID's EIP-155 v. Returns nil iff eth_sendRawTransaction
+// returns a tx hash. The first tx on a fresh subnet-evm chain produces block 1.
+func evmHeartbeat(ctx context.Context, uri, chainID string, evmChainID uint64, keyHex string) error {
+	keyHex = strings.TrimSpace(strings.TrimPrefix(keyHex, "0x"))
+	keyBytes, err := hex.DecodeString(keyHex)
+	if err != nil {
+		return fmt.Errorf("parse evm key hex: %w", err)
+	}
+	priv, err := secp256k1.ToPrivateKey(keyBytes)
+	if err != nil {
+		return fmt.Errorf("parse evm key: %w", err)
+	}
+	ecdsaPriv := priv.ToECDSA()
+	// EVM address derivation: keccak256(pubKey[1:65])[-20:]
+	from := evmAddrFromPriv(priv)
+	httpc := &http.Client{Timeout: 10 * time.Second}
+
+	// Fetch nonce + suggested gas + chain baseFee
+	rpc := fmt.Sprintf("%s/ext/bc/%s/rpc", uri, chainID)
+	nonce, err := ethGetTransactionCount(ctx, httpc, rpc, from)
+	if err != nil {
+		return fmt.Errorf("nonce: %w", err)
+	}
+	// Use the genesis baseFeePerGas (25 gwei per devnet configs) bumped 100%
+	// so the tx beats the min on the very first block.
+	gasPrice := new(big.Int).SetUint64(50_000_000_000)
+
+	tx := gethtypes.NewTransaction(nonce, from, big.NewInt(0), 21000, gasPrice, nil)
+	signer := gethtypes.NewEIP155Signer(new(big.Int).SetUint64(evmChainID))
+	signed, err := gethtypes.SignTx(tx, signer, ecdsaPriv)
+	if err != nil {
+		return fmt.Errorf("sign tx: %w", err)
+	}
+	raw, err := signed.MarshalBinary()
+	if err != nil {
+		return fmt.Errorf("marshal tx: %w", err)
+	}
+	rawHex := "0x" + hex.EncodeToString(raw)
+
+	body := strings.NewReader(fmt.Sprintf(
+		`{"jsonrpc":"2.0","id":1,"method":"eth_sendRawTransaction","params":["%s"]}`, rawHex))
+	req, _ := http.NewRequestWithContext(ctx, "POST", rpc, body)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := httpc.Do(req)
+	if err != nil {
+		return fmt.Errorf("post: %w", err)
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	var parsed struct {
+		Result string `json:"result"`
+		Error  *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return fmt.Errorf("decode: %w (body=%s)", err, string(respBody))
+	}
+	if parsed.Error != nil {
+		return fmt.Errorf("rpc error: %s", parsed.Error.Message)
+	}
+	log.Printf("    heartbeat tx hash=%s (from=%s nonce=%d)", parsed.Result, from.Hex(), nonce)
+	return nil
+}
+
+// evmAddrFromPriv computes the EVM address as keccak256(pubKey)[-20:].
+func evmAddrFromPriv(priv *secp256k1.PrivateKey) gethcommon.Address {
+	ecdsa := priv.ToECDSA()
+	luxAddr := secp256k1.PubkeyToAddress(ecdsa.PublicKey)
+	return gethcommon.BytesToAddress(luxAddr[:])
+}
+
+func ethGetTransactionCount(ctx context.Context, c *http.Client, rpc string, addr gethcommon.Address) (uint64, error) {
+	body := strings.NewReader(fmt.Sprintf(
+		`{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionCount","params":["0x%x","pending"]}`, addr))
+	req, _ := http.NewRequestWithContext(ctx, "POST", rpc, body)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	var parsed struct {
+		Result string `json:"result"`
+		Error  *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return 0, fmt.Errorf("decode: %w (body=%s)", err, string(raw))
+	}
+	if parsed.Error != nil {
+		return 0, fmt.Errorf("rpc: %s", parsed.Error.Message)
+	}
+	hexStr := strings.TrimPrefix(parsed.Result, "0x")
+	if hexStr == "" {
+		return 0, nil
+	}
+	n, ok := new(big.Int).SetString(hexStr, 16)
+	if !ok {
+		return 0, fmt.Errorf("bad hex nonce: %s", parsed.Result)
+	}
+	return n.Uint64(), nil
 }
 
 // probeChain polls /ext/info isBootstrapped + /ext/bc/<id>/rpc eth_blockNumber
