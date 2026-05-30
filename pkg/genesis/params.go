@@ -300,7 +300,7 @@ func GetBootstrappersFromKeys(keysDir string) ([]Bootstrapper, error) {
 }
 
 // allowedHRPs is the closed set of bech32 HRPs that ParseAddress accepts.
-// Any other HRP (notably "avax"/"fuji" from upstream Avalanche or arbitrary
+// Any other HRP (notably "avax" from upstream Avalanche or arbitrary
 // user HRPs) is a wrong-network event — the same 20 bytes silently re-encoded
 // under a foreign HRP must not be admitted into a Lux genesis.
 var allowedHRPs = map[string]struct{}{
