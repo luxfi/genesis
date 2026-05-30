@@ -12,7 +12,7 @@ import (
 
 // TestParseAddress_HRPWhitelist locks in that ParseAddress accepts only the
 // canonical Lux HRPs (lux/test/dev/local). Any other HRP — notably an upstream
-// "avax"/"fuji" address copy-pasted into a Lux genesis — must be rejected with
+// "avax" or other non-lux address copy-pasted into a Lux genesis — must be rejected with
 // a clear error rather than silently re-encoded into a lux1... allocation.
 func TestParseAddress_HRPWhitelist(t *testing.T) {
 	tests := []struct {
@@ -39,9 +39,9 @@ func TestParseAddress_HRPWhitelist(t *testing.T) {
 			wantErr: `unsupported HRP "avax"`,
 		},
 		{
-			name:    "reject P-fuji (fuji HRP not allowed)",
-			addr:    "P-fuji1ck0t9h5u7jvvzhx29n99guqjsfkpzt67cr6m3y",
-			wantErr: `unsupported HRP "fuji"`,
+			name:    "reject non-lux HRP",
+			addr:    "P-avax1ck0t9h5u7jvvzhx29n99guqjsfkpzt67cr6m3y",
+			wantErr: `unsupported HRP "avax"`,
 		},
 
 		// Reject: empty.
