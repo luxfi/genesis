@@ -99,6 +99,7 @@ func main() {
 	probeInterval := flag.Duration("probe-interval", 3*time.Second, "polling interval inside probe-timeout")
 	subnetSettleDelay := flag.Duration("subnet-settle-delay", 10*time.Second, "delay after IssueCreateNetworkTx before re-syncing wallet")
 	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from MNEMONIC, print the P-chain address, exit")
+	existingSubnetIDs := flag.String("existing-subnet-ids", "", "comma-separated <chain>:<subnetID> mappings — skip CreateNetworkTx for these chains and reuse the supplied subnet")
 	flag.Parse()
 
 	if *printAddrOnly {
@@ -139,6 +140,26 @@ func main() {
 	chains := strings.Split(*chainsCSV, ",")
 	for i := range chains {
 		chains[i] = strings.TrimSpace(chains[i])
+	}
+
+	// Parse --existing-subnet-ids=hanzo:abc,zoo:def
+	existing := map[string]ids.ID{}
+	if strings.TrimSpace(*existingSubnetIDs) != "" {
+		for _, pair := range strings.Split(*existingSubnetIDs, ",") {
+			pair = strings.TrimSpace(pair)
+			if pair == "" {
+				continue
+			}
+			kv := strings.SplitN(pair, ":", 2)
+			if len(kv) != 2 {
+				log.Fatalf("--existing-subnet-ids: bad pair %q (want chain:subnetID)", pair)
+			}
+			sid, err := ids.FromString(strings.TrimSpace(kv[1]))
+			if err != nil {
+				log.Fatalf("--existing-subnet-ids: bad subnetID for %s: %v", kv[0], err)
+			}
+			existing[strings.TrimSpace(kv[0])] = sid
+		}
 	}
 
 	// Pre-flight: load every genesis up front. A bad path is fatal before
@@ -256,14 +277,20 @@ func main() {
 	for _, spec := range specs {
 		log.Printf("[%s] === bootstrapping %s ===", *networkLabel, spec.Name)
 
-		log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Name)
-		createNetTx, err := w.P().IssueCreateNetworkTx(owner)
-		if err != nil {
-			log.Fatalf("[%s] create network: %v", spec.Name, err)
+		var subnetID ids.ID
+		if sid, ok := existing[spec.Name]; ok {
+			subnetID = sid
+			log.Printf("[%s/%s] reusing subnet ID = %s (skipping CreateNetworkTx)", *networkLabel, spec.Name, subnetID)
+		} else {
+			log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Name)
+			createNetTx, err := w.P().IssueCreateNetworkTx(owner)
+			if err != nil {
+				log.Fatalf("[%s] create network: %v", spec.Name, err)
+			}
+			subnetID = createNetTx.ID()
+			log.Printf("[%s/%s] subnet ID = %s", *networkLabel, spec.Name, subnetID)
+			time.Sleep(*subnetSettleDelay)
 		}
-		subnetID := createNetTx.ID()
-		log.Printf("[%s/%s] subnet ID = %s", *networkLabel, spec.Name, subnetID)
-		time.Sleep(*subnetSettleDelay)
 
 		// Re-sync wallet with the new subnetID tx fetched, so the builder
 		// can authorize the CreateChain spend.
