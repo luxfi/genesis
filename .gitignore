@@ -187,3 +187,4 @@ cmd/archive/*/check-balance
 migrated-ethdb.disabled/
 *.mem
 *.sst
+bootstrap-l2
