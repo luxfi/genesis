@@ -332,12 +332,12 @@ func GetConfig(networkID uint32) *genesiscfg.Config {
 // When present, the builder constructs an XVM genesis whose primary
 // asset is that descriptor (with initial holders sourced from
 // config.Allocations) and emits a CreateChainTx for the X-Chain.
-// xAssetID returned to the caller is the X-Chain primary asset ID
+// utxoAssetID returned to the caller is the X-Chain primary asset ID
 // (sha256 over xvmGenesisBytes) — the same ID P-Chain stake UTXOs are
 // denominated in.
 //
 // When absent, no XVM genesis is built, no X-Chain CreateChainTx is
-// emitted, and xAssetID is returned as ids.Empty. The primary network
+// emitted, and utxoAssetID is returned as ids.Empty. The primary network
 // then has no native UTXO asset: validator stakes denominated against
 // ids.Empty have no on-chain asset backing, which is the
 // permissioned-set semantics used by L1s whose value capture lives on
@@ -353,7 +353,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 
 	var (
 		xvmGenesisBytes []byte
-		xAssetID        = ids.Empty
+		utxoAssetID        = ids.Empty
 	)
 	if config.XChainGenesis != "" {
 		var asset struct {
@@ -419,7 +419,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 			return nil, ids.Empty, fmt.Errorf("couldn't serialize xvm genesis: %w", err)
 		}
 
-		xAssetID, err = XAssetID(xvmGenesisBytes)
+		utxoAssetID, err = UTXOAssetID(xvmGenesisBytes)
 		if err != nil {
 			return nil, ids.Empty, fmt.Errorf("couldn't generate LUX asset ID: %w", err)
 		}
@@ -593,7 +593,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 	}
 
 	pChainGenesis, err := genesis.New(
-		xAssetID,
+		utxoAssetID,
 		config.NetworkID,
 		protocolAllocations,
 		validators,
@@ -609,7 +609,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 	if err != nil {
 		return nil, ids.Empty, fmt.Errorf("problem while serializing protocol chain's genesis state: %w", err)
 	}
-	return pChainGenesisBytes, xAssetID, nil
+	return pChainGenesisBytes, utxoAssetID, nil
 }
 
 // FromFile loads genesis config from file and builds genesis bytes
@@ -786,8 +786,8 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 	return apiAliases, chainAliases, nil
 }
 
-// XAssetID returns the LUX asset ID from XVM genesis bytes
-func XAssetID(xvmGenesisBytes []byte) (ids.ID, error) {
+// UTXOAssetID returns the LUX asset ID from XVM genesis bytes
+func UTXOAssetID(xvmGenesisBytes []byte) (ids.ID, error) {
 	parser, err := xchaintxs.NewParser(
 		[]fxs.Fx{
 			&secp256k1fx.Fx{},
