@@ -148,23 +148,38 @@ func main() {
 		chains[i] = strings.TrimSpace(chains[i])
 	}
 
-	// Parse --existing-subnet-ids=hanzo:abc,zoo:def
-	existing := map[string]ids.ID{}
+	// Parse --existing-subnet-ids=hanzo:<subnetID>[:<chainID>],zoo:<subnetID>...
+	// If chainID is supplied as the third field, CreateChainTx is also
+	// skipped — we only heartbeat+probe.
+	type existingChain struct {
+		SubnetID ids.ID
+		ChainID  ids.ID // empty if not set
+	}
+	existing := map[string]existingChain{}
 	if strings.TrimSpace(*existingSubnetIDs) != "" {
 		for _, pair := range strings.Split(*existingSubnetIDs, ",") {
 			pair = strings.TrimSpace(pair)
 			if pair == "" {
 				continue
 			}
-			kv := strings.SplitN(pair, ":", 2)
-			if len(kv) != 2 {
-				log.Fatalf("--existing-subnet-ids: bad pair %q (want chain:subnetID)", pair)
+			parts := strings.Split(pair, ":")
+			if len(parts) < 2 || len(parts) > 3 {
+				log.Fatalf("--existing-subnet-ids: bad pair %q (want chain:subnetID[:chainID])", pair)
 			}
-			sid, err := ids.FromString(strings.TrimSpace(kv[1]))
+			name := strings.TrimSpace(parts[0])
+			sid, err := ids.FromString(strings.TrimSpace(parts[1]))
 			if err != nil {
-				log.Fatalf("--existing-subnet-ids: bad subnetID for %s: %v", kv[0], err)
+				log.Fatalf("--existing-subnet-ids: bad subnetID for %s: %v", name, err)
 			}
-			existing[strings.TrimSpace(kv[0])] = sid
+			ec := existingChain{SubnetID: sid}
+			if len(parts) == 3 {
+				cid, err := ids.FromString(strings.TrimSpace(parts[2]))
+				if err != nil {
+					log.Fatalf("--existing-subnet-ids: bad chainID for %s: %v", name, err)
+				}
+				ec.ChainID = cid
+			}
+			existing[name] = ec
 		}
 	}
 
@@ -284,9 +299,15 @@ func main() {
 		log.Printf("[%s] === bootstrapping %s ===", *networkLabel, spec.Name)
 
 		var subnetID ids.ID
-		if sid, ok := existing[spec.Name]; ok {
-			subnetID = sid
-			log.Printf("[%s/%s] reusing subnet ID = %s (skipping CreateNetworkTx)", *networkLabel, spec.Name, subnetID)
+		var presetChainID ids.ID
+		if ec, ok := existing[spec.Name]; ok {
+			subnetID = ec.SubnetID
+			presetChainID = ec.ChainID
+			if (presetChainID != ids.ID{}) {
+				log.Printf("[%s/%s] reusing subnet ID = %s + chain ID = %s (skipping both CreateNetworkTx and CreateChainTx)", *networkLabel, spec.Name, subnetID, presetChainID)
+			} else {
+				log.Printf("[%s/%s] reusing subnet ID = %s (skipping CreateNetworkTx)", *networkLabel, spec.Name, subnetID)
+			}
 		} else {
 			log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Name)
 			createNetTx, err := w.P().IssueCreateNetworkTx(owner)
@@ -298,35 +319,40 @@ func main() {
 			time.Sleep(*subnetSettleDelay)
 		}
 
-		// Re-sync wallet with the new subnetID tx fetched, so the builder
-		// can authorize the CreateChain spend.
-		var w2 primary.Wallet
-		for i := 0; i < 5; i++ {
-			w2, err = primary.MakeWallet(ctx, &primary.WalletConfig{
-				URI:              *uri,
-				LUXKeychain:      kc,
-				EVMKeychain:      kc,
-				PChainTxsToFetch: set.Of(subnetID),
-			})
-			if err == nil {
-				break
+		var bcID ids.ID
+		if (presetChainID != ids.ID{}) {
+			bcID = presetChainID
+		} else {
+			// Re-sync wallet with the new subnetID tx fetched, so the builder
+			// can authorize the CreateChain spend.
+			var w2 primary.Wallet
+			for i := 0; i < 5; i++ {
+				w2, err = primary.MakeWallet(ctx, &primary.WalletConfig{
+					URI:              *uri,
+					LUXKeychain:      kc,
+					EVMKeychain:      kc,
+					PChainTxsToFetch: set.Of(subnetID),
+				})
+				if err == nil {
+					break
+				}
+				log.Printf("[%s] wallet re-sync attempt %d: %v", spec.Name, i+1, err)
+				time.Sleep(5 * time.Second)
 			}
-			log.Printf("[%s] wallet re-sync attempt %d: %v", spec.Name, i+1, err)
-			time.Sleep(5 * time.Second)
-		}
-		if err != nil {
-			log.Fatalf("[%s] wallet re-sync failed: %v", spec.Name, err)
+			if err != nil {
+				log.Fatalf("[%s] wallet re-sync failed: %v", spec.Name, err)
+			}
+
+			log.Printf("[%s/%s] IssueCreateChainTx (vmID=%s)", *networkLabel, spec.Name, vmID)
+			createChainTx, err := w2.P().IssueCreateChainTx(subnetID, spec.GenesisRaw, vmID, nil, spec.Name)
+			if err != nil {
+				log.Fatalf("[%s] create chain: %v", spec.Name, err)
+			}
+			bcID = createChainTx.ID()
+			log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Name, bcID)
 		}
 
-		log.Printf("[%s/%s] IssueCreateChainTx (vmID=%s)", *networkLabel, spec.Name, vmID)
-		createChainTx, err := w2.P().IssueCreateChainTx(subnetID, spec.GenesisRaw, vmID, nil, spec.Name)
-		if err != nil {
-			log.Fatalf("[%s] create chain: %v", spec.Name, err)
-		}
-		bcID := createChainTx.ID()
-		log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Name, bcID)
-
-		if !*skipValidators && len(nodeIDs) > 0 {
+		if !*skipValidators && len(nodeIDs) > 0 && (presetChainID == ids.ID{}) {
 			time.Sleep(3 * time.Second)
 			w3, err := primary.MakeWallet(ctx, &primary.WalletConfig{
 				URI:              *uri,
@@ -368,14 +394,17 @@ func main() {
 
 		// Use w (not w2) for the next chain: w still has the parent wallet
 		// state for issuing a fresh CreateNetwork. Re-sync w so it picks up
-		// the spent UTXOs from this iteration.
-		w, err = primary.MakeWallet(ctx, &primary.WalletConfig{
-			URI:         *uri,
-			LUXKeychain: kc,
-			EVMKeychain: kc,
-		})
-		if err != nil {
-			log.Fatalf("[%s] post-chain wallet re-sync: %v", spec.Name, err)
+		// the spent UTXOs from this iteration. Skip when we didn't touch
+		// the P-chain (preset chain ID resume mode).
+		if (presetChainID == ids.ID{}) {
+			w, err = primary.MakeWallet(ctx, &primary.WalletConfig{
+				URI:         *uri,
+				LUXKeychain: kc,
+				EVMKeychain: kc,
+			})
+			if err != nil {
+				log.Fatalf("[%s] post-chain wallet re-sync: %v", spec.Name, err)
+			}
 		}
 
 		// Wait for bootstrap, send heartbeat if configured, then probe.
