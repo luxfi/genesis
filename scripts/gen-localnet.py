@@ -162,7 +162,7 @@ def build_px_allocations(accounts: list[dict]) -> tuple[list[dict], list[str]]:
         # X-chain allocation
         allocations.append({
             "evmAddr": eth_addr,
-            "luxAddr": f"X-{bech32_addr}",
+            "utxoAddr": f"X-{bech32_addr}",
             "initialAmount": PX_AMOUNT,
             "unlockSchedule": [],
         })
@@ -170,7 +170,7 @@ def build_px_allocations(accounts: list[dict]) -> tuple[list[dict], list[str]]:
         # P-chain allocation
         allocations.append({
             "evmAddr": eth_addr,
-            "luxAddr": f"P-{bech32_addr}",
+            "utxoAddr": f"P-{bech32_addr}",
             "initialAmount": PX_AMOUNT,
             "unlockSchedule": [],
         })
