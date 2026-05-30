@@ -79,7 +79,7 @@ func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 			initialAmount = a.amount // X-chain gets initial amount with vesting
 		} else {
 			// Immediate allocation (no vesting)
-			// X-chain gets full initial amount for subnet creation operations
+			// X-chain gets full initial amount for chain creation operations
 			unlockSchedule = []LockedAmount{{Amount: a.amount, Locktime: 0}}
 			initialAmount = a.amount
 		}
@@ -155,7 +155,7 @@ func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 			initialAmount = a.amount
 		} else {
 			// Immediate allocation (no vesting)
-			// X-chain gets full initial amount for subnet creation operations
+			// X-chain gets full initial amount for chain creation operations
 			unlockSchedule = []map[string]interface{}{
 				{"amount": a.amount, "locktime": uint64(0)},
 			}
