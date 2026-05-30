@@ -179,12 +179,12 @@ func TestChainAliases(t *testing.T) {
 //
 //   - Lux mainnet ships every primary-network chain shard
 //     (X/C/D/Q/A/B/T/Z/G/K) → FromConfig must emit all 10
-//     CreateChainTx entries and a non-empty xAssetID (X is the home of
+//     CreateChainTx entries and a non-empty utxoAssetID (X is the home of
 //     the LUX asset).
 //
 //   - Strip every chain shard from the same Config — same allocations,
 //     same validators, same network ID — and FromConfig must succeed,
-//     return ids.Empty for xAssetID, and produce a P-Chain genesis
+//     return ids.Empty for utxoAssetID, and produce a P-Chain genesis
 //     with zero CreateChainTx entries. This is the L1-from-P-only
 //     boot path: a sovereign L1 (lqd-style) ships only pchain.json +
 //     network.json and gets a primary-network of just P-Chain, with
@@ -199,9 +199,9 @@ func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
 	require.NotEmpty(t, cfg.XChainGenesis, "mainnet ships xchain.json")
 
 	// Full Lux mainnet: 10 chains + real LUX asset ID.
-	bytes, xAssetID, err := FromConfig(cfg)
+	bytes, utxoAssetID, err := FromConfig(cfg)
 	require.NoError(t, err)
-	require.NotEqual(t, ids.Empty, xAssetID, "mainnet has X-Chain → real asset ID")
+	require.NotEqual(t, ids.Empty, utxoAssetID, "mainnet has X-Chain → real asset ID")
 
 	full, err := pgenesis.Parse(bytes)
 	require.NoError(t, err)
@@ -220,9 +220,9 @@ func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
 	cfg.GChainGenesis = ""
 	cfg.KChainGenesis = ""
 
-	bytes, xAssetID, err = FromConfig(cfg)
+	bytes, utxoAssetID, err = FromConfig(cfg)
 	require.NoError(t, err, "P-only build must succeed")
-	require.Equal(t, ids.Empty, xAssetID, "no X-Chain → no LUX asset → ids.Empty")
+	require.Equal(t, ids.Empty, utxoAssetID, "no X-Chain → no LUX asset → ids.Empty")
 
 	pOnly, err := pgenesis.Parse(bytes)
 	require.NoError(t, err, "P-only genesis bytes must parse")
