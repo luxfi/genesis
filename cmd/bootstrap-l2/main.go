@@ -1,19 +1,28 @@
 // Copyright (C) 2019-2026, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-// Command bootstrap-l2 creates one or more L2 EVM subnets on a luxd
-// devnet/testnet network using the canonical BIP44 m/44'/9000'/0'/0/<idx>
-// derivation. For each chain it:
+// Command bootstrap-l2 creates one or more chains on a luxd network using the
+// canonical BIP44 m/44'/9000'/0'/0/<idx> derivation. For each chain it:
 //
-//  1. IssueCreateNetworkTx (P-chain CreateSubnetTx) — owner threshold=1
-//  2. IssueCreateChainTx — vmID=nyGCobireNhxFB7iM5bxV74hAY6j9nQX6wizxfWomnMMtztkr,
-//     genesis read from the genesis configs dir
+//  1. IssueCreateNetworkTx (upstream P-chain CreateSubnetTx, exposed in our
+//     wallet as a chain-namespace operation) — owner threshold=1
+//  2. IssueCreateChainTx — vmID=<--vm-id>, genesis read from the configs dir
 //  3. IssueAddChainValidatorTx — adds every primary network validator
 //  4. Probes eth_blockNumber and info.isBootstrapped — fails if either is bad
 //
-// Designed to bootstrap the four canonical Lux devnet L2 EVMs (hanzo, zoo,
-// pars, spc) in one pass, but the chains list is data-driven so it can
-// bootstrap any subset.
+// Designed to bootstrap the four canonical Lux devnet chains (hanzo, zoo,
+// pars, spc) in one pass, but the list is data-driven so it can bootstrap
+// any subset.
+//
+// Idempotency: before any P-chain spend, the tool queries
+// platform.getBlockchains and skips any chain whose alias already exists.
+// Re-running the tool is safe — already-bootstrapped chains are detected and
+// only probed for liveness, never re-created.
+//
+// Vocabulary: this tool speaks "chain" — the polymorphic primitive produced
+// by CreateChainTx, irrespective of L1/L2/L3 level. Upstream luxfi/node API
+// names (e.g. ConvertSubnetToL1Tx) keep their literal types as imported but
+// are wrapped here under chain-namespace naming.
 //
 // Usage:
 //
@@ -23,7 +32,7 @@
 //	  --bip44-idx=5 \
 //	  --network-label=devnet \
 //	  --configs-dir=/path/to/genesis/configs \
-//	  --chains=hanzo,zoo,pars,spc \
+//	  --track-chain-ids=hanzo,zoo,pars,spc \
 //	  --output=/dev/stdout
 package main
 
@@ -58,25 +67,23 @@ import (
 	"github.com/luxfi/utxo/secp256k1fx"
 )
 
-// defaultSubnetEVMID is the canonical subnet-evm VM ID present in the luxd
-// node image's plugin dir. Devnet, testnet, mainnet all expose this plugin
-// natively (verified via `ls /data/plugins`). Mainnet's L2 EVM subnets
-// (hanzo/zoo/pars/spc) were created against this same VM ID.
-//
-// The brand-namespaced alias nyGCobireNhxFB7iM5bxV74hAY6j9nQX6wizxfWomnMMtztkr
-// referenced in the 2026-05-27 devnet chain-aliases CM required a runtime
-// symlink that didn't survive PVC remount; using the native VM ID removes
-// that failure mode.
-const defaultSubnetEVMID = "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6"
+// defaultEVMID is the canonical EVM VM ID present in the luxd node image's
+// plugin dir. Devnet, testnet, mainnet all expose this plugin natively
+// (verified via `ls /data/plugins`). The brand-namespaced alias
+// nyGCobireNhxFB7iM5bxV74hAY6j9nQX6wizxfWomnMMtztkr referenced in the
+// 2026-05-27 devnet chain-aliases CM required a runtime symlink that didn't
+// survive PVC remount; using the native VM ID removes that failure mode.
+const defaultEVMID = "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6"
 
 // resultChain is the per-chain output written to --output.
 type resultChain struct {
 	Name           string `json:"name"`
-	SubnetID       string `json:"subnetId"`
+	ChainOwnerID   string `json:"chainOwnerId"`  // upstream "subnetID" — the CreateNetwork tx id
 	BlockchainID   string `json:"blockchainId"`
 	EVMChainID     uint64 `json:"evmChainId"`
 	FirstBlockHex  string `json:"firstBlockHex"`
 	BootstrappedAt string `json:"bootstrappedAt"`
+	Reused         bool   `json:"reused"` // true when the chain pre-existed and was only probed
 }
 
 type result struct {
@@ -95,16 +102,19 @@ func main() {
 	hrp := flag.String("hrp", "dev", "P-chain bech32 HRP: test|dev")
 	bipIdx := flag.Uint("bip44-idx", 5, "BIP44 derivation index at m/44'/9000'/0'/0/<idx>")
 	configsDir := flag.String("configs-dir", "", "directory containing <chain>-<network>/genesis.json files (required)")
-	chainsCSV := flag.String("chains", "hanzo,zoo,pars,spc", "comma-separated chain names")
-	vmIDStr := flag.String("vm-id", defaultSubnetEVMID, "subnet-evm VM ID present in luxd's --plugin-dir")
+	// --track-chain-ids mirrors luxd's existing --track-chain-ids flag. One
+	// concept, one flag — this is the declared list of chains this network
+	// serves. The tool reads it, queries the P-chain, and idempotently
+	// creates the missing ones.
+	trackChainIDs := flag.String("track-chain-ids", "hanzo,zoo,pars,spc", "comma-separated chain names (matches luxd --track-chain-ids)")
+	vmIDStr := flag.String("vm-id", defaultEVMID, "EVM VM ID present in luxd's --plugin-dir")
 	output := flag.String("output", "/dev/stdout", "result JSON output path")
-	skipValidators := flag.Bool("skip-validators", false, "skip adding primary validators as subnet validators")
+	skipValidators := flag.Bool("skip-validators", false, "skip adding primary validators as chain validators")
 	probeTimeout := flag.Duration("probe-timeout", 90*time.Second, "max wait per chain for eth_blockNumber>0 and isBootstrapped")
 	probeInterval := flag.Duration("probe-interval", 3*time.Second, "polling interval inside probe-timeout")
-	subnetSettleDelay := flag.Duration("subnet-settle-delay", 10*time.Second, "delay after IssueCreateNetworkTx before re-syncing wallet")
+	chainSettleDelay := flag.Duration("chain-settle-delay", 10*time.Second, "delay after IssueCreateNetworkTx before re-syncing wallet")
 	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from MNEMONIC, print the P-chain address, exit")
-	existingSubnetIDs := flag.String("existing-subnet-ids", "", "comma-separated <chain>:<subnetID> mappings — skip CreateNetworkTx for these chains and reuse the supplied subnet")
-	evmHeartbeatKeyHex := flag.String("evm-heartbeat-key", "", "hex-encoded secp256k1 key funded on every L2 EVM (LUX_PRIVATE_KEY). If set, the tool sends a 0-value self-tx after CreateChainTx to roll block 1 before probing eth_blockNumber>0")
+	evmHeartbeatKeyHex := flag.String("evm-heartbeat-key", "", "hex-encoded secp256k1 key funded on every EVM chain (LUX_PRIVATE_KEY). If set, the tool sends a 0-value self-tx after CreateChainTx to roll block 1 before probing eth_blockNumber>0")
 	probeBootstrapOnly := flag.Bool("probe-bootstrap-only", false, "accept the chain as healthy if info.isBootstrapped=true regardless of eth_blockNumber; use when --evm-heartbeat-key is unavailable and the operator will trigger heartbeats out-of-band")
 	flag.Parse()
 
@@ -143,49 +153,16 @@ func main() {
 	controlKey := formatPAddr(*hrp, addr)
 	log.Printf("[%s] derived key m/44'/9000'/0'/0/%d -> %s", *networkLabel, *bipIdx, controlKey)
 
-	chains := strings.Split(*chainsCSV, ",")
+	chains := strings.Split(*trackChainIDs, ",")
 	for i := range chains {
 		chains[i] = strings.TrimSpace(chains[i])
 	}
 
-	// Parse --existing-subnet-ids=hanzo:<subnetID>[:<chainID>],zoo:<subnetID>...
-	// If chainID is supplied as the third field, CreateChainTx is also
-	// skipped — we only heartbeat+probe.
-	type existingChain struct {
-		SubnetID ids.ID
-		ChainID  ids.ID // empty if not set
-	}
-	existing := map[string]existingChain{}
-	if strings.TrimSpace(*existingSubnetIDs) != "" {
-		for _, pair := range strings.Split(*existingSubnetIDs, ",") {
-			pair = strings.TrimSpace(pair)
-			if pair == "" {
-				continue
-			}
-			parts := strings.Split(pair, ":")
-			if len(parts) < 2 || len(parts) > 3 {
-				log.Fatalf("--existing-subnet-ids: bad pair %q (want chain:subnetID[:chainID])", pair)
-			}
-			name := strings.TrimSpace(parts[0])
-			sid, err := ids.FromString(strings.TrimSpace(parts[1]))
-			if err != nil {
-				log.Fatalf("--existing-subnet-ids: bad subnetID for %s: %v", name, err)
-			}
-			ec := existingChain{SubnetID: sid}
-			if len(parts) == 3 {
-				cid, err := ids.FromString(strings.TrimSpace(parts[2]))
-				if err != nil {
-					log.Fatalf("--existing-subnet-ids: bad chainID for %s: %v", name, err)
-				}
-				ec.ChainID = cid
-			}
-			existing[name] = ec
-		}
-	}
-
 	// Pre-flight: load every genesis up front. A bad path is fatal before
 	// we burn any P-chain LUX on a CreateNetwork that we can't follow with
-	// a CreateChain.
+	// a CreateChain. The loader also validates 0x-prefixing on alloc keys
+	// and auto-fixes in-memory (without rewriting the file on disk) so a
+	// historical 0x-less file doesn't block live work.
 	type chainSpec struct {
 		Name       string
 		GenesisRaw []byte
@@ -217,6 +194,59 @@ func main() {
 		default:
 			log.Fatalf("genesis %s: .config.chainId not a number (got %T)", path, v)
 		}
+		// Defensive 0x prefix + hex shape validation on alloc keys.
+		// The EVM genesis loader rejects unprefixed keys, but historical
+		// configs forgot the prefix. We normalize-and-log for missing
+		// prefixes (recoverable), and fail loudly for genuinely malformed
+		// keys (non-hex chars, wrong length) — never silently mutate
+		// something we can't prove is just a missing prefix.
+		//
+		// Acceptance shape after this block:
+		//   - every alloc key matches /^0x[0-9a-fA-F]{40}$/
+		//   - if any key fails that AND can't be fixed by prepending
+		//     `0x`, the whole bootstrap aborts before any CreateChainTx
+		//     burns LUX
+		alloc, _ := doc["alloc"].(map[string]any)
+		if alloc != nil {
+			fixed := 0
+			ok := 0
+			bad := make([]string, 0)
+			repaired := make(map[string]any, len(alloc))
+			for k, v := range alloc {
+				canonical, repair, valid := normalizeAllocKey(k)
+				if !valid {
+					bad = append(bad, k)
+					continue
+				}
+				repaired[canonical] = v
+				if repair {
+					fixed++
+				} else {
+					ok++
+				}
+			}
+			if len(bad) > 0 {
+				// Fail loud + give the operator everything they need to
+				// fix the genesis at source. Show up to 5 bad keys so
+				// the log line stays bounded but useful.
+				preview := bad
+				if len(preview) > 5 {
+					preview = preview[:5]
+				}
+				log.Fatalf(
+					"[%s] %s: %d malformed alloc keys (require canonical /^0x[0-9a-fA-F]{40}$/); sample: %v",
+					*networkLabel, name, len(bad), preview,
+				)
+			}
+			doc["alloc"] = repaired
+			if patched, perr := json.Marshal(doc); perr == nil {
+				raw = patched
+				log.Printf(
+					"[%s] %s: alloc keys ok=%d 0x-repaired=%d (in-memory only, file unchanged)",
+					*networkLabel, name, ok, fixed,
+				)
+			}
+		}
 		specs = append(specs, chainSpec{Name: name, GenesisRaw: raw, EVMChainID: evmChainID})
 		log.Printf("[%s] loaded %s genesis (evm chainId=%d, %d bytes)", *networkLabel, name, evmChainID, len(raw))
 	}
@@ -234,6 +264,36 @@ func main() {
 		log.Fatalf("getBalance: %v", err)
 	} else {
 		log.Printf("[%s] P-chain balance of control key: %+v", *networkLabel, balResp)
+	}
+
+	// Single source of truth for "already created" — query the live
+	// P-chain for the current blockchain set, then look up by chain name.
+	// This removes the operator burden of maintaining a --existing-X flag
+	// in lockstep with cluster reality.
+	existingByName := map[string]struct {
+		ChainOwnerID ids.ID // upstream "subnetID"
+		BlockchainID ids.ID
+	}{}
+	{
+		blockchains, perr := platformGetBlockchains(ctx, *uri)
+		if perr != nil {
+			log.Printf("WARN: platform.getBlockchains failed: %v (assuming no pre-existing chains)", perr)
+		} else {
+			byName := map[string]platformBlockchain{}
+			for _, b := range blockchains {
+				byName[strings.ToLower(b.Name)] = b
+			}
+			for _, spec := range specs {
+				if b, ok := byName[strings.ToLower(spec.Name)]; ok {
+					existingByName[spec.Name] = struct {
+						ChainOwnerID ids.ID
+						BlockchainID ids.ID
+					}{ChainOwnerID: b.SubnetID, BlockchainID: b.ID}
+					log.Printf("[%s/%s] pre-existing chain found via platform.getBlockchains: blockchainID=%s ownerID=%s",
+						*networkLabel, spec.Name, b.ID, b.SubnetID)
+				}
+			}
+		}
 	}
 
 	var nodeIDs []ids.NodeID
@@ -254,8 +314,8 @@ func main() {
 		}
 	}
 
-	// Initial wallet sync. We re-sync after every subnet creation so the
-	// builder sees the new subnetID UTXOs.
+	// Initial wallet sync. We re-sync after every chain creation so the
+	// builder sees the new chain-owner UTXOs.
 	w, err := primary.MakeWallet(ctx, &primary.WalletConfig{
 		URI:         *uri,
 		LUXKeychain: kc,
@@ -271,13 +331,21 @@ func main() {
 	}
 	log.Printf("[%s] initial wallet P-chain LUX = %d nLUX", *networkLabel, pBal[luxAssetID])
 
-	// Empirical: ~1 LUX for createSubnet + ~0.5 LUX for createChain per L2,
-	// plus ~0.005 LUX per addValidatorTx. Floor at 1.5 LUX * len(chains)
-	// to refuse work we cannot fund.
-	minRequired := uint64(1_500_000_000) * uint64(len(specs))
+	// Refuse work we cannot fund. We only charge for the chains that don't
+	// exist yet — pre-existing chains are skipped entirely.
+	pendingCount := 0
+	for _, s := range specs {
+		if _, ok := existingByName[s.Name]; !ok {
+			pendingCount++
+		}
+	}
+	// Empirical: ~1 LUX for createNetwork + ~0.5 LUX for createChain per
+	// pending chain, plus ~0.005 LUX per addValidator. Floor at 1.5 LUX *
+	// pendingCount.
+	minRequired := uint64(1_500_000_000) * uint64(pendingCount)
 	if pBal[luxAssetID] < minRequired {
-		log.Fatalf("insufficient P-chain balance for %d chains, need >= %d nLUX, have %d nLUX",
-			len(specs), minRequired, pBal[luxAssetID])
+		log.Fatalf("insufficient P-chain balance for %d pending chains, need >= %d nLUX, have %d nLUX",
+			pendingCount, minRequired, pBal[luxAssetID])
 	}
 
 	owner := &secp256k1fx.OutputOwners{
@@ -298,40 +366,35 @@ func main() {
 	for _, spec := range specs {
 		log.Printf("[%s] === bootstrapping %s ===", *networkLabel, spec.Name)
 
-		var subnetID ids.ID
-		var presetChainID ids.ID
-		if ec, ok := existing[spec.Name]; ok {
-			subnetID = ec.SubnetID
-			presetChainID = ec.ChainID
-			if (presetChainID != ids.ID{}) {
-				log.Printf("[%s/%s] reusing subnet ID = %s + chain ID = %s (skipping both CreateNetworkTx and CreateChainTx)", *networkLabel, spec.Name, subnetID, presetChainID)
-			} else {
-				log.Printf("[%s/%s] reusing subnet ID = %s (skipping CreateNetworkTx)", *networkLabel, spec.Name, subnetID)
-			}
+		var chainOwnerID ids.ID
+		var bcID ids.ID
+		reused := false
+
+		if ec, ok := existingByName[spec.Name]; ok {
+			chainOwnerID = ec.ChainOwnerID
+			bcID = ec.BlockchainID
+			reused = true
+			log.Printf("[%s/%s] REUSE: ownerID=%s blockchainID=%s (skipping both CreateNetworkTx and CreateChainTx)",
+				*networkLabel, spec.Name, chainOwnerID, bcID)
 		} else {
 			log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Name)
 			createNetTx, err := w.P().IssueCreateNetworkTx(owner)
 			if err != nil {
 				log.Fatalf("[%s] create network: %v", spec.Name, err)
 			}
-			subnetID = createNetTx.ID()
-			log.Printf("[%s/%s] subnet ID = %s", *networkLabel, spec.Name, subnetID)
-			time.Sleep(*subnetSettleDelay)
-		}
+			chainOwnerID = createNetTx.ID()
+			log.Printf("[%s/%s] chain owner ID = %s", *networkLabel, spec.Name, chainOwnerID)
+			time.Sleep(*chainSettleDelay)
 
-		var bcID ids.ID
-		if (presetChainID != ids.ID{}) {
-			bcID = presetChainID
-		} else {
-			// Re-sync wallet with the new subnetID tx fetched, so the builder
-			// can authorize the CreateChain spend.
+			// Re-sync wallet with the new chain-owner tx fetched, so the
+			// builder can authorize the CreateChain spend.
 			var w2 primary.Wallet
 			for i := 0; i < 5; i++ {
 				w2, err = primary.MakeWallet(ctx, &primary.WalletConfig{
 					URI:              *uri,
 					LUXKeychain:      kc,
 					EVMKeychain:      kc,
-					PChainTxsToFetch: set.Of(subnetID),
+					PChainTxsToFetch: set.Of(chainOwnerID),
 				})
 				if err == nil {
 					break
@@ -344,7 +407,7 @@ func main() {
 			}
 
 			log.Printf("[%s/%s] IssueCreateChainTx (vmID=%s)", *networkLabel, spec.Name, vmID)
-			createChainTx, err := w2.P().IssueCreateChainTx(subnetID, spec.GenesisRaw, vmID, nil, spec.Name)
+			createChainTx, err := w2.P().IssueCreateChainTx(chainOwnerID, spec.GenesisRaw, vmID, nil, spec.Name)
 			if err != nil {
 				log.Fatalf("[%s] create chain: %v", spec.Name, err)
 			}
@@ -352,13 +415,13 @@ func main() {
 			log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Name, bcID)
 		}
 
-		if !*skipValidators && len(nodeIDs) > 0 && (presetChainID == ids.ID{}) {
+		if !*skipValidators && len(nodeIDs) > 0 && !reused {
 			time.Sleep(3 * time.Second)
 			w3, err := primary.MakeWallet(ctx, &primary.WalletConfig{
 				URI:              *uri,
 				LUXKeychain:      kc,
 				EVMKeychain:      kc,
-				PChainTxsToFetch: set.Of(subnetID),
+				PChainTxsToFetch: set.Of(chainOwnerID),
 			})
 			if err != nil {
 				log.Printf("[%s] WARN validator wallet sync failed: %v", spec.Name, err)
@@ -380,12 +443,12 @@ func main() {
 							End:    uint64(endTime.Unix()),
 							Wght:   20,
 						},
-						Chain: subnetID,
+						Chain: chainOwnerID,
 					})
 					if err != nil {
 						log.Printf("[%s] WARN add validator %s: %v", spec.Name, nid, err)
 					} else {
-						log.Printf("[%s] added subnet validator: %s", spec.Name, nid)
+						log.Printf("[%s] added chain validator: %s", spec.Name, nid)
 					}
 					time.Sleep(1 * time.Second)
 				}
@@ -395,8 +458,8 @@ func main() {
 		// Use w (not w2) for the next chain: w still has the parent wallet
 		// state for issuing a fresh CreateNetwork. Re-sync w so it picks up
 		// the spent UTXOs from this iteration. Skip when we didn't touch
-		// the P-chain (preset chain ID resume mode).
-		if (presetChainID == ids.ID{}) {
+		// the P-chain (reused chain).
+		if !reused {
 			w, err = primary.MakeWallet(ctx, &primary.WalletConfig{
 				URI:         *uri,
 				LUXKeychain: kc,
@@ -418,7 +481,13 @@ func main() {
 		if *evmHeartbeatKeyHex != "" {
 			log.Printf("[%s/%s] sending EVM heartbeat tx to roll block 1", *networkLabel, spec.Name)
 			if err := evmHeartbeat(ctx, *uri, bcID.String(), spec.EVMChainID, *evmHeartbeatKeyHex); err != nil {
-				log.Fatalf("[%s] heartbeat failed: %v", spec.Name, err)
+				// Heartbeat failure on a reused chain is non-fatal: the
+				// chain may already have blocks. Log and continue.
+				if reused {
+					log.Printf("[%s/%s] WARN heartbeat on reused chain failed (non-fatal): %v", *networkLabel, spec.Name, err)
+				} else {
+					log.Fatalf("[%s] heartbeat failed: %v", spec.Name, err)
+				}
 			}
 		}
 
@@ -430,8 +499,9 @@ func main() {
 			}
 			log.Printf("[%s/%s] PROBE OK: first eth_blockNumber=%s", *networkLabel, spec.Name, firstBlock)
 		} else {
-			// In bootstrap-only mode we still capture whatever eth_blockNumber
-			// currently reports; the caller knows it may be 0x0.
+			// In bootstrap-only mode we still capture whatever
+			// eth_blockNumber currently reports; the caller knows it may
+			// be 0x0.
 			httpc := &http.Client{Timeout: 5 * time.Second}
 			if blk, berr := ethBlockNumber(ctx, httpc, *uri, bcID.String()); berr == nil {
 				firstBlock = blk
@@ -441,11 +511,12 @@ func main() {
 
 		out.Chains = append(out.Chains, resultChain{
 			Name:           spec.Name,
-			SubnetID:       subnetID.String(),
+			ChainOwnerID:   chainOwnerID.String(),
 			BlockchainID:   bcID.String(),
 			EVMChainID:     spec.EVMChainID,
 			FirstBlockHex:  firstBlock,
 			BootstrappedAt: time.Now().UTC().Format(time.RFC3339),
+			Reused:         reused,
 		})
 	}
 
@@ -466,6 +537,93 @@ func main() {
 		}
 		log.Printf("wrote %s", *output)
 	}
+}
+
+// platformBlockchain is the subset of platform.getBlockchains we care about.
+type platformBlockchain struct {
+	ID       ids.ID `json:"id"`
+	Name     string `json:"name"`
+	SubnetID ids.ID `json:"subnetID"` // upstream wire field — semantically "chain owner"
+	VMID     ids.ID `json:"vmID"`
+}
+
+// platformGetBlockchains queries the P-chain for the current set of
+// blockchains. Returns the parsed list. This is the canonical
+// already-exists check for idempotency.
+func platformGetBlockchains(ctx context.Context, uri string) ([]platformBlockchain, error) {
+	body := strings.NewReader(
+		`{"jsonrpc":"2.0","id":1,"method":"platform.getBlockchains","params":{}}`)
+	req, _ := http.NewRequestWithContext(ctx, "POST", uri+"/ext/P", body)
+	req.Header.Set("Content-Type", "application/json")
+	httpc := &http.Client{Timeout: 15 * time.Second}
+	resp, err := httpc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	var parsed struct {
+		Result struct {
+			Blockchains []platformBlockchain `json:"blockchains"`
+		} `json:"result"`
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return nil, fmt.Errorf("decode platform.getBlockchains: %w (body=%s)", err, string(raw))
+	}
+	if parsed.Error != nil {
+		return nil, fmt.Errorf("rpc error: %s", parsed.Error.Message)
+	}
+	return parsed.Result.Blockchains, nil
+}
+
+// normalizeAllocKey returns the canonical 0x-prefixed form of an EVM
+// genesis alloc key, a flag indicating whether the input needed repair,
+// and a validity flag.
+//
+// Acceptance shape: /^0x[0-9a-fA-F]{40}$/ after normalization.
+//
+// Returns:
+//   - canonical: the 0x-prefixed lowercase-or-mixed-case form (we don't
+//     lowercase the hex itself — Ethereum addresses preserve case as a
+//     checksum signal; if the caller mixed cases they want to keep it).
+//   - repaired: true if the input was missing a 0x prefix.
+//   - valid: false if the key fails the hex+length shape AFTER any prefix
+//     repair attempt. Callers must fail loudly on !valid.
+//
+// Single source of truth for "is this a usable alloc key?" — both the
+// in-memory repair in main and any future validation tooling should
+// route through this function.
+func normalizeAllocKey(k string) (canonical string, repaired bool, valid bool) {
+	switch {
+	case strings.HasPrefix(k, "0x"):
+		canonical = k
+	case strings.HasPrefix(k, "0X"):
+		// Normalize the prefix to lowercase even when the body cases are
+		// preserved — `0X` is non-standard for EVM addresses.
+		canonical = "0x" + k[2:]
+		repaired = true
+	default:
+		canonical = "0x" + k
+		repaired = true
+	}
+	body := canonical[2:]
+	if len(body) != 40 {
+		return canonical, repaired, false
+	}
+	for _, c := range body {
+		switch {
+		case c >= '0' && c <= '9':
+		case c >= 'a' && c <= 'f':
+		case c >= 'A' && c <= 'F':
+		default:
+			return canonical, repaired, false
+		}
+	}
+	valid = true
+	return
 }
 
 // deriveLuxKey derives a secp256k1 private key from a BIP39 mnemonic at the
@@ -529,7 +687,7 @@ func waitBootstrap(ctx context.Context, uri, chainID string, timeout, interval t
 
 // evmHeartbeat sends a 0-value self-transfer using the supplied secp256k1 key.
 // Signs with the EVM chainID's EIP-155 v. Returns nil iff eth_sendRawTransaction
-// returns a tx hash. The first tx on a fresh subnet-evm chain produces block 1.
+// returns a tx hash. The first tx on a fresh EVM chain produces block 1.
 func evmHeartbeat(ctx context.Context, uri, chainID string, evmChainID uint64, keyHex string) error {
 	keyHex = strings.TrimSpace(strings.TrimPrefix(keyHex, "0x"))
 	keyBytes, err := hex.DecodeString(keyHex)
