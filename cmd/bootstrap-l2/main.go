@@ -54,10 +54,16 @@ import (
 	"github.com/luxfi/utxo/secp256k1fx"
 )
 
-// defaultSubnetEVMID is the canonical subnet-evm VM ID used by all Lux L2 EVM
-// subnets. It must exist as a plugin in luxd's --plugin-dir (devnet provides
-// this via the operator pluginSource bake; mainnet via the node image).
-const defaultSubnetEVMID = "nyGCobireNhxFB7iM5bxV74hAY6j9nQX6wizxfWomnMMtztkr"
+// defaultSubnetEVMID is the canonical subnet-evm VM ID present in the luxd
+// node image's plugin dir. Devnet, testnet, mainnet all expose this plugin
+// natively (verified via `ls /data/plugins`). Mainnet's L2 EVM subnets
+// (hanzo/zoo/pars/spc) were created against this same VM ID.
+//
+// The brand-namespaced alias nyGCobireNhxFB7iM5bxV74hAY6j9nQX6wizxfWomnMMtztkr
+// referenced in the 2026-05-27 devnet chain-aliases CM required a runtime
+// symlink that didn't survive PVC remount; using the native VM ID removes
+// that failure mode.
+const defaultSubnetEVMID = "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6"
 
 // resultChain is the per-chain output written to --output.
 type resultChain struct {
