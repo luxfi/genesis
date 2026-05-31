@@ -37,22 +37,22 @@ The six bad addresses on both files were:
 | `698495959f5570420BAA955dae5eA2864933ACf` | `0698495959f5570420BAA955dae5eA2864933ACf` |
 | `7283AA2c30523E9190A17b9598ff65599BAAe17` | `07283AA2c30523E9190A17b9598ff65599BAAe17` |
 
-Symptom: subnet-evm refused to bootstrap the chain — `parsing genesis:
+Symptom: the EVM refused to bootstrap the chain — `parsing genesis:
 hex string of odd length`. The original CreateChainTx (`ZAKw...` on
 testnet, `2nLY...` on devnet) carries the broken genesis bytes
 immutably, so we had to re-issue under a new chain name and rewrite the
 gateway. The 39→40-char fix applied in genesis is now the SAME content
-subnet-evm expects.
+the EVM expects.
 
-Operators bootstrapping a fresh zoo subnet should pin the post-fix
+Operators bootstrapping a fresh zoo chain should pin the post-fix
 checksums in this file (see `### Verify Checksum`). Mainnet zoo
 (`zoo-mainnet/genesis.json`) was *not* affected — it has only the
 treasury account plus the `0x0200…0005` precompile.
 
-### Subnet bootstrap: chain-name collision (P-chain)
+### Chain bootstrap: chain-name collision (P-chain)
 
 `platform.IsChainNameTaken` is case-insensitive and global across all
-subnets. A failed CreateChainTx (e.g. the broken zoo above) still
+chains. A failed CreateChainTx (e.g. the broken zoo above) still
 permanently squats its `BlockchainName` on the P-chain ledger — you
 cannot reuse the name even after fixing the genesis. Work-around used
 on zoo testnet/devnet: issue under a throwaway name (`ZOOTEST123` /
@@ -158,7 +158,7 @@ The contract that every primary network ships all 10 shards is locked by
 mainnet/testnet/devnet/localnet is now a load-bearing test edit, not a
 silent operator switch.
 
-### L2 Chains
+### Application Chains
 
 | Chain | Mainnet ID | Testnet ID | Devnet ID | Treasury |
 |-------|-----------|-----------|-----------|----------|
@@ -680,7 +680,7 @@ codesign --force --sign - ~/work/lux/node/build/plugins/*
 
 ### Plugin filename / VM ID
 
-The Lux EVM plugin has one canonical VM ID for both C-Chain and EVM-based L2 chains:
+The Lux EVM plugin has one canonical VM ID for both C-Chain and other EVM chains:
 
 ```
 mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6
