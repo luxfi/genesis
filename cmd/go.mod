@@ -13,13 +13,13 @@ replace github.com/luxfi/genesis => ../
 require (
 	github.com/luxfi/constants v1.5.7
 	github.com/luxfi/crypto v1.19.17
-	github.com/luxfi/genesis v1.12.15
+	github.com/luxfi/genesis v1.12.19
 	github.com/luxfi/geth v1.16.98
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
 	github.com/luxfi/ids v1.2.13
 	github.com/luxfi/math v1.4.1
-	github.com/luxfi/node v1.27.24
+	github.com/luxfi/node v1.28.0
 	github.com/luxfi/sdk v1.17.0
 	github.com/luxfi/utxo v0.3.4
 )
@@ -81,7 +81,7 @@ require (
 	github.com/luxfi/codec v1.1.4 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
-	github.com/luxfi/consensus v1.25.0 // indirect
+	github.com/luxfi/consensus v1.25.2 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
 	github.com/luxfi/crypto/ipa v1.2.4 // indirect
 	github.com/luxfi/database v1.18.3 // indirect
