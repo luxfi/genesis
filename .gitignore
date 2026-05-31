@@ -89,7 +89,6 @@ convert-state
 convert-state-proper
 convert-trie
 create-replay
-debug-subnet
 dump-keys
 extract-raw-genesis
 extract-real-genesis
@@ -113,7 +112,6 @@ migrate-complete
 migrate-full
 migrate-proper
 migrate-rawdb
-migrate-subnet
 pebble-inspect
 pebble-scan
 probe
@@ -187,4 +185,4 @@ cmd/archive/*/check-balance
 migrated-ethdb.disabled/
 *.mem
 *.sst
-bootstrap-l2
+bootstrap-chain
