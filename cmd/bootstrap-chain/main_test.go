@@ -1,4 +1,4 @@
-// Unit tests for bootstrap-l2's defensive alloc key normalization.
+// Unit tests for bootstrap-chain's defensive alloc key normalization.
 //
 // The whole point of normalizeAllocKey is to keep the load-and-validate
 // path single-sourced: every consumer that touches an alloc key (the

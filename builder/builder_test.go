@@ -185,11 +185,11 @@ func TestChainAliases(t *testing.T) {
 //   - Strip every chain shard from the same Config — same allocations,
 //     same validators, same network ID — and FromConfig must succeed,
 //     return ids.Empty for utxoAssetID, and produce a P-Chain genesis
-//     with zero CreateChainTx entries. This is the L1-from-P-only
-//     boot path: a sovereign L1 (lqd-style) ships only pchain.json +
-//     network.json and gets a primary-network of just P-Chain, with
-//     funded addresses and weighted validators ready to issue
-//     CreateChainTx for whatever L2 chains it wants post-genesis.
+//     with zero CreateChainTx entries. This is the primary-from-P-only
+//     boot path: a sovereign primary network (lqd-style) ships only
+//     pchain.json + network.json and gets a primary-network of just
+//     P-Chain, with funded addresses and weighted validators ready to
+//     issue CreateChainTx for whatever chains it wants post-genesis.
 //
 // "Shard set = chain set" is the one-way contract; this test pins it.
 func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
