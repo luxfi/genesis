@@ -1,7 +1,7 @@
 // Copyright (C) 2019-2026, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-// Command bootstrap-l2 creates one or more chains on a luxd network using the
+// Command bootstrap-chain creates one or more chains on a luxd network using the
 // canonical BIP44 m/44'/9000'/0'/0/<idx> derivation. For each chain it:
 //
 //  1. IssueCreateNetworkTx — chain-owner network with threshold=1
@@ -19,8 +19,7 @@
 // only probed for liveness, never re-created.
 //
 // Vocabulary: this tool speaks "chain" — the polymorphic primitive produced
-// by CreateChainTx, irrespective of L1/L2/L3 level. Three IDs, three roles,
-// never aliased:
+// by CreateChainTx. Three IDs, three roles, never aliased:
 //
 //   - `networkID` — identifies a validator network. Comes in two scopes:
 //       * primary networkID (uint32: 1=mainnet, 2=testnet, 3=local, 1337=dev)
@@ -31,7 +30,7 @@
 //
 // Usage:
 //
-//	MNEMONIC="..." bootstrap-l2 \
+//	MNEMONIC="..." bootstrap-chain \
 //	  --uri=http://luxd-0.lux-devnet.svc.cluster.local:9650 \
 //	  --hrp=dev \
 //	  --bip44-idx=5 \
