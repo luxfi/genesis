@@ -34,8 +34,8 @@ type Config struct {
 
 	// Chains defines additional chains to include in genesis beyond the
 	// built-in alphabet chains (C, D, Q, B, T, Z, G, K). Each entry becomes
-	// a CreateChainTx in the P-Chain genesis. This allows L1/L2
-	// chains to be embedded directly for automatic bootstrap.
+	// a CreateChainTx in the P-Chain genesis. This allows chains to be
+	// embedded directly for automatic bootstrap.
 	Chains []ChainEntry `json:"chains,omitempty"`
 
 	// ChainMapping provides dynamic chain ID configuration per network.
@@ -251,7 +251,7 @@ type WarpConfig struct {
 }
 
 // ChainEntry defines an additional chain to create at genesis.
-// Used for embedding L1/L2 chains directly in the P-Chain genesis.
+// Used for embedding chains directly in the P-Chain genesis.
 type ChainEntry struct {
 	VMID        string `json:"vmID"`        // VM ID (base58 encoded)
 	Name        string `json:"name"`        // Human-readable chain name
