@@ -39,9 +39,12 @@ func TestParseAddress_HRPWhitelist(t *testing.T) {
 			wantErr: `unsupported HRP "avax"`,
 		},
 		{
+			// Different HRP, same canonical 20-byte payload — exercises the
+			// HRP-whitelist guard with a valid bech32 checksum so the
+			// rejection lands at the HRP check (not bech32 decode).
 			name:    "reject non-lux HRP",
-			addr:    "P-avax1ck0t9h5u7jvvzhx29n99guqjsfkpzt67cr6m3y",
-			wantErr: `unsupported HRP "avax"`,
+			addr:    "P-btc1chj6dh6w0fxxqhx29n99wpcqjpxcgj7h60avcf",
+			wantErr: `unsupported HRP "btc"`,
 		},
 
 		// Reject: empty.
