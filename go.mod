@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	github.com/luxfi/accel v1.1.7 // indirect
+	github.com/luxfi/accel v1.1.8 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
 	github.com/luxfi/math v1.4.1 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
