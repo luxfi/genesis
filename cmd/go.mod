@@ -10,10 +10,16 @@ go 1.26.3
 
 replace github.com/luxfi/genesis => ../
 
+// Local node fork for the P-only wallet fail-soft (FetchState now
+// degrades gracefully when the network has no X-Chain). Required for
+// bootstrap-chain against test+dev primaries which run P+C-only. Drop
+// this replace when luxfi/node tags the change.
+replace github.com/luxfi/node => ../../node
+
 require (
 	github.com/luxfi/constants v1.5.7
 	github.com/luxfi/crypto v1.19.17
-	github.com/luxfi/genesis v1.12.19
+	github.com/luxfi/genesis v1.13.8
 	github.com/luxfi/geth v1.16.98
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
@@ -72,7 +78,7 @@ require (
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/luxfi/accel v1.1.4 // indirect
+	github.com/luxfi/accel v1.1.8 // indirect
 	github.com/luxfi/address v1.0.1 // indirect
 	github.com/luxfi/age v1.5.0 // indirect
 	github.com/luxfi/api v1.0.11 // indirect
@@ -81,7 +87,7 @@ require (
 	github.com/luxfi/codec v1.1.4 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
-	github.com/luxfi/consensus v1.25.2 // indirect
+	github.com/luxfi/consensus v1.25.13 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
 	github.com/luxfi/crypto/ipa v1.2.4 // indirect
 	github.com/luxfi/database v1.18.3 // indirect
@@ -91,7 +97,7 @@ require (
 	github.com/luxfi/log v1.4.1 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
 	github.com/luxfi/math/safe v0.0.1 // indirect
-	github.com/luxfi/metric v1.5.5 // indirect
+	github.com/luxfi/metric v1.5.7 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/net v0.0.4 // indirect
 	github.com/luxfi/p2p v1.19.2 // indirect
