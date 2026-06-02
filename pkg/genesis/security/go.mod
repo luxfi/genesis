@@ -20,7 +20,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
 	github.com/gorilla/rpc v1.2.1 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
-	github.com/luxfi/accel v1.1.4 // indirect
+	github.com/luxfi/accel v1.1.8 // indirect
 	github.com/luxfi/address v1.0.1 // indirect
 	github.com/luxfi/cache v1.2.1 // indirect
 	github.com/luxfi/codec v1.1.4 // indirect
