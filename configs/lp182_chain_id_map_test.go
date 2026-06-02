@@ -5,10 +5,10 @@ package configs
 
 import "testing"
 
-// TestEVMChainID_KnownCells locks the canonical map per LP-182
-// §Appendix A. Any change to these values is a backward-incompatible
-// chainID rebrand and would replay-protect-conflict with
-// already-deployed contracts; this test is the protective floor.
+// TestEVMChainID_KnownCells locks the canonical map per LP-018
+// §Canonical EVM chainID map. Any change to these values is a
+// backward-incompatible chainID rebrand and would replay-protect-conflict
+// with already-deployed contracts; this test is the protective floor.
 func TestEVMChainID_KnownCells(t *testing.T) {
 	cases := []struct {
 		family NetworkFamily
@@ -50,6 +50,9 @@ func TestEVMChainID_KnownCells(t *testing.T) {
 // TestEVMChainID_UnknownReturnsFalse — an unknown family or an env
 // outside the canonical four must return (0, false), not a silent
 // default. This protects against typos in operator CRs.
+//
+// (Filename retains lp182_ prefix because that was the file's name at
+// commit time and the rename produces churn unrelated to behavior.)
 func TestEVMChainID_UnknownReturnsFalse(t *testing.T) {
 	if got, ok := EVMChainID(NetworkFamily("bogus"), MainnetID); ok || got != 0 {
 		t.Errorf("EVMChainID(bogus, mainnet) = (%d, %v), want (0, false)", got, ok)
@@ -121,5 +124,62 @@ func TestParseNetworkFamily_CaseInsensitive(t *testing.T) {
 	// Unknown family stays unknown.
 	if got, ok := ParseNetworkFamily("bogus"); ok || got != "" {
 		t.Errorf("ParseNetworkFamily(bogus) = (%q, %v), want (\"\", false)", got, ok)
+	}
+}
+
+// TestEVMChainIDFor_StringInputs locks the string-input convenience
+// wrapper to the full LP-182 §Appendix A table. This is the API
+// CRD validators / operator webhooks call.
+func TestEVMChainIDFor_StringInputs(t *testing.T) {
+	cases := []struct {
+		brand, env string
+		want       uint64
+	}{
+		{"lux", "mainnet", 96369},
+		{"lux", "testnet", 96368},
+		{"lux", "devnet", 96370},
+		{"lux", "localnet", 31337},
+		{"LUX", "MAINNET", 96369},
+		{"Lux", "Main", 96369},
+		{"hanzo", "mainnet", 36963},
+		{"hanzo", "testnet", 36962},
+		{"hanzo", "devnet", 36964},
+		{"zoo", "mainnet", 200200},
+		{"zoo", "testnet", 200201},
+		{"zoo", "devnet", 200202},
+		{"spc", "mainnet", 36911},
+		{"spc", "testnet", 36910},
+		{"spc", "devnet", 36912},
+		{"liquid", "mainnet", 8675309},
+		{"liquid", "testnet", 8675310},
+		{"liquid", "devnet", 8675312},
+		{"pars", "mainnet", 7070},
+		{"pars", "testnet", 494950},
+		{"pars", "devnet", 494951},
+	}
+	for _, c := range cases {
+		got, ok := EVMChainIDFor(c.brand, c.env)
+		if !ok {
+			t.Errorf("EVMChainIDFor(%q,%q) = (_, false), want (%d, true)", c.brand, c.env, c.want)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("EVMChainIDFor(%q,%q) = %d, want %d", c.brand, c.env, got, c.want)
+		}
+	}
+}
+
+// TestEVMChainIDFor_UnknownReturnsFalse — typos and TBD cells return
+// (0, false) instead of a silent default.
+func TestEVMChainIDFor_UnknownReturnsFalse(t *testing.T) {
+	for _, c := range []struct{ brand, env string }{
+		{"bogus", "mainnet"},
+		{"lux", "bogus"},
+		{"hanzo", "localnet"}, // hanzo has no localnet cell
+		{"", ""},
+	} {
+		if got, ok := EVMChainIDFor(c.brand, c.env); ok || got != 0 {
+			t.Errorf("EVMChainIDFor(%q,%q) = (%d, %v), want (0, false)", c.brand, c.env, got, ok)
+		}
 	}
 }
