@@ -1,15 +1,14 @@
 // Copyright (C) 2024-2026, Lux Partners Limited. All rights reserved.
 // See the file LICENSE for licensing terms.
 
-// LP-182 §Appendix A — canonical EVM chainID map per (network family,
-// environment) tuple. This is the source of truth that operator CRs
-// and per-network genesis blobs must agree with; a misconfigured
-// `NetworkSpec.EVMChainID` that does not appear in this map is an
-// authoring error.
+// LP-018 §Canonical EVM chainID map — per (network family, environment)
+// tuple. This is the source of truth that operator CRs and per-network
+// genesis blobs must agree with; a misconfigured `NetworkSpec.EVMChainID`
+// that does not appear in this map is an authoring error.
 //
 // One source of truth, one way to look up: pass a (family, env) pair,
 // get back the EVMChainID (or 0 for "unknown / TBD"). The map covers
-// every brand-X-environment cell at LP-182 publication time; new cells
+// every brand-X-environment cell at LP-018 publication time; new cells
 // land here when the corresponding genesis configs land in the
 // embedded tree.
 
@@ -27,27 +26,28 @@ const (
 	// FamilyLux is the Lux primary network family (C-Chain).
 	FamilyLux NetworkFamily = "lux"
 	// FamilyHanzo is the Hanzo L2 family hosted on the Lux primary
-	// network's validator set (sovereign=false per LP-182).
+	// network's validator set (validators==0 per LP-018).
 	FamilyHanzo NetworkFamily = "hanzo"
 	// FamilyZoo is the Zoo L2 family hosted on the Lux primary network's
-	// validator set (sovereign=false per LP-182).
+	// validator set (validators==0 per LP-018).
 	FamilyZoo NetworkFamily = "zoo"
 	// FamilySPC is the SPC L2 family hosted on the Lux primary network's
-	// validator set (sovereign=false per LP-182).
+	// validator set (validators==0 per LP-018).
 	FamilySPC NetworkFamily = "spc"
-	// FamilyLiquid is the Liquid sovereign L1 family with its own
-	// validator set (sovereign=true per LP-182).
+	// FamilyLiquid is the Liquid network family. Runs as Anchored on a
+	// Lux primary (validators>0 with networkID in {1,2,3,1337}) or as
+	// Independent (own networkID = 8675309/8675310/8675312 per env).
 	FamilyLiquid NetworkFamily = "liquid"
-	// FamilyPars is the Pars sovereign L1 family with its own validator
-	// set (sovereign=true per LP-182).
+	// FamilyPars is the Pars network family. Runs as Anchored on a Lux
+	// primary or as Independent — same dual-mode option as Liquid.
 	FamilyPars NetworkFamily = "pars"
-	// FamilyOsage is the Osage sovereign L1 family (placeholder pending
+	// FamilyOsage is the Osage network family (placeholder pending
 	// genesis publication).
 	FamilyOsage NetworkFamily = "osage"
 )
 
 // EVMChainID returns the canonical EVM chainID for a (family, env)
-// tuple per LP-182 §Appendix A. The env argument MUST be one of
+// tuple per LP-018 §Canonical EVM chainID map. The env argument MUST be one of
 // MainnetID / TestnetID / DevnetID / LocalID (the four canonical
 // primary network IDs). Any other value returns (0, false).
 //
@@ -118,14 +118,14 @@ func EVMChainID(family NetworkFamily, env uint32) (uint64, bool) {
 		case DevnetID:
 			return 494951, true
 		}
-		// Osage cells are TBD as of LP-182 publication; lookup returns
+		// Osage cells are TBD as of LP-018 publication; lookup returns
 		// (0, false) until the genesis configs land here.
 	}
 	return 0, false
 }
 
 // NetworkFamilyOf returns the canonical NetworkFamily for a chainID,
-// per LP-182 §Appendix A. The first uint64 → family mapping that
+// per LP-018 §Canonical EVM chainID map. The first uint64 → family mapping that
 // matches wins. The boolean is false when no family claims the
 // chainID (caller must surface this as an authoring error).
 //
@@ -173,4 +173,33 @@ func ParseNetworkFamily(s string) (NetworkFamily, bool) {
 		return FamilyOsage, true
 	}
 	return "", false
+}
+
+// EVMChainIDFor is the string-input convenience over EVMChainID for
+// callers that hold brand+env as text (CRD validators, operator-side
+// helpers, k8s admission webhooks). Case-insensitive on brand.
+//
+// env must be one of "mainnet", "testnet", "devnet", "localnet" (case-
+// insensitive). Any other env or unknown brand returns (0, false). One
+// way to look up by string; delegates to the typed EVMChainID — there
+// is no parallel data table.
+func EVMChainIDFor(brand, env string) (uint64, bool) {
+	fam, ok := ParseNetworkFamily(brand)
+	if !ok {
+		return 0, false
+	}
+	var envID uint32
+	switch strings.ToLower(env) {
+	case "mainnet", "main":
+		envID = MainnetID
+	case "testnet", "test":
+		envID = TestnetID
+	case "devnet", "dev":
+		envID = DevnetID
+	case "localnet", "local":
+		envID = LocalID
+	default:
+		return 0, false
+	}
+	return EVMChainID(fam, envID)
 }
