@@ -1,0 +1,8 @@
+{
+  "pq": true,
+  "admin-api-enabled": true,
+  "eth-apis": ["eth", "eth-filter", "net", "web3", "internal-eth", "internal-blockchain", "internal-transaction", "internal-account", "admin"],
+  "log-level": "info",
+  "pruning-enabled": false,
+  "rpc-gas-cap": 50000000
+}
