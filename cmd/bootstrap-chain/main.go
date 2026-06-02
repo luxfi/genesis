@@ -125,16 +125,37 @@ func main() {
 	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from MNEMONIC, print the P-chain address, exit")
 	evmHeartbeatKeyHex := flag.String("evm-heartbeat-key", "", "hex-encoded secp256k1 key funded on every EVM chain (LUX_PRIVATE_KEY). If set, the tool sends a 0-value self-tx after CreateChainTx to roll block 1 before probing eth_blockNumber>0")
 	probeBootstrapOnly := flag.Bool("probe-bootstrap-only", false, "accept the chain as healthy if info.isBootstrapped=true regardless of eth_blockNumber; use when --evm-heartbeat-key is unavailable and the operator will trigger heartbeats out-of-band")
+	// --key-file is an alternate entry to MNEMONIC+BIP44 for callers that
+	// already hold the deployer's raw 32-byte secp256k1 key on disk (e.g. the
+	// node{1..5}/ec/private.key files used to fund test+dev primary genesis).
+	// When set, MNEMONIC and --bip44-idx are ignored.
+	keyFile := flag.String("key-file", "", "path to a 64-char hex secp256k1 private key (alternative to MNEMONIC+BIP44 derivation)")
 	flag.Parse()
 
-	if *printAddrOnly {
-		mn := os.Getenv("MNEMONIC")
-		if mn == "" {
-			log.Fatal("MNEMONIC env var required")
+	loadKey := func() (*secp256k1.PrivateKey, error) {
+		if *keyFile != "" {
+			raw, err := os.ReadFile(*keyFile)
+			if err != nil {
+				return nil, fmt.Errorf("read key-file %s: %w", *keyFile, err)
+			}
+			hexStr := strings.TrimSpace(strings.TrimPrefix(string(raw), "0x"))
+			keyBytes, err := hex.DecodeString(hexStr)
+			if err != nil {
+				return nil, fmt.Errorf("parse key-file %s as hex: %w", *keyFile, err)
+			}
+			return secp256k1.ToPrivateKey(keyBytes)
 		}
-		key, err := deriveLuxKey(mn, uint32(*bipIdx))
+		mn := strings.TrimSpace(os.Getenv("MNEMONIC"))
+		if mn == "" {
+			return nil, fmt.Errorf("MNEMONIC env var or --key-file required")
+		}
+		return deriveLuxKey(mn, uint32(*bipIdx))
+	}
+
+	if *printAddrOnly {
+		key, err := loadKey()
 		if err != nil {
-			log.Fatalf("derive: %v", err)
+			log.Fatalf("load key: %v", err)
 		}
 		fmt.Println(formatPAddr(*hrp, key.PublicKey().Address()))
 		return
@@ -149,14 +170,9 @@ func main() {
 		log.Fatalf("invalid --vm-id: %v", err)
 	}
 
-	mnemonic := os.Getenv("MNEMONIC")
-	if mnemonic == "" {
-		log.Fatal("MNEMONIC env var required")
-	}
-
-	key, err := deriveLuxKey(mnemonic, uint32(*bipIdx))
+	key, err := loadKey()
 	if err != nil {
-		log.Fatalf("derive key: %v", err)
+		log.Fatalf("load key: %v", err)
 	}
 	addr := key.PublicKey().Address()
 	controlKey := formatPAddr(*hrp, addr)
