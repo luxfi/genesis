@@ -2,286 +2,40 @@
   "alloc": {
     "0200000000000000000000000000000000000005": {
       "balance": "0x0",
-      "code": "0x01",
-      "nonce": "0x1"
+      "nonce": "0x1",
+      "code": "0x01"
     },
     "9011E888251AB053B7bD1cdB598Db4f9DEd94714": {
       "balance": "0x193e5939a08ce9dbd480000000"
     }
   },
   "baseFeePerGas": "0x5d21dba00",
-  "coinbase": "0x0000000000000000000000000000000000000000",
   "config": {
-    "arrowGlacierBlock": 0,
     "berlinBlock": 0,
-    "blobSchedule": {
-      "cancun": {
-        "baseFeeUpdateFraction": 3338477,
-        "max": 6,
-        "target": 3
-      }
-    },
     "byzantiumBlock": 0,
-    "cancunTime": 0,
     "chainId": 200200,
     "constantinopleBlock": 0,
     "eip150Block": 0,
     "eip155Block": 0,
     "eip158Block": 0,
-    "evmTimestamp": 0,
-    "feeConfig": {
-      "baseFeeChangeDenominator": 36,
-      "blockGasCostStep": 200000,
-      "gasLimit": 1000000000,
-      "maxBlockGasCost": 1000000,
-      "minBaseFee": 25000000000,
-      "minBlockGasCost": 0,
-      "targetBlockRate": 2,
-      "targetGas": 500000000
-    },
-    "grayGlacierBlock": 0,
     "homesteadBlock": 0,
     "istanbulBlock": 0,
     "londonBlock": 0,
-    "mergeNetsplitBlock": 0,
-    "muirGlacierBlock": 0,
     "petersburgBlock": 0,
-    "shanghaiTime": 0,
-    "terminalTotalDifficulty": 0,
-    "warpConfig": {
-      "blockTimestamp": 0,
-      "quorumNumerator": 67,
-      "requirePrimaryNetworkSigners": false
-    },
+    "evmTimestamp": 0,
     "durangoTimestamp": 0,
-    "etnaTimestamp": 0,
-    "fortunaTimestamp": 0,
-    "graniteTimestamp": 0,
-    "precompileUpgrades": [
-      {
-        "aiMiningConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "anchorConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "attestationConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "babyjubjubConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "blake3Config": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381G1AddConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381G1MulConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381G1MSMConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381G2AddConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381G2MulConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381G2MSMConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bls12381PairingConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "bridgeRegistrarConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "cggmp21Verify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "computeMarketConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "coronaThreshold": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "curve25519Config": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "dexConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "eciesConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "fheConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "fixedPointMathConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "frostVerify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "graphConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "hpkeConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "hqcEncapsulate": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "magnetarVerify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "mldsaVerify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "mlkemConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "p3qVerify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "pastaConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "pedersenConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "poseidonConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "pqcryptoConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "pulsarVerify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "ringConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "routerConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "slhdsaVerify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "sr25519Verify": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "stableSwapConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "vrfConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "x25519Config": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "xwingConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
-        "zkConfig": {
-          "blockTimestamp": 0
-        }
-      }
-    ]
+    "feeConfig": {
+      "gasLimit": 12000000,
+      "targetBlockRate": 2,
+      "minBaseFee": 25000000000,
+      "targetGas": 15000000,
+      "baseFeeChangeDenominator": 36,
+      "minBlockGasCost": 0,
+      "maxBlockGasCost": 1000000,
+      "blockGasCostStep": 200000
+    }
   },
   "difficulty": "0x0",
-  "extraData": "0x",
-  "gasLimit": "0x3b9aca00",
-  "gasUsed": "0x0",
-  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "nonce": "0x0",
-  "number": "0x0",
-  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "gasLimit": "0xb71b00",
   "timestamp": "0x6727e9c3"
 }
