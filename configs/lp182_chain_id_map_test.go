@@ -1,0 +1,125 @@
+// Copyright (C) 2024-2026, Lux Partners Limited. All rights reserved.
+// See the file LICENSE for licensing terms.
+
+package configs
+
+import "testing"
+
+// TestEVMChainID_KnownCells locks the canonical map per LP-182
+// §Appendix A. Any change to these values is a backward-incompatible
+// chainID rebrand and would replay-protect-conflict with
+// already-deployed contracts; this test is the protective floor.
+func TestEVMChainID_KnownCells(t *testing.T) {
+	cases := []struct {
+		family NetworkFamily
+		env    uint32
+		want   uint64
+	}{
+		{FamilyLux, MainnetID, 96369},
+		{FamilyLux, TestnetID, 96368},
+		{FamilyLux, DevnetID, 96370},
+		{FamilyLux, LocalID, 31337},
+		{FamilyHanzo, MainnetID, 36963},
+		{FamilyHanzo, TestnetID, 36962},
+		{FamilyHanzo, DevnetID, 36964},
+		{FamilyZoo, MainnetID, 200200},
+		{FamilyZoo, TestnetID, 200201},
+		{FamilyZoo, DevnetID, 200202},
+		{FamilySPC, MainnetID, 36911},
+		{FamilySPC, TestnetID, 36910},
+		{FamilySPC, DevnetID, 36912},
+		{FamilyLiquid, MainnetID, 8675309},
+		{FamilyLiquid, TestnetID, 8675310},
+		{FamilyLiquid, DevnetID, 8675312},
+		{FamilyPars, MainnetID, 7070},
+		{FamilyPars, TestnetID, 494950},
+		{FamilyPars, DevnetID, 494951},
+	}
+	for _, c := range cases {
+		got, ok := EVMChainID(c.family, c.env)
+		if !ok {
+			t.Errorf("EVMChainID(%q, %d) = (_, false), want (%d, true)", c.family, c.env, c.want)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("EVMChainID(%q, %d) = %d, want %d", c.family, c.env, got, c.want)
+		}
+	}
+}
+
+// TestEVMChainID_UnknownReturnsFalse — an unknown family or an env
+// outside the canonical four must return (0, false), not a silent
+// default. This protects against typos in operator CRs.
+func TestEVMChainID_UnknownReturnsFalse(t *testing.T) {
+	if got, ok := EVMChainID(NetworkFamily("bogus"), MainnetID); ok || got != 0 {
+		t.Errorf("EVMChainID(bogus, mainnet) = (%d, %v), want (0, false)", got, ok)
+	}
+	if got, ok := EVMChainID(FamilyLux, 9999); ok || got != 0 {
+		t.Errorf("EVMChainID(lux, 9999) = (%d, %v), want (0, false)", got, ok)
+	}
+	if got, ok := EVMChainID(FamilyHanzo, LocalID); ok || got != 0 {
+		t.Errorf("EVMChainID(hanzo, local) = (%d, %v), want (0, false) — TBD cell", got, ok)
+	}
+}
+
+// TestNetworkFamilyOf_RoundTrip — given any canonical chainID,
+// NetworkFamilyOf must return the family that originally produced it,
+// and EVMChainID on that family must yield the original chainID back.
+func TestNetworkFamilyOf_RoundTrip(t *testing.T) {
+	cases := []struct {
+		chainID uint64
+		family  NetworkFamily
+	}{
+		{96369, FamilyLux},
+		{96368, FamilyLux},
+		{96370, FamilyLux},
+		{31337, FamilyLux},
+		{36963, FamilyHanzo},
+		{200200, FamilyZoo},
+		{36911, FamilySPC},
+		{8675309, FamilyLiquid},
+		{7070, FamilyPars},
+	}
+	for _, c := range cases {
+		got, ok := NetworkFamilyOf(c.chainID)
+		if !ok {
+			t.Errorf("NetworkFamilyOf(%d) = (_, false), want (%q, true)", c.chainID, c.family)
+			continue
+		}
+		if got != c.family {
+			t.Errorf("NetworkFamilyOf(%d) = %q, want %q", c.chainID, got, c.family)
+		}
+	}
+}
+
+// TestNetworkFamilyOf_UnknownReturnsFalse — an unknown chainID must
+// return ("", false). This is how a CR validator can detect a typo
+// in `evmChainID` early.
+func TestNetworkFamilyOf_UnknownReturnsFalse(t *testing.T) {
+	if got, ok := NetworkFamilyOf(0); ok || got != "" {
+		t.Errorf("NetworkFamilyOf(0) = (%q, %v), want (\"\", false)", got, ok)
+	}
+	if got, ok := NetworkFamilyOf(99999999); ok || got != "" {
+		t.Errorf("NetworkFamilyOf(99999999) = (%q, %v), want (\"\", false)", got, ok)
+	}
+}
+
+// TestParseNetworkFamily_CaseInsensitive — the parser must accept
+// "Lux", "LUX", "lux" all as FamilyLux. The canonical wire form is
+// lowercase but humans type whatever they type.
+func TestParseNetworkFamily_CaseInsensitive(t *testing.T) {
+	for _, in := range []string{"lux", "LUX", "Lux", "luX"} {
+		got, ok := ParseNetworkFamily(in)
+		if !ok {
+			t.Errorf("ParseNetworkFamily(%q) = (_, false), want (lux, true)", in)
+			continue
+		}
+		if got != FamilyLux {
+			t.Errorf("ParseNetworkFamily(%q) = %q, want %q", in, got, FamilyLux)
+		}
+	}
+	// Unknown family stays unknown.
+	if got, ok := ParseNetworkFamily("bogus"); ok || got != "" {
+		t.Errorf("ParseNetworkFamily(bogus) = (%q, %v), want (\"\", false)", got, ok)
+	}
+}
