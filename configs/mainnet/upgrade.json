@@ -67,10 +67,7 @@
     {"vrfConfig":              {"blockTimestamp": 1782864000}},
     {"attestationConfig":      {"blockTimestamp": 1782864000}},
     {"anchorConfig":           {"blockTimestamp": 1782864000}},
-    {"fixedPointMathConfig":   {"blockTimestamp": 1782864000}},
-    {"kzg4844Config":          {"blockTimestamp": 1782864000}},
-    {"secp256r1Config":        {"blockTimestamp": 1782864000}},
-    {"ed25519Config":          {"blockTimestamp": 1782864000}}
+    {"fixedPointMathConfig":   {"blockTimestamp": 1782864000}}
   ],
   "stateUpgrades": []
 }
