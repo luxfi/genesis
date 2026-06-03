@@ -2,7 +2,7 @@
   "networkUpgradeOverrides": {
     "evmTimestamp": 0,
     "durangoTimestamp": 0,
-    "etnaTimestamp": 1766708400,
+    "quasarTimestamp": 1766708400,
     "fortunaTimestamp": 1766708400,
     "graniteTimestamp": 1766708400,
     "strictPQTimestamp": 1766708400
