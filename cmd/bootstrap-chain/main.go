@@ -125,6 +125,24 @@ func main() {
 	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from MNEMONIC, print the P-chain address, exit")
 	evmHeartbeatKeyHex := flag.String("evm-heartbeat-key", "", "hex-encoded secp256k1 key funded on every EVM chain (LUX_PRIVATE_KEY). If set, the tool sends a 0-value self-tx after CreateChainTx to roll block 1 before probing eth_blockNumber>0")
 	probeBootstrapOnly := flag.Bool("probe-bootstrap-only", false, "accept the chain as healthy if info.isBootstrapped=true regardless of eth_blockNumber; use when --evm-heartbeat-key is unavailable and the operator will trigger heartbeats out-of-band")
+	// --skip-bootstrap-wait is the create-only path: issue CreateNetworkTx +
+	// CreateChainTx + AddChainValidatorTx and exit immediately, without
+	// waiting for the chain to bootstrap. This is the right tool when the
+	// running luxd's --track-chains flag does not yet include the new chain
+	// ID — the only way to make luxd track it is to update the ConfigMap and
+	// roll the StatefulSet, which must happen AFTER we know the new chain ID.
+	skipBootstrapWait := flag.Bool("skip-bootstrap-wait", false, "skip the post-CreateChainTx isBootstrapped+eth_blockNumber probe; use when the running luxd does not yet --track-chains the new chain")
+	// --force-new-chains bypasses the platform.getBlockchains existing-chain
+	// detection. Use when re-bootstrapping a brand whose name already exists
+	// on P-chain but whose previous CreateChainTx used a wrong genesis blob.
+	// The new chain will have a NEW blockchain ID; the old chain stays
+	// orphaned on P-chain (no way to delete, no harm if untracked by luxd).
+	forceNewChains := flag.Bool("force-new-chains", false, "ignore pre-existing chains with the same name on P-chain and always issue a fresh CreateChainTx")
+	// To override the fee-payment asset (e.g. on lux-mainnet where staking
+	// asset pmSJ7BfZ... differs from the legacy LUX asset HrJCm4yvN... held
+	// on P-chain UTXOs), set the env var LUX_WALLET_UTXO_ASSET_ID_OVERRIDE
+	// in the process environment before running. The override is read by
+	// luxfi/node/wallet/chain/p.NewContextFromClients.
 	// --key-file is an alternate entry to MNEMONIC+BIP44 for callers that
 	// already hold the deployer's raw 32-byte secp256k1 key on disk (e.g. the
 	// node{1..5}/ec/private.key files used to fund test+dev primary genesis).
@@ -218,6 +236,27 @@ func main() {
 		default:
 			log.Fatalf("genesis %s: .config.chainId not a number (got %T)", path, v)
 		}
+		// Track D regression gate: brand L2 genesis blobs MUST NOT carry a
+		// pre-computed `stateRoot` or `genesisHash`. These two fields in
+		// luxfi/geth/core/genesis.go::Genesis.Commit override the result of
+		// flushAlloc — meaning a stale value silently displaces the
+		// canonical alloc trie. The only legitimate use was the historical
+		// Lux primary C-Chain header workaround, now resolved via the
+		// empirical block-0 hash in cchain.json. Any brand L2 carrying
+		// these fields is a regression — fail loudly before burning LUX on
+		// a CreateChainTx with poisoned GenesisData.
+		if v, ok := doc["stateRoot"]; ok && v != nil && v != "" {
+			log.Fatalf(
+				"[%s] %s: genesis %s carries pre-computed stateRoot=%v — brand L2 JSON must let flushAlloc compute the root (see Track D root cause + geth/core/genesis.go:592-595)",
+				*networkLabel, name, path, v,
+			)
+		}
+		if v, ok := doc["genesisHash"]; ok && v != nil && v != "" {
+			log.Fatalf(
+				"[%s] %s: genesis %s carries pre-computed genesisHash=%v — brand L2 JSON must let toBlockWithRoot compute the hash (see geth/core/genesis.go:602-605)",
+				*networkLabel, name, path, v,
+			)
+		}
 		// Defensive 0x prefix + hex shape validation on alloc keys.
 		// The EVM genesis loader rejects unprefixed keys. We normalize
 		// and log for missing prefixes (recoverable), and fail loudly for
@@ -297,7 +336,9 @@ func main() {
 		NetworkID ids.ID // parent validator-network (CreateNetworkTx ID)
 		ChainID   ids.ID // the blockchain's own ID
 	}{}
-	{
+	if *forceNewChains {
+		log.Printf("[%s] FORCE-NEW-CHAINS: skipping platform.getBlockchains existing-chain detection; every spec will issue a fresh CreateNetworkTx + CreateChainTx", *networkLabel)
+	} else {
 		blockchains, perr := platformGetBlockchains(ctx, *uri)
 		if perr != nil {
 			log.Printf("WARN: platform.getBlockchains failed: %v (assuming no pre-existing chains)", perr)
@@ -352,7 +393,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("P balance: %v", err)
 	}
-	log.Printf("[%s] initial wallet P-chain LUX = %d nLUX", *networkLabel, pBal[luxAssetID])
+	log.Printf("[%s] initial wallet P-chain LUX = %d nLUX (assetID=%s)", *networkLabel, pBal[luxAssetID], luxAssetID)
 
 	// Refuse work we cannot fund. We only charge for the chains that don't
 	// exist yet — pre-existing chains are skipped entirely.
@@ -496,12 +537,16 @@ func main() {
 		// Wait for bootstrap, send heartbeat if configured, then probe.
 		// Bootstrap-only probe is required before sending a tx — otherwise
 		// eth_sendRawTransaction returns "chain not bootstrapped".
-		if err := waitBootstrap(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval); err != nil {
-			log.Fatalf("[%s] wait-bootstrap failed: %v", spec.Name, err)
+		if *skipBootstrapWait {
+			log.Printf("[%s/%s] SKIP-BOOTSTRAP-WAIT: chain registered on P-chain at chainID=%s; operator must update --track-chains and roll luxd to activate", *networkLabel, spec.Name, chainID)
+		} else {
+			if err := waitBootstrap(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval); err != nil {
+				log.Fatalf("[%s] wait-bootstrap failed: %v", spec.Name, err)
+			}
+			log.Printf("[%s/%s] isBootstrapped=true", *networkLabel, spec.Name)
 		}
-		log.Printf("[%s/%s] isBootstrapped=true", *networkLabel, spec.Name)
 
-		if *evmHeartbeatKeyHex != "" {
+		if *evmHeartbeatKeyHex != "" && !*skipBootstrapWait {
 			log.Printf("[%s/%s] sending EVM heartbeat tx to roll block 1", *networkLabel, spec.Name)
 			if err := evmHeartbeat(ctx, *uri, chainID.String(), spec.EVMChainID, *evmHeartbeatKeyHex); err != nil {
 				// Heartbeat failure on a reused chain is non-fatal: the
@@ -515,7 +560,9 @@ func main() {
 		}
 
 		firstBlock := "0x0"
-		if !*probeBootstrapOnly {
+		if *skipBootstrapWait {
+			log.Printf("[%s/%s] SKIP-BOOTSTRAP-WAIT: firstBlockHex=0x0 (chain not yet tracked by luxd)", *networkLabel, spec.Name)
+		} else if !*probeBootstrapOnly {
 			firstBlock, err = probeChain(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval)
 			if err != nil {
 				log.Fatalf("[%s] probe failed: %v", spec.Name, err)
