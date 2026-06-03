@@ -55,8 +55,8 @@ const (
 
 	// DefaultNumAccounts is the default number of mnemonic-derived accounts.
 	// Funds 1000 BIP44 wallet keys at m/44'/9000'/0'/0/i so that any
-	// canonical-BIP44 wallet (Core, MetaMask, AvalancheJS, `lux key derive`)
-	// sees a fundable address on both P and X under the same mnemonic.
+	// canonical-BIP44 wallet (Lux Wallet, MetaMask, `lux key derive`) sees
+	// a fundable address on both P and X under the same mnemonic.
 	// Per-network isolation comes from a DIFFERENT mnemonic per env
 	// (loaded from KMS), not from path divergence.
 	DefaultNumAccounts = 1000
@@ -403,10 +403,10 @@ func LoadKeyFromEnv() (*KeyInfo, error) {
 }
 
 // LoadKeysFromMnemonic derives keys from a BIP39 mnemonic using the canonical
-// Avalanche/Lux BIP44 path m/44'/9000'/0'/0/i. The same mnemonic produces the
-// same keys across every Lux network — addresses are stable in MetaMask, Core
-// Wallet, AvalancheJS, and `lux key derive`. Per-network isolation comes from
-// using a different mnemonic per environment, not from path divergence.
+// Lux BIP44 path m/44'/9000'/0'/0/i. The same mnemonic produces the same keys
+// across every Lux network — addresses are stable in MetaMask, Lux Wallet,
+// and `lux key derive`. Per-network isolation comes from using a different
+// mnemonic per environment, not from path divergence.
 func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic")
@@ -437,8 +437,8 @@ func LoadKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInfo, error) {
 
 	keys := make([]KeyInfo, 0, numAccounts)
 	for i := 0; i < numAccounts; i++ {
-		// Standard Avalanche/Lux secp256k1 child: m/44'/9000'/0'/0/i
-		// (non-hardened index — matches Core Wallet, MetaMask, cast).
+		// Standard Lux secp256k1 child: m/44'/9000'/0'/0/i
+		// (non-hardened index — matches Lux Wallet, MetaMask, cast).
 		luxChild, err := change.NewChildKey(uint32(i)) //nolint:gosec
 		if err != nil {
 			return nil, fmt.Errorf("failed to derive secp256k1 key %d: %w", i, err)
@@ -825,10 +825,10 @@ func LoadBIP44WalletKeysFromMnemonic(mnemonic string, numAccounts int) ([]KeyInf
 
 // BuildBIP44WalletAllocations derives wallet keys on the canonical BIP44
 // path m/44'/9000'/0'/0/i (purpose-44' / coin-9000' / account-0' hardened;
-// change-0 / index-i NON-hardened). 9000 is the SLIP-0044 coin type Lux
-// inherits from its upstream lineage; any BIP44-conformant wallet using
-// that coin type derives the same key set. Returns free (no vesting)
-// spending allocations for each key.
+// change-0 / index-i NON-hardened). 9000 is the BIP44 coin type Lux uses
+// by canonical convention; any BIP44-conformant wallet using that coin
+// type derives the same key set. Returns free (no vesting) spending
+// allocations for each key.
 //
 // Use this instead of BuildWalletAllocations when the receiving consumer
 // (e.g. a chain-bootstrap CLI) expects classical BIP44 web-wallet
