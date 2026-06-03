@@ -34,53 +34,46 @@ import (
 )
 
 const (
-	// DefaultAllocationPerAccount is 50M LUX per account per chain (P and X).
-	// 1000 accounts × 50M × 2 chains = 100B LUX of UTXOs in genesis (well
-	// under the 2T LUX SupplyCap on every network).
-	// X-Chain: 50M free (immediately spendable from genesis).
-	// P-Chain: 50M free at genesis (no vesting); the long-tail unlock
-	// schedule below adds a separate 50M per account that vests 1%/year
-	// over 100 years from Jan 1 2020 — i.e. each address sees 50M
-	// spendable on X, 50M spendable on P + 50M vesting on P.
+	// DefaultAllocationPerAccount is the canonical fresh-genesis amount:
+	// 50M LUX per derived account, spendable immediately on both X-Chain
+	// and P-Chain (same address — bech32(ripemd160(sha256(secp256k1_pubkey)))).
+	//
+	// 1000 accounts × 50M × 2 chains = 100B LUX of UTXOs in genesis.
+	// Per-chain SupplyCap is 2T LUX, so each chain individually clears.
 	//
 	// Address scheme — Bitcoin-UTXO-style (more quantum-resistant):
 	//   P-Chain / X-Chain addresses are bech32(ripemd160(sha256(pubkey))).
-	//   The public key is *hidden behind two hash layers* until the
-	//   address is first spent. Until first spend, even a future
-	//   quantum adversary cannot recover the private key — Shor's
-	//   algorithm works against the secp256k1 pubkey, but not against
-	//   sha256+ripemd160. Contrast with C-Chain (Ethereum) addresses,
-	//   which are keccakBytes(pubkey)[12:] and effectively expose the
-	//   pubkey on every signature (recovery in ECDSA). Long-term holds
-	//   should sit on P/X, not C, for this reason.
+	//   The public key is hidden behind two hash layers until first spend.
+	//   A future quantum adversary cannot recover the private key from the
+	//   address alone — Shor's works on the pubkey, not on sha256+ripemd160.
+	//   C-Chain (Ethereum) addresses expose the pubkey via ECDSA recovery
+	//   on every signed tx; long-term holds belong on P/X, not C.
 	DefaultAllocationPerAccount = 50_000_000 * Lux
 
 	// DefaultAllocationPerValidator is kept for backward compatibility
 	DefaultAllocationPerValidator = DefaultAllocationPerAccount
 
-	// DefaultNumAccounts is the default number of mnemonic-derived accounts
-	// Funds 1000 wallet keys at canonical BIP44 m/44'/9000'/0'/0/i so that
-	// any wallet that derives at this path against the SAME mnemonic sees
-	// a fundable address on both P and X.
+	// DefaultNumAccounts is the default number of mnemonic-derived accounts.
+	// Funds 1000 BIP44 wallet keys at m/44'/9000'/0'/0/i so that any
+	// canonical-BIP44 wallet (Core, MetaMask, AvalancheJS, `lux key derive`)
+	// sees a fundable address on both P and X under the same mnemonic.
+	// Per-network isolation comes from a DIFFERENT mnemonic per env
+	// (loaded from KMS), not from path divergence.
 	DefaultNumAccounts = 1000
 
-	// StakingStartTime is Jan 1, 2020 00:00:00 UTC
-	StakingStartTime = 1577836800
-
-	// UnlockInterval is 1 year in seconds
-	UnlockInterval = 365 * 24 * 60 * 60
-
-	// TreasuryAddress is the C-Chain treasury with 2T LUX
+	// TreasuryAddress is the C-Chain treasury (no per-account C-Chain alloc).
 	TreasuryAddress = "0x9011E888251AB053B7bD1cdB598Db4f9DEd94714"
 
-	// TreasuryAmount is 2 trillion LUX in microLUX (2T * 10^6)
+	// TreasuryAmount is 2 trillion LUX in microLUX (2T * 10^6).
 	TreasuryAmount = 2_000_000_000_000 * Lux
 
-	// PChainFeeReserve is 10,000 LUX per validator for P-Chain fees
+	// PChainFeeReserve is 10,000 LUX per validator earmarked for P-Chain fees.
 	PChainFeeReserve = 10_000 * Lux
 
-	// LightMnemonic is the well-known dev mnemonic for local networks (network-id >= 1337).
-	// NEVER use on public networks (mainnet, testnet, devnet).
+	// LightMnemonic is the well-known public dev seed. Pass this as the
+	// value of LUX_MNEMONIC to bootstrap a local network (network ID >=
+	// 1337). RefuseLightMnemonicOnProduction enforces it cannot be used
+	// on mainnet/testnet/devnet (network IDs 1/2/3).
 	LightMnemonic = "light light light light light light light light light light light energy"
 )
 
@@ -312,21 +305,6 @@ func deriveFeeKey(keysDir string, validatorKey KeyInfo, index int) (*KeyInfo, er
 	}, nil
 }
 
-// buildUnlockSchedule creates a vesting schedule
-func buildUnlockSchedule(totalAmount uint64, startTime uint64, interval uint64, periods int) []LockedAmount {
-	amountPerPeriod := totalAmount / uint64(periods)
-	schedule := make([]LockedAmount, 0, periods)
-
-	for i := 0; i < periods; i++ {
-		schedule = append(schedule, LockedAmount{
-			Amount:   amountPerPeriod,
-			Locktime: startTime + uint64(i)*interval,
-		})
-	}
-
-	return schedule
-}
-
 // buildCChainGenesisTreasury creates C-chain genesis JSON with only the treasury allocation.
 // Treasury: 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714 gets 2T LUX.
 // No mnemonic-derived account allocations on C-Chain.
@@ -539,14 +517,14 @@ func mldsaKeygenFromChildSeed(childSeed []byte) ([]byte, error) {
 	return pk.Bytes(), nil
 }
 
-// LoadKeysFromMnemonicEnv loads keys from mnemonic env vars (MNEMONIC > LIGHT_MNEMONIC).
+// LoadKeysFromMnemonicEnv loads keys from the LUX_MNEMONIC env var.
 // Callers that already know the network id MUST use
 // LoadKeysFromMnemonicEnvForNetwork instead — it adds the production-safe
 // public-mnemonic guard around this entry point.
 func LoadKeysFromMnemonicEnv(numAccounts int) ([]KeyInfo, error) {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
-		return nil, fmt.Errorf("mnemonic not set (set MNEMONIC or LIGHT_MNEMONIC)")
+		return nil, fmt.Errorf("mnemonic not set (set %s)", MnemonicEnvVar)
 	}
 	return LoadKeysFromMnemonic(mnemonic, numAccounts)
 }
@@ -630,28 +608,24 @@ func genesisMessage(networkID uint32) string {
 	}
 }
 
-// getMnemonicEnv returns the mnemonic from environment variables.
-// Priority: MNEMONIC > LIGHT_MNEMONIC
-//
-// LIGHT_MNEMONIC is the publicly-known dev seed. Anyone in the world can
-// derive its first 200 child keys; the auto-fund pre-allocation in
-// HIP-0077 §"Auto-funding the first 200 devices" is *only* meant for
-// network IDs >= 1337 (dev / primary local mesh). Production networks
-// MUST set MNEMONIC.
-//
-// Use IsLightMnemonic and RefuseLightMnemonicOnProduction to enforce that
-// rule wherever a key is loaded for a known network ID.
+// MnemonicEnvVar is the single canonical env var name for the genesis
+// mnemonic. One env, one way:
+//   - mainnet/testnet/devnet (IDs 1/2/3): a private hardware-RNG mnemonic
+//     loaded from KMS; RefuseLightMnemonicOnProduction rejects all known
+//     public mnemonics so the production guard is enforced at derivation.
+//   - local (ID 1337): typically set to LightMnemonic for fast dev boot;
+//     the same public-mnemonic blacklist still applies, but local IDs
+//     are exempt by IsProductionNetwork.
+const MnemonicEnvVar = "LUX_MNEMONIC"
+
+// getMnemonicEnv returns the mnemonic from the canonical LUX_MNEMONIC env
+// var. No fallback chain — one and only one env name.
 func getMnemonicEnv() string {
-	for _, env := range []string{"MNEMONIC", "LIGHT_MNEMONIC"} {
-		if v := os.Getenv(env); v != "" {
-			return v
-		}
-	}
-	return ""
+	return os.Getenv(MnemonicEnvVar)
 }
 
 // IsLightMnemonic reports whether the given mnemonic is exactly the
-// well-known LIGHT_MNEMONIC dev seed. Compared in constant time so a
+// well-known LightMnemonic dev seed value. Compared in constant time so a
 // timing attacker can't probe the running config from outside.
 func IsLightMnemonic(mnemonic string) bool {
 	return subtleConstantTimeEqual([]byte(mnemonic), []byte(LightMnemonic))
@@ -660,7 +634,7 @@ func IsLightMnemonic(mnemonic string) bool {
 // knownPublicMnemonics is the curated set of seeds that anyone in the
 // world can derive from. Production deployments MUST refuse all of them.
 //
-// LIGHT_MNEMONIC is one row; the rest are the most-frequently-cited public
+// LightMnemonic is one row; the rest are the most-frequently-cited public
 // mnemonics from BIP-39 test vectors, common dev tooling defaults, and
 // hardware-wallet demo seeds. Any of these on a production network →
 // every derived child key is publicly enumerable.
@@ -687,7 +661,7 @@ var knownPublicMnemonics = []string{
 }
 
 // IsKnownPublicMnemonic reports whether the given mnemonic appears in any
-// well-known public list (LIGHT_MNEMONIC, BIP-39 test vectors, Hardhat
+// well-known public list (LightMnemonic, BIP-39 test vectors, Hardhat
 // default, hardware-wallet demos, etc.). Compared in constant time per
 // entry so a timing attacker can't probe which entry matched.
 //
@@ -710,15 +684,16 @@ func IsKnownPublicMnemonic(mnemonic string) bool {
 // IsProductionNetwork reports whether the given numeric network ID is on
 // the list of *production* Lux networks. Local / primary-local meshes
 // (network IDs >= 1337, including constants.LocalID = 1337) deliberately
-// allow LIGHT_MNEMONIC; mainnet, testnet and any other reserved low-ID
-// network refuse it.
+// allow public mnemonics like LightMnemonic; mainnet, testnet and any
+// other reserved low-ID network refuse them.
 //
-// Network ID convention (mirrors lux/constants):
-//   - 1     mainnet (production)
-//   - 2     testnet (production-grade staging — refuses LIGHT_MNEMONIC)
-//   - 1337  LocalID (free-form local dev, allows LIGHT_MNEMONIC)
-//   - >= 1337 any tenant local / dev mesh (allows LIGHT_MNEMONIC)
-//   - 3..1336 reserved; treated as production by default
+// Canonical network ID map (mirrors lux/constants):
+//   - 1     mainnet (production — refuses public mnemonics)
+//   - 2     testnet (production-grade staging — refuses public mnemonics)
+//   - 3     devnet  (production-grade dev mesh — refuses public mnemonics)
+//   - 1337  LocalID (free-form local dev — allows LightMnemonic)
+//   - >= 1337 any tenant local / dev mesh (allows LightMnemonic)
+//   - 4..1336 reserved; treated as production by default
 func IsProductionNetwork(networkID uint32) bool {
 	switch networkID {
 	case constants.MainnetID, constants.TestnetID:
@@ -730,7 +705,7 @@ func IsProductionNetwork(networkID uint32) bool {
 }
 
 // RefuseLightMnemonicOnProduction returns a non-nil error iff the running
-// process is configured with any publicly-known mnemonic (LIGHT_MNEMONIC,
+// process is configured with any publicly-known mnemonic (LightMnemonic,
 // BIP-39 test vectors, Hardhat / Trezor demos, …) AND the supplied
 // networkID is a production network. Runtime guard required by HIP-0077
 // §"Mnemonic exposure" / "Auto-funded blast radius".
@@ -743,9 +718,9 @@ func IsProductionNetwork(networkID uint32) bool {
 // derivation point, never silently produces public-mnemonic-derived
 // signing keys.
 //
-// The guard widens beyond LIGHT_MNEMONIC to cover the broader
-// public-mnemonic blacklist (HIP-0077 red-review F31): BIP-39 abandon
-// vector, Hardhat default, Trezor demo, etc. See knownPublicMnemonics.
+// The guard covers the full public-mnemonic blacklist (HIP-0077 red-review
+// F31): LightMnemonic, BIP-39 abandon vector, Hardhat default, Trezor
+// demo, etc. See knownPublicMnemonics.
 func RefuseLightMnemonicOnProduction(networkID uint32) error {
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
@@ -761,11 +736,11 @@ func RefuseLightMnemonicOnProduction(networkID uint32) error {
 	}
 	return fmt.Errorf(
 		"refusing to derive keys: a publicly-known mnemonic is set on production "+
-			"network %d (mainnet/testnet/<1337). Public mnemonics (LIGHT_MNEMONIC, "+
+			"network %d (mainnet/testnet/<1337). Public mnemonics (LightMnemonic, "+
 			"BIP-39 test vectors, Hardhat/Trezor demos) are deterministic — anyone "+
-			"can derive every child key. Set MNEMONIC env var with "+
-			"a private hardware-RNG mnemonic loaded from KMS, or run on a dev "+
-			"network ID (>= 1337)", networkID,
+			"can derive every child key. Set %s with a private hardware-RNG "+
+			"mnemonic loaded from KMS, or run on a dev network ID (>= 1337)",
+		networkID, MnemonicEnvVar,
 	)
 }
 
@@ -776,7 +751,7 @@ func RefuseLightMnemonicOnProduction(networkID uint32) error {
 //
 // Closes HIP-0077 red-review F30 (the prior LoadKeysFromMnemonicEnv was
 // guard-free and operators could silently derive on production from
-// LIGHT_MNEMONIC).
+// the public LightMnemonic).
 func LoadKeysFromMnemonicEnvForNetwork(networkID uint32, numAccounts int) ([]KeyInfo, error) {
 	if err := RefuseLightMnemonicOnProduction(networkID); err != nil {
 		return nil, err
@@ -868,7 +843,7 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 	_ = networkID // see comment above
 	mnemonic := getMnemonicEnv()
 	if mnemonic == "" {
-		return nil, fmt.Errorf("wallet allocations require MNEMONIC env var")
+		return nil, fmt.Errorf("wallet allocations require %s env var", MnemonicEnvVar)
 	}
 	if !bip39.IsMnemonicValid(mnemonic) {
 		return nil, fmt.Errorf("invalid mnemonic for wallet key derivation")
@@ -933,13 +908,13 @@ func BuildBIP44WalletAllocations(networkID uint32, numKeys int, amountPerKey uin
 	return allocations, nil
 }
 
-// BuildConfigFromEnv builds genesis config from environment variables
-// Checks in order: KEYS_DIR, mnemonic (MNEMONIC/LIGHT_MNEMONIC), PRIVATE_KEY
+// BuildConfigFromEnv builds genesis config from environment variables.
+// Checks in order: KEYS_DIR, LUX_MNEMONIC, PRIVATE_KEY.
 //
 // Architecture:
-//   - X-Chain: 100 accounts × 500M LUX each, FREE
-//   - P-Chain: 100 accounts × 500M LUX each, vesting 1%/year from 2020-01-01
-//   - C-Chain: treasury 0x9011...4714 gets 2T LUX
+//   - X-Chain: DefaultNumAccounts × allocationPerKey, immediate spend
+//   - P-Chain: DefaultNumAccounts × allocationPerKey, immediate spend
+//   - C-Chain: treasury 0x9011...4714 gets 2T LUX (no per-account alloc)
 func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey uint64) (*Config, error) {
 	var err error
 
@@ -960,7 +935,7 @@ func BuildConfigFromEnv(networkID uint32, numValidators int, allocationPerKey ui
 	// m/44'/9000'/0'/0/i (the same path the genesis CLI's -bip44-wallet-keys
 	// flag uses, and the same path the derive100 / luxfi wallet UIs use).
 	// This is what every user-facing tool that scans the chain for funded
-	// addresses will expect — derive100 against $MNEMONIC and the
+	// addresses will expect — derive100 against $LUX_MNEMONIC and the
 	// addresses here must match byte-for-byte.
 	//
 	// NOTE: this is intentionally a SEPARATE concern from

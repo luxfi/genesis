@@ -27,12 +27,7 @@ const (
 
 	// DefaultValidatorAllocation is 1B LUX per validator
 	DefaultValidatorAllocation uint64 = OneBillionLUX
-
-	// VestingPeriods is 100 years (1% unlocks per year)
-	VestingPeriods = 100
 )
-
-// StakingStartTime and UnlockInterval are defined in keys.go
 
 // ValidatorKeyInfo contains computed addresses from a validator's private key
 type ValidatorKeyInfo struct {
@@ -161,42 +156,6 @@ func GeneratePChainAllocations(keys []ValidatorKeyInfo, hrp string, amountPerKey
 			EVMAddr:        key.EVMAddr,
 			UTXOAddr:       utxoAddr,
 			InitialAmount:  0, // initialAmount is NOT immediately spendable
-			UnlockSchedule: unlockSchedule,
-		}
-	}
-	return allocations, nil
-}
-
-// GeneratePChainAllocationsWithVesting creates P-chain allocations with a vesting schedule.
-// Each key gets the specified amount vested over the given number of periods.
-func GeneratePChainAllocationsWithVesting(keys []ValidatorKeyInfo, hrp string, amountPerKey uint64, startTime uint64, interval uint64, periods int) ([]AllocationJSON, error) {
-	if amountPerKey == 0 {
-		amountPerKey = OneBillionLUX
-	}
-	if startTime == 0 {
-		startTime = StakingStartTime
-	}
-	if interval == 0 {
-		interval = UnlockInterval
-	}
-	if periods == 0 {
-		periods = 100 // 100 years default
-	}
-
-	allocations := make([]AllocationJSON, len(keys))
-	for i, key := range keys {
-		utxoAddr, err := FormatChainAddress("P", hrp, key.ShortID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to format address for key %d: %w", i, err)
-		}
-
-		// Build vesting schedule
-		unlockSchedule := buildUnlockSchedule(amountPerKey, startTime, interval, periods)
-
-		allocations[i] = AllocationJSON{
-			EVMAddr:        key.EVMAddr,
-			UTXOAddr:       utxoAddr,
-			InitialAmount:  amountPerKey, // X-chain initial amount
 			UnlockSchedule: unlockSchedule,
 		}
 	}
