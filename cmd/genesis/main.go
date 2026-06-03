@@ -44,7 +44,7 @@ func main() {
 		validators      = flag.Int("validators", 3, "Number of validators for mnemonic-based genesis")
 		walletKeys      = flag.Int("wallet-keys", 0, "Number of mnemonic-derived wallet keys to fund (Lux-internal hardened path m/44'/9000'/nid'/1'/i'; requires LUX_MNEMONIC env)")
 		walletAmount    = flag.Uint64("wallet-amount", 10000, "Allocation per wallet key in LUX (default: 10000)")
-		bip44WalletKeys = flag.Int("bip44-wallet-keys", 0, "Number of canonical BIP44 wallet keys to fund (m/44'/9000'/0'/0/i — SLIP-0044 coin type 9000)")
+		bip44WalletKeys = flag.Int("bip44-wallet-keys", 0, "Number of canonical BIP44 wallet keys to fund (m/44'/9000'/0'/0/i — BIP44 coin type 9000 canonical convention)")
 		cchainPath      = flag.String("cchain", "", "Path to existing C-Chain genesis (preserves original)")
 		format          = flag.String("format", "pretty", "Output format: json, pretty")
 		showHelp        = flag.Bool("help", false, "Show help")
