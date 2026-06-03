@@ -111,7 +111,7 @@ func TestGetGenesisLocalnet(t *testing.T) {
 	}
 
 	// Verify first allocation is canonical BIP44 m/44'/9000'/0'/0/0
-	// for LIGHT_MNEMONIC. ETH addr is the keccak256(pubkey) projection
+	// for LightMnemonic. ETH addr is the keccak256(pubkey) projection
 	// of the same secp256k1 spending key, computed from the BIP44 child
 	// at index 0 (not the Lux-internal hardened path).
 	first := allocs[0].(map[string]interface{})
