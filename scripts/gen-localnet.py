@@ -217,7 +217,7 @@ def build_cchain_genesis(alloc: dict) -> dict:
             "terminalTotalDifficulty": 0,
             "chainEVMTimestamp": 0,
             "durangoTimestamp": 0,
-            "etnaTimestamp": 0,
+            "quasarTimestamp": 0,
             "fortunaTimestamp": 0,
             "graniteTimestamp": 0,
             "blobSchedule": {
