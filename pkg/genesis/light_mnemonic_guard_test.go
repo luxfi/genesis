@@ -53,16 +53,16 @@ func TestIsProductionNetwork(t *testing.T) {
 }
 
 // TestIsKnownPublicMnemonic — F31 expansion. The guard now refuses every
-// known-public mnemonic, not just LIGHT_MNEMONIC. The BIP-39 abandon
+// known-public mnemonic, not just LightMnemonic. The BIP-39 abandon
 // vector, Hardhat default, and Trezor demo previously passed the
-// LIGHT_MNEMONIC-only check.
+// LightMnemonic-only check.
 func TestIsKnownPublicMnemonic(t *testing.T) {
 	cases := []struct {
 		name     string
 		mnemonic string
 		want     bool
 	}{
-		{"LIGHT_MNEMONIC", LightMnemonic, true},
+		{"LightMnemonic", LightMnemonic, true},
 		{"BIP-39 abandon vector #1",
 			"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
 			true},
@@ -93,48 +93,46 @@ func TestIsKnownPublicMnemonic(t *testing.T) {
 
 // TestRefuseLightMnemonicOnProduction is the headline F12 fix +
 // F31 expansion: derivation MUST refuse on production for any
-// publicly-known mnemonic, not just the literal LIGHT_MNEMONIC.
+// publicly-known mnemonic, not just the literal LightMnemonic.
 func TestRefuseLightMnemonicOnProduction(t *testing.T) {
 	// 1. No mnemonic set: not our problem at this layer.
-	t.Setenv("MNEMONIC", "")
-	t.Setenv("LIGHT_MNEMONIC", "")
+	t.Setenv("LUX_MNEMONIC", "")
 	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err != nil {
 		t.Fatalf("no-mnemonic case: unexpected error: %v", err)
 	}
 
-	// 2. LIGHT_MNEMONIC on dev mesh: allowed.
-	t.Setenv("LIGHT_MNEMONIC", LightMnemonic)
+	// 2. LightMnemonic on dev mesh: allowed.
+	t.Setenv("LUX_MNEMONIC", LightMnemonic)
 	if err := RefuseLightMnemonicOnProduction(constants.LocalID); err != nil {
-		t.Fatalf("LIGHT_MNEMONIC on LocalID(1337): unexpected error: %v", err)
+		t.Fatalf("LightMnemonic on LocalID(1337): unexpected error: %v", err)
 	}
 
-	// 3. LIGHT_MNEMONIC on mainnet: REFUSED.
+	// 3. LightMnemonic on mainnet: REFUSED.
 	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err == nil {
-		t.Fatalf("LIGHT_MNEMONIC on MainnetID: expected refusal, got nil")
+		t.Fatalf("LightMnemonic on MainnetID: expected refusal, got nil")
 	}
 
-	// 4. LIGHT_MNEMONIC on testnet: REFUSED.
+	// 4. LightMnemonic on testnet: REFUSED.
 	if err := RefuseLightMnemonicOnProduction(constants.TestnetID); err == nil {
-		t.Fatalf("LIGHT_MNEMONIC on TestnetID: expected refusal, got nil")
+		t.Fatalf("LightMnemonic on TestnetID: expected refusal, got nil")
 	}
 
-	// 5. F31: BIP-39 abandon vector via MNEMONIC on mainnet → REFUSED
+	// 5. F31: BIP-39 abandon vector via LUX_MNEMONIC on mainnet → REFUSED
 	// (was previously ALLOWED — see prior red-review F31).
-	t.Setenv("LIGHT_MNEMONIC", "")
-	t.Setenv("MNEMONIC", "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about")
+	t.Setenv("LUX_MNEMONIC", "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about")
 	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err == nil {
 		t.Fatalf("BIP-39 abandon vector on mainnet: expected refusal, got nil")
 	}
 
 	// 6. F31: Hardhat default on mainnet → REFUSED.
-	t.Setenv("MNEMONIC", "test test test test test test test test test test test junk")
+	t.Setenv("LUX_MNEMONIC", "test test test test test test test test test test test junk")
 	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err == nil {
 		t.Fatalf("Hardhat default on mainnet: expected refusal, got nil")
 	}
 
 	// 7. Real (non-public) mnemonic on mainnet: allowed.
 	realMnemonic := "venue armor mouse cheese fork stem siren acquire rocket cabbage sentence vibrant"
-	t.Setenv("MNEMONIC", realMnemonic)
+	t.Setenv("LUX_MNEMONIC", realMnemonic)
 	if err := RefuseLightMnemonicOnProduction(constants.MainnetID); err != nil {
 		t.Fatalf("real mnemonic on mainnet: unexpected error: %v", err)
 	}
@@ -147,19 +145,18 @@ func TestRefuseLightMnemonicOnProduction(t *testing.T) {
 // trusted callers), this one fails-closed on a production network with
 // any public mnemonic.
 func TestLoadKeysFromMnemonicEnvForNetwork(t *testing.T) {
-	// Setup: LIGHT_MNEMONIC on mainnet should refuse derivation.
-	t.Setenv("MNEMONIC", "")
-	t.Setenv("LIGHT_MNEMONIC", LightMnemonic)
+	// Setup: LightMnemonic on mainnet should refuse derivation.
+	t.Setenv("LUX_MNEMONIC", LightMnemonic)
 	_, err := LoadKeysFromMnemonicEnvForNetwork(constants.MainnetID, 1)
 	if err == nil {
-		t.Fatalf("LoadKeysFromMnemonicEnvForNetwork: LIGHT_MNEMONIC on mainnet must refuse, got nil")
+		t.Fatalf("LoadKeysFromMnemonicEnvForNetwork: LightMnemonic on mainnet must refuse, got nil")
 	}
 
 	// Same env on a dev mesh should succeed (the guard does not refuse;
 	// derivation proceeds via the underlying LoadKeysFromMnemonicEnv).
 	keys, err := LoadKeysFromMnemonicEnvForNetwork(constants.LocalID, 1)
 	if err != nil {
-		t.Fatalf("LoadKeysFromMnemonicEnvForNetwork: LIGHT_MNEMONIC on dev (LocalID=1337): unexpected error: %v", err)
+		t.Fatalf("LoadKeysFromMnemonicEnvForNetwork: LightMnemonic on dev (LocalID=1337): unexpected error: %v", err)
 	}
 	if len(keys) != 1 {
 		t.Fatalf("expected 1 key, got %d", len(keys))
