@@ -8,15 +8,9 @@ import (
 )
 
 func main() {
-	mnemonic := ""
-	for _, env := range []string{"MNEMONIC", "LIGHT_MNEMONIC"} {
-		if v := os.Getenv(env); v != "" {
-			mnemonic = v
-			break
-		}
-	}
+	mnemonic := os.Getenv(genesis.MnemonicEnvVar)
 	if mnemonic == "" {
-		fmt.Println("mnemonic not set (set MNEMONIC or LIGHT_MNEMONIC)")
+		fmt.Printf("mnemonic not set (set %s)\n", genesis.MnemonicEnvVar)
 		os.Exit(1)
 	}
 

@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+### Mnemonic env unification — one var, one way
+
+The genesis mnemonic is now read from exactly one env var: `LUX_MNEMONIC`.
+The previous two-env fallback chain (`MNEMONIC` then `LIGHT_MNEMONIC`)
+is gone — there is one and only one canonical name.
+
+- `pkg/genesis.MnemonicEnvVar` constant exposes the name (`"LUX_MNEMONIC"`).
+- `getMnemonicEnv()` reads only `LUX_MNEMONIC`. No fallback.
+- All CLI help, error messages and tests now reference `LUX_MNEMONIC`.
+- `LightMnemonic` constant still holds the well-known dev seed value:
+  pass it as the value of `LUX_MNEMONIC` to bootstrap a local network.
+
+Per-env isolation comes from a DIFFERENT mnemonic per env (loaded from
+KMS for production), not from the env-var name.
+
+### Dead-code removal — vesting rot
+
+The "50M free + 50M vesting at 1%/year over 100y from Jan 1 2020"
+docstring was a lie: the canonical builder `buildConfigFromKeyInfos`
+never wired the 100-period schedule (the prior code admits the schedule
+"overflows zapdb batch limit"). Drop the unreachable plumbing:
+
+- `StakingStartTime`, `UnlockInterval`, `VestingPeriods` constants
+- `buildUnlockSchedule()` function (pkg/genesis/keys.go)
+- `VestingConfig` struct + `DefaultVesting()` + `WithVesting()`
+- vesting branches in `ChainAllocations.PChain()` / `PChainMap()`
+- `GeneratePChainAllocationsWithVesting()` function
+- `MainnetAllocations` no longer calls `WithVesting(DefaultVesting())`
+
+The validator stake-lock (3-entry 5y/10y/20y schedule attached to the
+validator's UTXO inside `buildConfigFromKeyInfos`) is unchanged — that
+locked-stake bucket is the only `UnlockSchedule` in the canonical
+genesis path and the ProtocolVM needs it.
+
+`pkg/genesis/networks.go` adds the canonical primary-network-id table
+(`MainnetID` 1, `TestnetID` 2, `DevnetID` 3, `LocalID` 1337) as the
+single source of truth for "what envs exist".
+
 ### Breaking — HIP-0077 §"Identity" HD path alignment
 
 `pkg/genesis/keys.go` now derives keys on the per-network hardened
@@ -57,7 +95,7 @@ reproduce under the new layout. Specifically:
   re-derived after upgrading.
 - If you need to keep the old addresses spendable, export their private
   keys (`BuildWalletKeyHex` on the old code) and load them via
-  `KEYS_DIR` instead of `MNEMONIC` — `LoadKeysFromDir` is unchanged.
+  `KEYS_DIR` instead of `LUX_MNEMONIC` — `LoadKeysFromDir` is unchanged.
 
 Per CLAUDE.md `no backwards compatibility, only forwards perfection`:
 this is the correct break; clients deriving from the HIP-0077 spec

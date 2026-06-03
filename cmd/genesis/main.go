@@ -42,7 +42,7 @@ func main() {
 		output          = flag.String("output", "", "Output file path (default: stdout)")
 		allocation      = flag.Uint64("allocation", genesis.DefaultAllocationPerValidator, "Allocation per validator in nLUX")
 		validators      = flag.Int("validators", 3, "Number of validators for mnemonic-based genesis")
-		walletKeys      = flag.Int("wallet-keys", 0, "Number of mnemonic-derived wallet keys to fund (Lux-internal hardened path m/44'/9000'/nid'/1'/i'; requires MNEMONIC env)")
+		walletKeys      = flag.Int("wallet-keys", 0, "Number of mnemonic-derived wallet keys to fund (Lux-internal hardened path m/44'/9000'/nid'/1'/i'; requires LUX_MNEMONIC env)")
 		walletAmount    = flag.Uint64("wallet-amount", 10000, "Allocation per wallet key in LUX (default: 10000)")
 		bip44WalletKeys = flag.Int("bip44-wallet-keys", 0, "Number of canonical BIP44 wallet keys to fund (m/44'/9000'/0'/0/i — SLIP-0044 coin type 9000)")
 		cchainPath      = flag.String("cchain", "", "Path to existing C-Chain genesis (preserves original)")
@@ -115,10 +115,10 @@ Flags:
 
 Environment Variables:
   KEYS_DIR       Directory containing node keys
-  MNEMONIC       BIP39 mnemonic for key derivation
+  LUX_MNEMONIC   BIP39 mnemonic for key derivation
   PRIVATE_KEY    Single private key (hex)
-  GENESIS_DIR        Directory containing genesis component files
-  NETWORK_ID         Network ID
+  GENESIS_DIR    Directory containing genesis component files
+  NETWORK_ID     Network ID
 
 Examples:
   # Generate local genesis from keys in ~/.lux/keys
@@ -128,7 +128,7 @@ Examples:
   genesis -network mainnet -cchain mainnet/cchain.json -output primary.json
 
   # Generate from mnemonic with 3 validators
-  MNEMONIC="your mnemonic here" genesis -validators 3 -output primary.json
+  LUX_MNEMONIC="your mnemonic here" genesis -validators 3 -output primary.json
 
   # Load from existing genesis directory
   genesis -genesis-dir ./mainnet -output primary.json`)
@@ -189,7 +189,7 @@ func buildConfig(networkID uint32, keysDir, genesisDir string, allocation uint64
 
 	config, err = genesis.BuildConfigFromKeys(networkID, keysDir, allocation)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build config: %w (try setting KEYS_DIR, MNEMONIC, or PRIVATE_KEY)", err)
+		return nil, fmt.Errorf("failed to build config: %w (try setting KEYS_DIR, LUX_MNEMONIC, or PRIVATE_KEY)", err)
 	}
 
 	config = maybeAddWalletAllocations(config, walletKeys, walletAmount)
