@@ -8,8 +8,6 @@
     "strictPQTimestamp": 1766708400
   },
   "precompileUpgrades": [
-    {"warpConfig": {"blockTimestamp": 1766708400, "quorumNumerator": 67, "requirePrimaryNetworkSigners": true}},
-
     {"aiMiningConfig":   {"blockTimestamp": 0}},
     {"blake3Config":     {"blockTimestamp": 0}},
     {"cggmp21Verify":    {"blockTimestamp": 0}},
@@ -41,18 +39,14 @@
     {"slhdsaVerify":     {"blockTimestamp": 0}},
     {"zkConfig":         {"blockTimestamp": 0}},
 
+    {"warpConfig": {"blockTimestamp": 1766708399, "disable": true}},
+    {"warpConfig": {"blockTimestamp": 1766708400, "quorumNumerator": 67, "requirePrimaryNetworkSigners": true}},
+
     {"pulsarVerify":           {"blockTimestamp": 1782864000}},
     {"magnetarVerify":         {"blockTimestamp": 1782864000}},
     {"p3qVerify":              {"blockTimestamp": 1782864000}},
     {"coronaThreshold":        {"blockTimestamp": 1782864000}},
     {"hqcEncapsulate":         {"blockTimestamp": 1782864000}},
-    {"bls12381G1AddConfig":    {"blockTimestamp": 1782864000}},
-    {"bls12381G1MulConfig":    {"blockTimestamp": 1782864000}},
-    {"bls12381G1MSMConfig":    {"blockTimestamp": 1782864000}},
-    {"bls12381G2AddConfig":    {"blockTimestamp": 1782864000}},
-    {"bls12381G2MulConfig":    {"blockTimestamp": 1782864000}},
-    {"bls12381G2MSMConfig":    {"blockTimestamp": 1782864000}},
-    {"bls12381PairingConfig":  {"blockTimestamp": 1782864000}},
     {"curve25519Config":       {"blockTimestamp": 1782864000}},
     {"x25519Config":           {"blockTimestamp": 1782864000}},
     {"sr25519Verify":          {"blockTimestamp": 1782864000}},
