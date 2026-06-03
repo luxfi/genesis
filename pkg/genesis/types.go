@@ -226,7 +226,7 @@ type CChainParams struct {
 	TerminalTotalDifficulty uint64      `json:"terminalTotalDifficulty,omitempty"`
 	EVMTimestamp            uint64      `json:"evmTimestamp,omitempty"`
 	DurangoTimestamp        uint64      `json:"durangoTimestamp,omitempty"`
-	EtnaTimestamp           uint64      `json:"etnaTimestamp,omitempty"`
+	QuasarTimestamp         uint64      `json:"quasarTimestamp,omitempty"`
 	FeeConfig               FeeConfig   `json:"feeConfig"`
 	WarpConfig              *WarpConfig `json:"warpConfig,omitempty"`
 }
