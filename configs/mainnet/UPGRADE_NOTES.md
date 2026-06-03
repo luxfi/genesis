@@ -7,17 +7,25 @@ excluded from the primary-network safe subset.
 
 ## Safe-subset framing
 
-- **Brand L2s** (hanzo, zoo, pars, spc) carry **43 precompiles** baked into
-  their genesis at block 0. See `~/work/lux/genesis/configs/hanzo-mainnet/genesis.json`
-  for the canonical L2 set; the precompile keys are identical across the four
+- **Brand L2s** (hanzo, zoo, pars, spc) carry **42 precompiles** baked into
+  their genesis at block 0 after the `eciesConfig` scrub in this patch.
+  See `~/work/lux/genesis/configs/hanzo-mainnet/genesis.json` for the
+  canonical L2 set; the precompile keys are identical across the four
   brand L2 genesis files.
-- **Primary C-Chain safe subset = 42** (brand L2 `43` minus `eciesConfig`),
-  plus three additional standard EIP precompiles that brand L2s do not need
-  but the primary network does (`kzg4844Config`, `secp256r1Config`,
-  `ed25519Config`), plus three burn-handler precompiles
-  (`deadConfig`, `deadFullConfig`, `deadZeroConfig`) that exist only on the
-  primary network, plus `warpConfig` and the AI-Mining / DEX / Router stack
-  already activated at genesis (`blockTimestamp: 0`).
+- **Primary C-Chain safe subset = 42** (the brand L2 set), plus three
+  burn-handler precompiles (`deadConfig`, `deadFullConfig`,
+  `deadZeroConfig`) that exist only on the primary network, plus
+  `warpConfig` and the AI-Mining / DEX / Router stack already activated
+  at genesis (`blockTimestamp: 0`).
+- **NOT in this patch** (deferred to v2 — see *Followup* below):
+  `kzg4844Config`, `secp256r1Config`, `ed25519Config`. The pinned
+  `luxfi/precompile v0.5.27` ships these as primitive modules but does
+  not declare `RegisterModule(...)` for them, so the EVM extras
+  `PrecompileUpgrade.UnmarshalJSON` parser rejects them with
+  `"unknown precompile config"`. Re-add after bumping
+  `luxfi/precompile` to a version that registers all three (and
+  rebuilding the EVM plugin image so the registry side-effect imports
+  pick them up).
 
 ## Exclusions
 
@@ -63,9 +71,9 @@ already pins `feeConfig` directly, so no behavioural change.
 | Tier | Timestamp (Unix) | Timestamp (UTC) | Count | Notes |
 |------|------------------|-----------------|-------|-------|
 | Genesis    | `0`          | block 0       | 19 | `warpConfig` + 18 already-live precompiles (the set inlined in `~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml` `UPGRADE_JSON`). DO NOT RESCHEDULE — luxd's `checkPrecompileCompatible` refuses to boot if any already-live precompile is moved to a different timestamp. The `IsForwardCompatibleWithLiveActivations` rollout test pins this contract. |
-| Safe-subset extension (this patch) | `1782864000` | 2026-07-01 00:00 UTC | 30 | Forward-dated 29 days from patch authorship date (2026-06-02) to give validators upgrade buffer. Brand L2s already carry these at their own block-0 genesis. |
+| Safe-subset extension (this patch) | `1782864000` | 2026-07-01 00:00 UTC | 27 | Forward-dated 29 days from patch authorship date (2026-06-02) to give validators upgrade buffer. Brand L2s already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included in this patch — they are unregistered in `luxfi/precompile v0.5.27` and would brick boot. See *Exclusions* and *Followup* sections. |
 
-Total entries: **49** (1 warp + 18 live + 30 forward-dated).
+Total entries: **46** (1 warp + 18 live + 27 forward-dated).
 
 ## Strict-PQ profile gate
 
@@ -99,16 +107,49 @@ surfaces that consume it:
 1. `~/work/lux/genesis/configs/mainnet/upgrade.json` — canonical (this
    file).
 2. `~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml` — k8s
-   StatefulSet startup script. Currently carries a hand-coded inline
-   `UPGRADE_JSON` shell variable with 17 of the 18 already-live activations
-   (the `aiMiningConfig` plus the 16 deterministic crypto/dex precompiles
-   activated at block 0). The same shell variable is written to all 5 EVM
-   chains (C + 4 brand L2s), which is a separate latent issue — brand L2s
-   already carry these precompiles in their genesis at block 0 and
-   overwriting their per-chain `upgrade.json` with the primary set is at
-   best a no-op and at worst a wedge. The k8s ConfigMap rewrite is the
-   operator-side follow-up; this canonical file change is the
-   source-of-truth side.
+   StatefulSet ConfigMap. The canonical content above is mirrored
+   byte-for-byte in the `cchain-upgrade.json` data key. The startup
+   script copies that file to `/data/configs/chains/C/upgrade.json`
+   at boot (PRIMARY C-CHAIN ONLY). Brand L2 chain config directories
+   are NOT touched — brand L2 genesis files carry their precompile
+   activations baked at block 0 and overwriting their upgrade.json
+   with the C-Chain schedule could reschedule an already-live
+   precompile and brick the chain via `checkPrecompileCompatible`.
+   Sync rule: this file and the ConfigMap data key are a coordinated
+   pair; updating one without the other is a silent drift footgun.
+
+## Followup (v2 patch)
+
+1. Bump `github.com/luxfi/precompile` (currently pinned at `v0.5.27` in
+   `~/work/lux/evm/go.mod:36`) to a version that declares
+   `RegisterModule(...)` for the `kzg4844`, `secp256r1`, and `ed25519`
+   modules. Each module must have an `init()` that registers a
+   `precompileconfig.Config` factory keyed on `kzg4844Config`,
+   `secp256r1Config`, and `ed25519Config` respectively.
+2. Rebuild the EVM plugin image so its
+   `~/work/lux/evm/precompile/registry/registry.go` side-effect imports
+   pick up the new `init()` calls.
+3. Re-add the three keys to `~/work/lux/genesis/configs/mainnet/upgrade.json`
+   at a forward-dated timestamp (still after Quasar activation
+   `1766708400` so the strict-PQ gate is in force when they activate).
+4. Re-run the new
+   `TestMainnetUpgradeJSON_UnmarshalsAgainstRegistry` end-to-end test
+   to confirm the parser accepts every key in the canonical file.
+
+## Brand genesis scrub (this patch)
+
+`eciesConfig` is deliberately not registered in
+`luxfi/evm/precompile/registry/registry.go` (the ECIES precompile was
+removed because the recipient secret key sits in calldata — see
+*Exclusions* above). The brand L2 genesis files at
+`~/work/lux/genesis/configs/{hanzo,zoo,pars,spc}-{mainnet,testnet,devnet}/genesis.json`
+(11 of 12) carried `eciesConfig` in their block-0
+`precompileUpgrades` array, which would fail the same
+`PrecompileUpgrade.UnmarshalJSON` parser as soon as any CTO-side
+canonical-genesis rebootstrap re-fired a `CreateChainTx` against them.
+The scrub strips `eciesConfig` from those 11 files in this same
+patch. `zoo-mainnet` had no `precompileUpgrades` array and was
+untouched.
 
 ## Verification
 
@@ -126,24 +167,35 @@ After luxd reads this file at boot, validators on Lux mainnet should see:
 
 ## Red review checklist
 
-- [ ] Every classical precompile in tier 2 (BLS12-381 family, BabyJubJub,
+- [x] Every classical precompile in tier 2 (BLS12-381 family, BabyJubJub,
       Pasta, Pedersen, Poseidon) is verified to call
       `contract.RefuseUnderStrictPQ` at the top of its `Run()` method. If
       any does not, that is a separate latent bug — flag in followup, do
       not block this patch.
-- [ ] The 30 new activations at `1782864000` do not introduce any
+- [x] The 27 new activations at `1782864000` do not introduce any
       precompile whose source has not been audited or which has been
       deprecated.
-- [ ] Activation date `1782864000` (2026-07-01 00:00 UTC) is no earlier
+- [x] Activation date `1782864000` (2026-07-01 00:00 UTC) is no earlier
       than 14 days from merge time.
-- [ ] No `eciesConfig`, `contract*AllowListConfig`, `*NativeMinterConfig`,
+- [x] No `eciesConfig`, `contract*AllowListConfig`, `*NativeMinterConfig`,
       `rewardManagerConfig`, or `*MinterConfig` in the activation list.
-- [ ] All 18 already-live precompiles stay at `blockTimestamp: 0` so
+- [x] No `kzg4844Config`, `secp256r1Config`, or `ed25519Config` in this
+      patch (Red vector 8 CRITICAL — deferred to v2 per *Followup*).
+- [x] All 18 already-live precompiles stay at `blockTimestamp: 0` so
       `checkPrecompileCompatible` does not refuse boot.
-- [ ] Monotonicity test passes (no entry has a smaller blockTimestamp than
+- [x] Monotonicity test passes (no entry has a smaller blockTimestamp than
       its predecessor in the list).
-- [ ] k8s StatefulSet startup script is patched in a separate PR to (a)
-      inline the new canonical `UPGRADE_JSON` for the primary C-Chain only
-      and (b) stop writing `upgrade.json` to the brand L2 EVM chain
-      directories. The brand L2s already have precompiles in their genesis
-      at block 0.
+- [x] k8s StatefulSet startup script patched in lockstep
+      (`~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml`): new
+      `cchain-upgrade.json` data key mirrors this canonical byte-for-byte;
+      script seeds it onto `/data/configs/chains/C/upgrade.json` only;
+      the 4 brand L2 chain dirs are NOT touched.
+- [x] End-to-end UnmarshalJSON regression test added at
+      `~/work/lux/evm/params/extras_e2e_test/upgrade_unmarshal_test.go`
+      (Red vector 9 MEDIUM): asserts the canonical parses cleanly via
+      `extras.UpgradeConfig.UnmarshalJSON` after registry side-effects
+      AND asserts unregistered keys (kzg4844/secp256r1/ed25519) are
+      rejected with the canonical "unknown precompile config" error.
+- [x] Brand mainnet/testnet/devnet genesis files scrubbed of
+      `eciesConfig` (Red vector 6 INFO): 11 of 12 had it; all 11
+      cleaned; `zoo-mainnet` had no precompileUpgrades array.
