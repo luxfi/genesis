@@ -10,7 +10,14 @@
 
 package main
 
-import "testing"
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+)
 
 func TestNormalizeAllocKey_AlreadyCanonical(t *testing.T) {
 	canonical, repaired, valid := normalizeAllocKey("0x1111111111111111111111111111111111111111")
@@ -131,4 +138,65 @@ func TestNormalizeAllocKey_IsIdempotent(t *testing.T) {
 	if second != first {
 		t.Errorf("second-call output differs from first: %q vs %q", second, first)
 	}
+}
+
+// TestBrandL2GenesisHasNoStateRootOrGenesisHash pins the Track D
+// regression: every <brand>-<env>/genesis.json under configs/ MUST NOT
+// embed a `stateRoot` or `genesisHash` field. These two fields override
+// the result of luxfi/geth/core/genesis.go::Genesis.Commit's flushAlloc
+// — meaning any value present in the JSON silently displaces the
+// canonical alloc trie. The historical workaround that needed these
+// fields (Lux primary C-Chain header mismatch) is dead; the empirical
+// block-0 hash now lives in cchain.json. Brand L2 JSONs MUST stay
+// clean. If a generator (or a hand-edit) reintroduces these fields,
+// CreateChainTx will burn LUX and produce a chain whose block 0 has
+// a stateRoot whose trie node was never persisted to disk — the exact
+// failure mode that produced the missing-trie-node errors on testnet
+// hanzo / zoo / spc / pars between 2026-05-27 and 2026-06-02.
+func TestBrandL2GenesisHasNoStateRootOrGenesisHash(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	configsDir := filepath.Join(filepath.Dir(thisFile), "..", "..", "configs")
+	entries, err := os.ReadDir(configsDir)
+	if err != nil {
+		t.Fatalf("read configs dir %s: %v", configsDir, err)
+	}
+	checked := 0
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		// Brand L2 dirs look like `<brand>-<env>` where env is
+		// {mainnet,testnet,devnet}; skip primary-network legacy dirs
+		// (testnet/, devnet/, mainnet/, local/, localnet/, dev/,
+		// chain-configs/) — those have the embedded cChainGenesis
+		// blob which is a separate concern handled by luxd's primary
+		// genesis loader, not bootstrap-chain.
+		if !(strings.HasSuffix(name, "-mainnet") || strings.HasSuffix(name, "-testnet") || strings.HasSuffix(name, "-devnet")) {
+			continue
+		}
+		path := filepath.Join(configsDir, name, "genesis.json")
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue // brand dir without a genesis.json (e.g. metadata only)
+			}
+			t.Fatalf("read %s: %v", path, err)
+		}
+		var doc map[string]any
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			t.Fatalf("invalid json %s: %v", path, err)
+		}
+		if v, ok := doc["stateRoot"]; ok && v != nil && v != "" {
+			t.Errorf("%s: carries stateRoot=%v — must be absent (Track D regression)", path, v)
+		}
+		if v, ok := doc["genesisHash"]; ok && v != nil && v != "" {
+			t.Errorf("%s: carries genesisHash=%v — must be absent (Track D regression)", path, v)
+		}
+		checked++
+	}
+	if checked == 0 {
+		t.Fatal("no brand L2 genesis.json files found under configs/ — test self-check failed")
+	}
+	t.Logf("Track D regression gate: checked %d brand L2 genesis files, all clean", checked)
 }
