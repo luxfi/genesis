@@ -9,36 +9,19 @@ import (
 )
 
 // ChainAllocations holds genesis allocations for all chains.
-// Use NewAllocations() or AllocationBuilder to create.
+// Use NewAllocations() to create.
+//
+// All allocations are immediate (no vesting). The long-locked validator
+// stake bucket is attached separately by buildConfigFromKeyInfos and is
+// the only place an UnlockSchedule appears in the canonical genesis path.
 type ChainAllocations struct {
 	keys   []ValidatorKeyInfo
 	hrp    string
 	amount uint64
-
-	// Vesting configuration (optional)
-	vesting *VestingConfig
-}
-
-// VestingConfig defines the vesting schedule parameters.
-type VestingConfig struct {
-	StartTime uint64 // Unix timestamp when vesting starts
-	Interval  uint64 // Seconds between each unlock
-	Periods   int    // Number of unlock periods
-}
-
-// DefaultVesting returns the standard vesting config:
-// - Start: Jan 1, 2020
-// - 1% unlocks per year for 100 years
-func DefaultVesting() *VestingConfig {
-	return &VestingConfig{
-		StartTime: StakingStartTime, // Jan 1, 2020
-		Interval:  UnlockInterval,   // 1 year
-		Periods:   100,              // 100 periods = 1% per year
-	}
 }
 
 // NewAllocations creates a ChainAllocations for the given validator keys.
-// Default amount is 100M LUX per key, no vesting.
+// Default amount is DefaultValidatorAllocation per key, immediate spend.
 func NewAllocations(keys []ValidatorKeyInfo, hrp string) *ChainAllocations {
 	return &ChainAllocations{
 		keys:   keys,
@@ -53,14 +36,8 @@ func (a *ChainAllocations) WithAmount(amount uint64) *ChainAllocations {
 	return a
 }
 
-// WithVesting enables vesting with the specified config.
-// Use DefaultVesting() for standard 100-year vesting from Jan 1 2020.
-func (a *ChainAllocations) WithVesting(config *VestingConfig) *ChainAllocations {
-	a.vesting = config
-	return a
-}
-
 // PChain returns P-chain allocations in the standard AllocationJSON format.
+// All entries are immediately spendable (locktime=0).
 func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 	allocations := make([]AllocationJSON, len(a.keys))
 
@@ -70,25 +47,11 @@ func (a *ChainAllocations) PChain() ([]AllocationJSON, error) {
 			return nil, fmt.Errorf("failed to format P-chain address for key %d: %w", i, err)
 		}
 
-		var unlockSchedule []LockedAmount
-		var initialAmount uint64
-
-		if a.vesting != nil {
-			// Vested allocation
-			unlockSchedule = buildUnlockSchedule(a.amount, a.vesting.StartTime, a.vesting.Interval, a.vesting.Periods)
-			initialAmount = a.amount // X-chain gets initial amount with vesting
-		} else {
-			// Immediate allocation (no vesting)
-			// X-chain gets full initial amount for chain creation operations
-			unlockSchedule = []LockedAmount{{Amount: a.amount, Locktime: 0}}
-			initialAmount = a.amount
-		}
-
 		allocations[i] = AllocationJSON{
 			EVMAddr:        key.EVMAddr,
 			UTXOAddr:       utxoAddr,
-			InitialAmount:  initialAmount,
-			UnlockSchedule: unlockSchedule,
+			InitialAmount:  a.amount,
+			UnlockSchedule: []LockedAmount{{Amount: a.amount, Locktime: 0}},
 		}
 	}
 	return allocations, nil
@@ -130,6 +93,7 @@ func (a *ChainAllocations) CChainMap() map[string]map[string]string {
 }
 
 // PChainMap returns P-chain allocations as interface maps (for netrunner compatibility).
+// All entries are immediately spendable (locktime=0).
 func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 	allocations := make([]map[string]interface{}, len(a.keys))
 
@@ -139,34 +103,13 @@ func (a *ChainAllocations) PChainMap() ([]map[string]interface{}, error) {
 			return nil, fmt.Errorf("failed to format P-chain address for key %d: %w", i, err)
 		}
 
-		var unlockSchedule []map[string]interface{}
-		var initialAmount uint64
-
-		if a.vesting != nil {
-			// Build vesting schedule as maps
-			locked := buildUnlockSchedule(a.amount, a.vesting.StartTime, a.vesting.Interval, a.vesting.Periods)
-			unlockSchedule = make([]map[string]interface{}, len(locked))
-			for j, l := range locked {
-				unlockSchedule[j] = map[string]interface{}{
-					"amount":   l.Amount,
-					"locktime": l.Locktime,
-				}
-			}
-			initialAmount = a.amount
-		} else {
-			// Immediate allocation (no vesting)
-			// X-chain gets full initial amount for chain creation operations
-			unlockSchedule = []map[string]interface{}{
-				{"amount": a.amount, "locktime": uint64(0)},
-			}
-			initialAmount = a.amount
-		}
-
 		allocations[i] = map[string]interface{}{
-			"evmAddr":        key.EVMAddr,
-			"utxoAddr":        utxoAddr,
-			"initialAmount":  initialAmount,
-			"unlockSchedule": unlockSchedule,
+			"evmAddr":       key.EVMAddr,
+			"utxoAddr":      utxoAddr,
+			"initialAmount": a.amount,
+			"unlockSchedule": []map[string]interface{}{
+				{"amount": a.amount, "locktime": uint64(0)},
+			},
 		}
 	}
 	return allocations, nil
@@ -206,15 +149,14 @@ func QuickAllocations(keys []ValidatorKeyInfo, hrp string, amount uint64) (*AllC
 	return NewAllocations(keys, hrp).WithAmount(amount).All()
 }
 
-// MainnetAllocations creates allocations with standard mainnet vesting (1B LUX, 100 years).
+// MainnetAllocations creates immediate-spend mainnet allocations (1B LUX per key).
 func MainnetAllocations(keys []ValidatorKeyInfo, hrp string) (*AllChainAllocations, error) {
 	return NewAllocations(keys, hrp).
 		WithAmount(OneBillionLUX).
-		WithVesting(DefaultVesting()).
 		All()
 }
 
-// TestnetAllocations creates allocations suitable for testnet (100M LUX, no vesting).
+// TestnetAllocations creates immediate-spend testnet allocations (100M LUX per key).
 func TestnetAllocations(keys []ValidatorKeyInfo, hrp string) (*AllChainAllocations, error) {
 	return NewAllocations(keys, hrp).
 		WithAmount(OneHundredMillionLUX).

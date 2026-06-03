@@ -17,7 +17,7 @@ silent classification change.
 |-----|-----|--------|
 | `85a8fc8` | v1.9.6 | Pin ChainSecurityProfile into Config + Resolve at load (closes F102 genesis layer) |
 | `1d73c8d` | v1.9.6 | Swap mldsa65 keygen from cloudflare/circl to luxfi/crypto/pq/mldsa |
-| `e698307` | v1.9.5 | HD branch hardening + LIGHT_MNEMONIC production refusal (F12/F30/F31/F35) |
+| `e698307` | v1.9.5 | HD branch hardening + LightMnemonic production refusal (F12/F30/F31/F35) |
 | `fe4781c` | v1.9.5 | `LUX_DISABLE_CCHAIN=1` omits C-Chain from primary genesis |
 | `2b16f45` | v1.9.5 | Operator-overridable C-Chain genesis via `LUX_CCHAIN_GENESIS_FILE` |
 
@@ -350,7 +350,7 @@ Generate genesis configurations:
 
 ```bash
 # Generate from mnemonic
-MNEMONIC="test test..." ./genesis -network-id 96369 -validators 5 -output genesis.json
+LUX_MNEMONIC="test test..." ./genesis -network-id 96369 -validators 5 -output genesis.json
 
 # From existing keys
 ./genesis -network mainnet -keys-dir ~/.lux/keys -output genesis.json
