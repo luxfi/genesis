@@ -30,7 +30,7 @@
 //
 // Usage:
 //
-//	MNEMONIC="..." bootstrap-chain \
+//	LUX_MNEMONIC="..." bootstrap-chain \
 //	  --uri=http://luxd-0.lux-devnet.svc.cluster.local:9650 \
 //	  --hrp=dev \
 //	  --bip44-idx=5 \
@@ -134,7 +134,7 @@ func main() {
 	probeTimeout := flag.Duration("probe-timeout", 90*time.Second, "max wait per chain for eth_blockNumber>0 and isBootstrapped")
 	probeInterval := flag.Duration("probe-interval", 3*time.Second, "polling interval inside probe-timeout")
 	chainSettleDelay := flag.Duration("chain-settle-delay", 10*time.Second, "delay after IssueCreateNetworkTx before re-syncing wallet")
-	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from MNEMONIC, print the P-chain address, exit")
+	printAddrOnly := flag.Bool("print-addr-only", false, "derive the BIP44 key from LUX_MNEMONIC, print the P-chain address, exit")
 	evmHeartbeatKeyHex := flag.String("evm-heartbeat-key", "", "hex-encoded secp256k1 key funded on every EVM chain (LUX_PRIVATE_KEY). If set, the tool sends a 0-value self-tx after CreateChainTx to roll block 1 before probing eth_blockNumber>0")
 	probeBootstrapOnly := flag.Bool("probe-bootstrap-only", false, "accept the chain as healthy if info.isBootstrapped=true regardless of eth_blockNumber; use when --evm-heartbeat-key is unavailable and the operator will trigger heartbeats out-of-band")
 	// --skip-bootstrap-wait is the create-only path: issue CreateNetworkTx +
@@ -155,11 +155,11 @@ func main() {
 	// on P-chain UTXOs), set the env var LUX_WALLET_UTXO_ASSET_ID_OVERRIDE
 	// in the process environment before running. The override is read by
 	// luxfi/node/wallet/chain/p.NewContextFromClients.
-	// --key-file is an alternate entry to MNEMONIC+BIP44 for callers that
+	// --key-file is an alternate entry to LUX_MNEMONIC+BIP44 for callers that
 	// already hold the deployer's raw 32-byte secp256k1 key on disk (e.g. the
 	// node{1..5}/ec/private.key files used to fund test+dev primary genesis).
-	// When set, MNEMONIC and --bip44-idx are ignored.
-	keyFile := flag.String("key-file", "", "path to a 64-char hex secp256k1 private key (alternative to MNEMONIC+BIP44 derivation)")
+	// When set, LUX_MNEMONIC and --bip44-idx are ignored.
+	keyFile := flag.String("key-file", "", "path to a 64-char hex secp256k1 private key (alternative to LUX_MNEMONIC+BIP44 derivation)")
 	flag.Parse()
 
 	loadKey := func() (*secp256k1.PrivateKey, error) {
@@ -175,9 +175,9 @@ func main() {
 			}
 			return secp256k1.ToPrivateKey(keyBytes)
 		}
-		mn := strings.TrimSpace(os.Getenv("MNEMONIC"))
+		mn := strings.TrimSpace(os.Getenv("LUX_MNEMONIC"))
 		if mn == "" {
-			return nil, fmt.Errorf("MNEMONIC env var or --key-file required")
+			return nil, fmt.Errorf("LUX_MNEMONIC env var or --key-file required")
 		}
 		return deriveLuxKey(mn, uint32(*bipIdx))
 	}
