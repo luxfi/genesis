@@ -469,7 +469,11 @@ invalid gas limit: have 12000000, want 10000000
 Zoo genesis files had `fortunaTimestamp: 0` which activates Fortuna from block 0. Fortuna uses dynamic gas limits via `state.MaxCapacity()` returning 10M, but original blocks had 12M gas limit (Cortina rules).
 
 ### Solution
-Set far-future timestamps for Fortuna, Etna, and Granite upgrades:
+Set far-future timestamps for the pre-Quasar Edition upgrades that the
+imported Zoo blocks predate (the `etnaTimestamp`/`fortunaTimestamp`/
+`graniteTimestamp` JSON fields are preserved verbatim because they are
+the wire-format identifiers consumed by luxfi/evm; only the prose label
+moves to "Quasar Edition upgrades"):
 
 ```json
 {
