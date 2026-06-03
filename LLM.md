@@ -269,7 +269,7 @@ C-Chain protocol upgrades activated Dec 25, 2024 @ 4:20pm UTC (timestamp 1735143
 {
   "evmTimestamp": 0,
   "durangoTimestamp": 0,
-  "etnaTimestamp": 1735143600,
+  "quasarTimestamp": 1735143600,
   "fortunaTimestamp": 1735143600,
   "graniteTimestamp": 1735143600
 }
@@ -470,14 +470,14 @@ Zoo genesis files had `fortunaTimestamp: 0` which activates Fortuna from block 0
 
 ### Solution
 Set far-future timestamps for the pre-Quasar Edition upgrades that the
-imported Zoo blocks predate (the `etnaTimestamp`/`fortunaTimestamp`/
+imported Zoo blocks predate (the `quasarTimestamp`/`fortunaTimestamp`/
 `graniteTimestamp` JSON fields are preserved verbatim because they are
 the wire-format identifiers consumed by luxfi/evm; only the prose label
 moves to "Quasar Edition upgrades"):
 
 ```json
 {
-  "etnaTimestamp": 253399622400,
+  "quasarTimestamp": 253399622400,
   "fortunaTimestamp": 253399622400,
   "graniteTimestamp": 253399622400
 }
