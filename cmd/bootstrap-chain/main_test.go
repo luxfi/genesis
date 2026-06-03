@@ -140,6 +140,72 @@ func TestNormalizeAllocKey_IsIdempotent(t *testing.T) {
 	}
 }
 
+// TestContentHashChainName_Deterministic pins the canonical
+// chain.name format and its idempotency contract. Re-running
+// bootstrap-chain with the same canonical genesis bytes MUST produce
+// the same chain.name, otherwise idempotent re-runs would burn LUX
+// creating duplicate chains for the same content.
+func TestContentHashChainName_Deterministic(t *testing.T) {
+	g := []byte(`{"config":{"chainId":36963},"alloc":{}}`)
+	a := contentHashChainName("hanzo", "testnet", g)
+	b := contentHashChainName("hanzo", "testnet", g)
+	if a != b {
+		t.Fatalf("content hash must be deterministic: %q vs %q", a, b)
+	}
+	if !strings.HasPrefix(a, "hanzo-") {
+		t.Errorf("name must be brand-rooted; got %q", a)
+	}
+	suffix := strings.TrimPrefix(a, "hanzo-")
+	if len(suffix) != 8 {
+		t.Errorf("suffix must be 8 hex chars; got %q (len=%d)", suffix, len(suffix))
+	}
+	for _, c := range suffix {
+		switch {
+		case c >= '0' && c <= '9', c >= 'a' && c <= 'f':
+		default:
+			t.Errorf("suffix must be lowercase hex; got %q (bad char %q)", suffix, c)
+		}
+	}
+}
+
+// TestContentHashChainName_DifferentGenesisDifferentName pins the
+// no-collision contract. A change to the genesis bytes (e.g. EVM chain
+// ID, alloc, anything) MUST produce a different chain.name, so
+// CreateChainTx succeeds against P-chain instead of colliding with the
+// previous (stale) chain row.
+func TestContentHashChainName_DifferentGenesisDifferentName(t *testing.T) {
+	a := contentHashChainName("hanzo", "testnet", []byte(`{"config":{"chainId":36963}}`))
+	b := contentHashChainName("hanzo", "testnet", []byte(`{"config":{"chainId":36964}}`))
+	if a == b {
+		t.Fatalf("different genesis bytes must produce different chain.name; both = %q", a)
+	}
+}
+
+// TestContentHashChainName_DifferentBrandDifferentName pins the
+// brand-scoping contract. Two brands with identical (improbable but
+// possible) genesis bytes still get distinct chain.name values because
+// the brand is mixed into the hash input.
+func TestContentHashChainName_DifferentBrandDifferentName(t *testing.T) {
+	g := []byte(`{"config":{"chainId":36963},"alloc":{}}`)
+	a := contentHashChainName("hanzo", "testnet", g)
+	b := contentHashChainName("zoo", "testnet", g)
+	if a == b {
+		t.Fatalf("different brands must produce different chain.name; both = %q", a)
+	}
+}
+
+// TestContentHashChainName_DifferentEnvDifferentName pins env-scoping.
+// Even with identical brand+genesis, testnet and devnet produce
+// distinct chain.name values.
+func TestContentHashChainName_DifferentEnvDifferentName(t *testing.T) {
+	g := []byte(`{"config":{"chainId":36963},"alloc":{}}`)
+	a := contentHashChainName("hanzo", "testnet", g)
+	b := contentHashChainName("hanzo", "devnet", g)
+	if a == b {
+		t.Fatalf("different envs must produce different chain.name; both = %q", a)
+	}
+}
+
 // TestBrandL2GenesisHasNoStateRootOrGenesisHash pins the Track D
 // regression: every <brand>-<env>/genesis.json under configs/ MUST NOT
 // embed a `stateRoot` or `genesisHash` field. These two fields override

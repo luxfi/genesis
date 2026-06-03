@@ -42,6 +42,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -81,12 +82,17 @@ const defaultEVMID = "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6"
 
 // resultChain is the per-chain output written to --output.
 //
+// Brand is the user-facing brand identifier ("hanzo", "zoo", "spc",
+// "pars") that downstream consumers (chain-aliases CM, explorer-chains
+// CM, gateway routes) map onto. ChainTxName is the P-chain-unique
+// identifier passed to IssueCreateChainTx (content-hashed by default).
 // NetworkID is the CreateNetworkTx ID — the per-chain validator network
 // that owns the blockchain. ChainID is the blockchain's own globally
 // unique ID. EVMChainID is the EIP-155 chain ID for EVM JSON-RPC.
-// Three distinct concepts; never alias.
+// Five distinct concepts; never alias.
 type resultChain struct {
-	Name           string `json:"name"`
+	Brand          string `json:"brand"`
+	ChainTxName    string `json:"chainTxName"`
 	NetworkID      string `json:"networkId"`
 	ChainID        string `json:"chainId"`
 	EVMChainID     uint64 `json:"evmChainId"`
@@ -115,8 +121,14 @@ func main() {
 	// concept, one flag — this is the declared list of chains this network
 	// serves. The tool reads it, queries the P-chain, and idempotently
 	// creates the missing ones.
-	trackChainIDs := flag.String("track-chain-ids", "hanzo,zoo,pars,spc", "comma-separated chain names (matches luxd --track-chain-ids)")
+	trackChainIDs := flag.String("track-chain-ids", "hanzo,zoo,pars,spc", "comma-separated brand names (matches luxd --track-chain-ids). Each name resolves a (brand,env) → configs/<brand>-<env>/genesis.json and a content-hashed CreateChainTx name.")
 	vmIDStr := flag.String("vm-id", defaultEVMID, "EVM VM ID present in luxd's --plugin-dir")
+	// --chain-name-override pins an explicit CreateChainTx name for a single
+	// brand (format: <brand>=<name>, repeatable). Bypasses the content-hash
+	// default. Use only for legacy reattachment scenarios; the canonical
+	// path is the content-hash default which keeps re-runs idempotent and
+	// avoids collisions on P-chain.
+	chainNameOverride := flag.String("chain-name-override", "", "comma-separated <brand>=<chainName> overrides (e.g. 'hanzo=hanzo-v2,zoo=zoo-final'). Empty = use content-hash default.")
 	output := flag.String("output", "/dev/stdout", "result JSON output path")
 	skipValidators := flag.Bool("skip-validators", false, "skip adding primary validators as chain validators")
 	probeTimeout := flag.Duration("probe-timeout", 90*time.Second, "max wait per chain for eth_blockNumber>0 and isBootstrapped")
@@ -201,18 +213,51 @@ func main() {
 		chains[i] = strings.TrimSpace(chains[i])
 	}
 
+	// Parse --chain-name-override (CSV of <brand>=<name>).
+	overrideByBrand := map[string]string{}
+	if strings.TrimSpace(*chainNameOverride) != "" {
+		for _, kv := range strings.Split(*chainNameOverride, ",") {
+			kv = strings.TrimSpace(kv)
+			if kv == "" {
+				continue
+			}
+			eq := strings.IndexByte(kv, '=')
+			if eq <= 0 || eq == len(kv)-1 {
+				log.Fatalf("--chain-name-override entry %q: expected <brand>=<name>", kv)
+			}
+			overrideByBrand[strings.TrimSpace(kv[:eq])] = strings.TrimSpace(kv[eq+1:])
+		}
+	}
+
 	// Pre-flight: load every genesis up front. A bad path is fatal before
 	// we burn any P-chain LUX on a CreateNetwork that we can't follow with
 	// a CreateChain. The loader validates 0x-prefixing on alloc keys
 	// (auto-fixes in memory, never rewrites the file on disk).
+	//
+	// Two-name decomposition (decomplected from brand identity):
+	//   - Brand          — user-facing brand identifier ("hanzo", "zoo",
+	//                      "spc", "pars"). Lives at the chain-aliases CM
+	//                      layer (blockchainID → ["hanzo"]). NOT used as
+	//                      the CreateChainTx name.
+	//   - ChainTxName    — P-chain-unique identifier passed to
+	//                      IssueCreateChainTx. Default is content-
+	//                      addressed: "<brand>-<8hex>" where 8hex is
+	//                      hex(SHA256("<brand>|<env>|"||genesisBytes))
+	//                      [:4]. Same canonical genesis → same name (idem-
+	//                      potent re-runs). Different genesis → different
+	//                      name → no collision.
+	//   - GenesisPath    — configs/<brand>-<env>/genesis.json (one
+	//                      canonical path per (brand,env); no "fix"
+	//                      suffix variants).
 	type chainSpec struct {
-		Name       string
-		GenesisRaw []byte
-		EVMChainID uint64
+		Brand       string // user-facing brand identifier
+		ChainTxName string // P-chain unique name (content-hash or override)
+		GenesisRaw  []byte
+		EVMChainID  uint64
 	}
 	specs := make([]chainSpec, 0, len(chains))
-	for _, name := range chains {
-		path := filepath.Join(*configsDir, fmt.Sprintf("%s-%s", name, *networkLabel), "genesis.json")
+	for _, brand := range chains {
+		path := filepath.Join(*configsDir, fmt.Sprintf("%s-%s", brand, *networkLabel), "genesis.json")
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			log.Fatalf("read genesis %s: %v", path, err)
@@ -248,13 +293,13 @@ func main() {
 		if v, ok := doc["stateRoot"]; ok && v != nil && v != "" {
 			log.Fatalf(
 				"[%s] %s: genesis %s carries pre-computed stateRoot=%v — brand L2 JSON must let flushAlloc compute the root (see Track D root cause + geth/core/genesis.go:592-595)",
-				*networkLabel, name, path, v,
+				*networkLabel, brand, path, v,
 			)
 		}
 		if v, ok := doc["genesisHash"]; ok && v != nil && v != "" {
 			log.Fatalf(
 				"[%s] %s: genesis %s carries pre-computed genesisHash=%v — brand L2 JSON must let toBlockWithRoot compute the hash (see geth/core/genesis.go:602-605)",
-				*networkLabel, name, path, v,
+				*networkLabel, brand, path, v,
 			)
 		}
 		// Defensive 0x prefix + hex shape validation on alloc keys.
@@ -297,7 +342,7 @@ func main() {
 				}
 				log.Fatalf(
 					"[%s] %s: %d malformed alloc keys (require canonical /^0x[0-9a-fA-F]{40}$/); sample: %v",
-					*networkLabel, name, len(bad), preview,
+					*networkLabel, brand, len(bad), preview,
 				)
 			}
 			doc["alloc"] = repaired
@@ -305,12 +350,27 @@ func main() {
 				raw = patched
 				log.Printf(
 					"[%s] %s: alloc keys ok=%d 0x-repaired=%d (in-memory only, file unchanged)",
-					*networkLabel, name, ok, fixed,
+					*networkLabel, brand, ok, fixed,
 				)
 			}
 		}
-		specs = append(specs, chainSpec{Name: name, GenesisRaw: raw, EVMChainID: evmChainID})
-		log.Printf("[%s] loaded %s genesis (evm chainId=%d, %d bytes)", *networkLabel, name, evmChainID, len(raw))
+		// Decomplect chain.name from brand identity. Default is content-
+		// addressed: same canonical genesis → same chain.name → idempotent
+		// across re-runs. Different bytes → different chain.name → no
+		// collision against stale "hanzo"/"zoo"/"spc"/"pars" chain rows
+		// from prior CreateChainTx attempts on P-chain.
+		chainTxName := overrideByBrand[brand]
+		if chainTxName == "" {
+			chainTxName = contentHashChainName(brand, *networkLabel, raw)
+		}
+		specs = append(specs, chainSpec{
+			Brand:       brand,
+			ChainTxName: chainTxName,
+			GenesisRaw:  raw,
+			EVMChainID:  evmChainID,
+		})
+		log.Printf("[%s] loaded %s genesis (chainTxName=%s, evm chainId=%d, %d bytes)",
+			*networkLabel, brand, chainTxName, evmChainID, len(raw))
 	}
 
 	ctx := context.Background()
@@ -329,10 +389,15 @@ func main() {
 	}
 
 	// Single source of truth for "already created" — query the live
-	// P-chain for the current blockchain set, then look up by chain name.
-	// This removes the operator burden of maintaining a --existing-X flag
-	// in lockstep with cluster reality.
-	existingByName := map[string]struct {
+	// P-chain for the current blockchain set, then look up by the
+	// content-hashed ChainTxName. This removes the operator burden of
+	// maintaining a --existing-X flag in lockstep with cluster reality
+	// AND makes the idempotency check exact: a pre-existing chain
+	// matches IFF it shares the same canonical genesis bytes (because
+	// chain.name encodes the content hash). A previous "hanzo" chain
+	// from a different genesis is NOT matched and falls through to a
+	// fresh CreateChainTx with a new, distinct chain.name.
+	existingByChainTxName := map[string]struct {
 		NetworkID ids.ID // parent validator-network (CreateNetworkTx ID)
 		ChainID   ids.ID // the blockchain's own ID
 	}{}
@@ -348,13 +413,13 @@ func main() {
 				byName[strings.ToLower(b.Name)] = b
 			}
 			for _, spec := range specs {
-				if b, ok := byName[strings.ToLower(spec.Name)]; ok {
-					existingByName[spec.Name] = struct {
+				if b, ok := byName[strings.ToLower(spec.ChainTxName)]; ok {
+					existingByChainTxName[spec.ChainTxName] = struct {
 						NetworkID ids.ID
 						ChainID   ids.ID
 					}{NetworkID: b.NetworkID, ChainID: b.ID}
-					log.Printf("[%s/%s] pre-existing chain found via platform.getBlockchains: chainID=%s networkID=%s",
-						*networkLabel, spec.Name, b.ID, b.NetworkID)
+					log.Printf("[%s/%s] pre-existing chain found via platform.getBlockchains: chainTxName=%s chainID=%s networkID=%s",
+						*networkLabel, spec.Brand, spec.ChainTxName, b.ID, b.NetworkID)
 				}
 			}
 		}
@@ -399,7 +464,7 @@ func main() {
 	// exist yet — pre-existing chains are skipped entirely.
 	pendingCount := 0
 	for _, s := range specs {
-		if _, ok := existingByName[s.Name]; !ok {
+		if _, ok := existingByChainTxName[s.ChainTxName]; !ok {
 			pendingCount++
 		}
 	}
@@ -428,26 +493,26 @@ func main() {
 	}
 
 	for _, spec := range specs {
-		log.Printf("[%s] === bootstrapping %s ===", *networkLabel, spec.Name)
+		log.Printf("[%s] === bootstrapping %s (chainTxName=%s) ===", *networkLabel, spec.Brand, spec.ChainTxName)
 
 		var networkID ids.ID // chain-owner validator network (CreateNetworkTx ID)
 		var chainID ids.ID   // the blockchain's own ID
 		reused := false
 
-		if ec, ok := existingByName[spec.Name]; ok {
+		if ec, ok := existingByChainTxName[spec.ChainTxName]; ok {
 			networkID = ec.NetworkID
 			chainID = ec.ChainID
 			reused = true
 			log.Printf("[%s/%s] REUSE: networkID=%s chainID=%s (skipping both CreateNetworkTx and CreateChainTx)",
-				*networkLabel, spec.Name, networkID, chainID)
+				*networkLabel, spec.Brand, networkID, chainID)
 		} else {
-			log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Name)
+			log.Printf("[%s/%s] IssueCreateNetworkTx", *networkLabel, spec.Brand)
 			createNetTx, err := w.P().IssueCreateNetworkTx(owner)
 			if err != nil {
-				log.Fatalf("[%s] create network: %v", spec.Name, err)
+				log.Fatalf("[%s] create network: %v", spec.Brand, err)
 			}
 			networkID = createNetTx.ID()
-			log.Printf("[%s/%s] network ID = %s", *networkLabel, spec.Name, networkID)
+			log.Printf("[%s/%s] network ID = %s", *networkLabel, spec.Brand, networkID)
 			time.Sleep(*chainSettleDelay)
 
 			// Re-sync wallet with the new chain-owner tx fetched, so the
@@ -463,20 +528,21 @@ func main() {
 				if err == nil {
 					break
 				}
-				log.Printf("[%s] wallet re-sync attempt %d: %v", spec.Name, i+1, err)
+				log.Printf("[%s] wallet re-sync attempt %d: %v", spec.Brand, i+1, err)
 				time.Sleep(5 * time.Second)
 			}
 			if err != nil {
-				log.Fatalf("[%s] wallet re-sync failed: %v", spec.Name, err)
+				log.Fatalf("[%s] wallet re-sync failed: %v", spec.Brand, err)
 			}
 
-			log.Printf("[%s/%s] IssueCreateChainTx (vmID=%s)", *networkLabel, spec.Name, vmID)
-			createChainTx, err := w2.P().IssueCreateChainTx(networkID, spec.GenesisRaw, vmID, nil, spec.Name)
+			log.Printf("[%s/%s] IssueCreateChainTx (vmID=%s, chainTxName=%s)",
+				*networkLabel, spec.Brand, vmID, spec.ChainTxName)
+			createChainTx, err := w2.P().IssueCreateChainTx(networkID, spec.GenesisRaw, vmID, nil, spec.ChainTxName)
 			if err != nil {
-				log.Fatalf("[%s] create chain: %v", spec.Name, err)
+				log.Fatalf("[%s] create chain: %v", spec.Brand, err)
 			}
 			chainID = createChainTx.ID()
-			log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Name, chainID)
+			log.Printf("[%s/%s] blockchain ID = %s", *networkLabel, spec.Brand, chainID)
 		}
 
 		if !*skipValidators && len(nodeIDs) > 0 && !reused {
@@ -488,7 +554,7 @@ func main() {
 				PChainTxsToFetch: set.Of(networkID),
 			})
 			if err != nil {
-				log.Printf("[%s] WARN validator wallet sync failed: %v", spec.Name, err)
+				log.Printf("[%s] WARN validator wallet sync failed: %v", spec.Brand, err)
 			} else {
 				startTime := time.Now().Add(60 * time.Second)
 				endTime := startTime.Add(300 * 24 * time.Hour)
@@ -510,9 +576,9 @@ func main() {
 						Chain: networkID,
 					})
 					if err != nil {
-						log.Printf("[%s] WARN add validator %s: %v", spec.Name, nid, err)
+						log.Printf("[%s] WARN add validator %s: %v", spec.Brand, nid, err)
 					} else {
-						log.Printf("[%s] added chain validator: %s", spec.Name, nid)
+						log.Printf("[%s] added chain validator: %s", spec.Brand, nid)
 					}
 					time.Sleep(1 * time.Second)
 				}
@@ -530,7 +596,7 @@ func main() {
 				EVMKeychain: kc,
 			})
 			if err != nil {
-				log.Fatalf("[%s] post-chain wallet re-sync: %v", spec.Name, err)
+				log.Fatalf("[%s] post-chain wallet re-sync: %v", spec.Brand, err)
 			}
 		}
 
@@ -538,36 +604,36 @@ func main() {
 		// Bootstrap-only probe is required before sending a tx — otherwise
 		// eth_sendRawTransaction returns "chain not bootstrapped".
 		if *skipBootstrapWait {
-			log.Printf("[%s/%s] SKIP-BOOTSTRAP-WAIT: chain registered on P-chain at chainID=%s; operator must update --track-chains and roll luxd to activate", *networkLabel, spec.Name, chainID)
+			log.Printf("[%s/%s] SKIP-BOOTSTRAP-WAIT: chain registered on P-chain at chainID=%s; operator must update --track-chains and roll luxd to activate", *networkLabel, spec.Brand, chainID)
 		} else {
 			if err := waitBootstrap(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval); err != nil {
-				log.Fatalf("[%s] wait-bootstrap failed: %v", spec.Name, err)
+				log.Fatalf("[%s] wait-bootstrap failed: %v", spec.Brand, err)
 			}
-			log.Printf("[%s/%s] isBootstrapped=true", *networkLabel, spec.Name)
+			log.Printf("[%s/%s] isBootstrapped=true", *networkLabel, spec.Brand)
 		}
 
 		if *evmHeartbeatKeyHex != "" && !*skipBootstrapWait {
-			log.Printf("[%s/%s] sending EVM heartbeat tx to roll block 1", *networkLabel, spec.Name)
+			log.Printf("[%s/%s] sending EVM heartbeat tx to roll block 1", *networkLabel, spec.Brand)
 			if err := evmHeartbeat(ctx, *uri, chainID.String(), spec.EVMChainID, *evmHeartbeatKeyHex); err != nil {
 				// Heartbeat failure on a reused chain is non-fatal: the
 				// chain may already have blocks. Log and continue.
 				if reused {
-					log.Printf("[%s/%s] WARN heartbeat on reused chain failed (non-fatal): %v", *networkLabel, spec.Name, err)
+					log.Printf("[%s/%s] WARN heartbeat on reused chain failed (non-fatal): %v", *networkLabel, spec.Brand, err)
 				} else {
-					log.Fatalf("[%s] heartbeat failed: %v", spec.Name, err)
+					log.Fatalf("[%s] heartbeat failed: %v", spec.Brand, err)
 				}
 			}
 		}
 
 		firstBlock := "0x0"
 		if *skipBootstrapWait {
-			log.Printf("[%s/%s] SKIP-BOOTSTRAP-WAIT: firstBlockHex=0x0 (chain not yet tracked by luxd)", *networkLabel, spec.Name)
+			log.Printf("[%s/%s] SKIP-BOOTSTRAP-WAIT: firstBlockHex=0x0 (chain not yet tracked by luxd)", *networkLabel, spec.Brand)
 		} else if !*probeBootstrapOnly {
 			firstBlock, err = probeChain(ctx, *uri, chainID.String(), *probeTimeout, *probeInterval)
 			if err != nil {
-				log.Fatalf("[%s] probe failed: %v", spec.Name, err)
+				log.Fatalf("[%s] probe failed: %v", spec.Brand, err)
 			}
-			log.Printf("[%s/%s] PROBE OK: first eth_blockNumber=%s", *networkLabel, spec.Name, firstBlock)
+			log.Printf("[%s/%s] PROBE OK: first eth_blockNumber=%s", *networkLabel, spec.Brand, firstBlock)
 		} else {
 			// In bootstrap-only mode we still capture whatever
 			// eth_blockNumber currently reports; the caller knows it may
@@ -576,11 +642,12 @@ func main() {
 			if blk, berr := ethBlockNumber(ctx, httpc, *uri, chainID.String()); berr == nil {
 				firstBlock = blk
 			}
-			log.Printf("[%s/%s] BOOTSTRAP-ONLY mode: eth_blockNumber=%s (heartbeat will roll block 1 out-of-band)", *networkLabel, spec.Name, firstBlock)
+			log.Printf("[%s/%s] BOOTSTRAP-ONLY mode: eth_blockNumber=%s (heartbeat will roll block 1 out-of-band)", *networkLabel, spec.Brand, firstBlock)
 		}
 
 		out.Chains = append(out.Chains, resultChain{
-			Name:           spec.Name,
+			Brand:          spec.Brand,
+			ChainTxName:    spec.ChainTxName,
 			NetworkID:      networkID.String(),
 			ChainID:        chainID.String(),
 			EVMChainID:     spec.EVMChainID,
@@ -654,6 +721,36 @@ func platformGetBlockchains(ctx context.Context, uri string) ([]platformBlockcha
 		return nil, fmt.Errorf("rpc error: %s", parsed.Error.Message)
 	}
 	return parsed.Result.Blockchains, nil
+}
+
+// contentHashChainName returns the P-chain CreateChainTx name for a
+// brand-env pair, content-addressed against the canonical genesis bytes.
+//
+// Format: "<brand>-<8hex>" where 8hex is the first 8 hex chars (4 bytes)
+// of SHA256("<brand>|<env>|"||genesisBytes).
+//
+// Properties:
+//   - Deterministic. Same canonical genesis → same chain.name → idempotent
+//     re-runs of bootstrap-chain see the chain already exists and skip.
+//   - Collision-free against legacy "hanzo"/"zoo"/"spc"/"pars" rows from
+//     prior CreateChainTx attempts. Old chains stay orphaned on P-chain;
+//     the new chain.name is distinct so CreateChainTx succeeds.
+//   - Brand-rooted. The "<brand>-" prefix keeps the value humanly legible
+//     ("hanzo-3f4a1c8b") without conflating it with the user-facing
+//     brand alias (which lives at the chain-aliases CM layer).
+//
+// 4 bytes (8 hex chars) gives a 2^32 collision space — overkill for the
+// 4-chain set we bootstrap. Operators who need explicit names use the
+// --chain-name-override flag.
+func contentHashChainName(brand, env string, genesisBytes []byte) string {
+	h := sha256.New()
+	h.Write([]byte(brand))
+	h.Write([]byte("|"))
+	h.Write([]byte(env))
+	h.Write([]byte("|"))
+	h.Write(genesisBytes)
+	digest := h.Sum(nil)
+	return fmt.Sprintf("%s-%s", brand, hex.EncodeToString(digest[:4]))
 }
 
 // normalizeAllocKey returns the canonical 0x-prefixed form of an EVM
