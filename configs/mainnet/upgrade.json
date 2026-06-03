@@ -42,6 +42,14 @@
     {"warpConfig": {"blockTimestamp": 1766708399, "disable": true}},
     {"warpConfig": {"blockTimestamp": 1766708400, "quorumNumerator": 67, "requirePrimaryNetworkSigners": true}},
 
+    {"bls12381G1AddConfig":    {"blockTimestamp": 1766708400}},
+    {"bls12381G1MulConfig":    {"blockTimestamp": 1766708400}},
+    {"bls12381G1MSMConfig":    {"blockTimestamp": 1766708400}},
+    {"bls12381G2AddConfig":    {"blockTimestamp": 1766708400}},
+    {"bls12381G2MulConfig":    {"blockTimestamp": 1766708400}},
+    {"bls12381G2MSMConfig":    {"blockTimestamp": 1766708400}},
+    {"bls12381PairingConfig":  {"blockTimestamp": 1766708400}},
+
     {"pulsarVerify":           {"blockTimestamp": 1782864000}},
     {"magnetarVerify":         {"blockTimestamp": 1782864000}},
     {"p3qVerify":              {"blockTimestamp": 1782864000}},
