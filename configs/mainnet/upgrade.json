@@ -8,7 +8,7 @@
     "strictPQTimestamp": 1766708400
   },
   "precompileUpgrades": [
-    {"warpConfig": {"blockTimestamp": 0, "quorumNumerator": 67, "requirePrimaryNetworkSigners": true}},
+    {"warpConfig": {"blockTimestamp": 1766708400, "quorumNumerator": 67, "requirePrimaryNetworkSigners": true}},
 
     {"aiMiningConfig":   {"blockTimestamp": 0}},
     {"blake3Config":     {"blockTimestamp": 0}},
