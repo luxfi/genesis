@@ -1,0 +1,14 @@
+MOVED — Task #109 (2026-06-04)
+
+Brand L1 genesis is no longer owned by luxfi/genesis.
+
+This file is now at:
+  hanzoai/universe → configs/genesis/devnet/genesis.json
+  Local path:       ~/work/hanzo/universe/configs/genesis/devnet/genesis.json
+
+Reason: each brand owns its own L1 genesis blob; luxfi/genesis only
+owns Lux primary-network genesis (mainnet/testnet/devnet/localnet).
+
+Do NOT recreate the file here — see no_brand_shadow_test.go in
+pkg/genesis which fails CI if any hanzo-* / zoo-* dir reappears at
+configs/ top level.
