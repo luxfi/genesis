@@ -23,7 +23,8 @@ silent classification change.
 
 ### Zoo testnet/devnet 39-char alloc address bug (May 2026)
 
-`configs/zoo-{testnet,devnet}/genesis.json` shipped six alloc addresses with
+`zooai/universe/configs/genesis/{testnet,devnet}/genesis.json` (moved from
+`luxfi/genesis/configs/zoo-*/` in Task #109, 2026-06-04) shipped six alloc addresses with
 only 39 hex chars instead of 40 — the leading `0` nibble was stripped at
 genesis-generation time (commit `2b46a8b`, "regenerate all network configs").
 The six bad addresses on both files were:
@@ -484,8 +485,8 @@ moves to "Quasar Edition upgrades"):
 ```
 
 ### Files Updated
-- `configs/zoo-mainnet/genesis.json`
-- `configs/zoo-testnet/genesis.json`
+- `zooai/universe/configs/genesis/mainnet/genesis.json` (moved from `luxfi/genesis/configs/zoo-mainnet/` in Task #109)
+- `zooai/universe/configs/genesis/testnet/genesis.json` (moved from `luxfi/genesis/configs/zoo-testnet/` in Task #109)
 
 ### Verified Block Counts (2025-12-28)
 
