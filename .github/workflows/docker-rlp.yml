@@ -1,0 +1,58 @@
+name: Docker rlp-import/rlp-export
+
+# Builds + publishes the two CronJob/Job images that the lux operator
+# wires into LuxNetwork.spec.{tenantImports,exportSchedules}. Driven
+# by the shared workflow at hanzoai/.github so all image tagging,
+# registry login, and BuildKit caching stays one-way across orgs.
+#
+# Trigger: any push to main (publishes :sha-<sha7>) or a v* tag
+# (publishes the semver tag). PRs build but do not publish.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - 'cmd/rlp-export/**'
+      - 'cmd/rlp-import/**'
+      - 'Dockerfile.rlp-export'
+      - 'Dockerfile.rlp-import'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/docker-rlp.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cmd/rlp-export/**'
+      - 'cmd/rlp-import/**'
+      - 'Dockerfile.rlp-export'
+      - 'Dockerfile.rlp-import'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  rlp-export:
+    name: rlp-export
+    uses: hanzoai/.github/.github/workflows/docker-build.yml@main
+    with:
+      image-name: luxfi/rlp-export
+      dockerfile: Dockerfile.rlp-export
+      platforms: linux/amd64
+      runner-amd64: lux-build-linux-amd64
+      build-arm64:
+        if: false
+    secrets: inherit
+
+  rlp-import:
+    name: rlp-import
+    uses: hanzoai/.github/.github/workflows/docker-build.yml@main
+    with:
+      image-name: luxfi/rlp-import
+      dockerfile: Dockerfile.rlp-import
+      platforms: linux/amd64
+      runner-amd64: lux-build-linux-amd64
+      build-arm64:
+        if: false
+    secrets: inherit
