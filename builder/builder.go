@@ -16,7 +16,11 @@ import (
 	"path"
 	"time"
 
+	"math"
+
 	"github.com/luxfi/address"
+	"github.com/luxfi/codec"
+	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/container/sampler"
 	"github.com/luxfi/ids"
@@ -405,16 +409,21 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		}
 		primary.Memo = memoBytes
 
+		xvmCodecs, err := newXVMParserCodecs()
+		if err != nil {
+			return nil, ids.Empty, err
+		}
 		xvmGenesis, err := xgenesis.NewGenesis(
 			config.NetworkID,
 			map[string]xgenesis.GenesisAssetDefinition{
 				asset.Symbol: primary,
 			},
+			xvmCodecs.GenesisCodec,
 		)
 		if err != nil {
 			return nil, ids.Empty, err
 		}
-		xvmGenesisBytes, err = xvmGenesis.Bytes()
+		xvmGenesisBytes, err = xvmGenesis.Bytes(xvmCodecs.GenesisCodec)
 		if err != nil {
 			return nil, ids.Empty, fmt.Errorf("couldn't serialize xvm genesis: %w", err)
 		}
@@ -786,9 +795,38 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 	return apiAliases, chainAliases, nil
 }
 
+// newXVMParserCodecs constructs the linearcodec-backed ParserCodecs for
+// proto/x. Mirrors sdk/wallet/chain/x/constants.go::newXVMParserCodecs.
+// proto/x carries no codec import after the Wave 1A rip (#101); callers
+// supply the codec implementation. genesis/builder needs this for
+// UTXOAssetID's wire decode path.
+func newXVMParserCodecs() (xchaintxs.ParserCodecs, error) {
+	c := linearcodec.NewDefault()
+	gc := linearcodec.NewDefault()
+	cm := codec.NewDefaultManager()
+	gcm := codec.NewManager(math.MaxInt32)
+	if err := cm.RegisterCodec(xchaintxs.CodecVersion, c); err != nil {
+		return xchaintxs.ParserCodecs{}, err
+	}
+	if err := gcm.RegisterCodec(xchaintxs.CodecVersion, gc); err != nil {
+		return xchaintxs.ParserCodecs{}, err
+	}
+	return xchaintxs.ParserCodecs{
+		Codec:           cm,
+		GenesisCodec:    gcm,
+		Registry:        c,
+		GenesisRegistry: gc,
+	}, nil
+}
+
 // UTXOAssetID returns the LUX asset ID from XVM genesis bytes
 func UTXOAssetID(xvmGenesisBytes []byte) (ids.ID, error) {
+	codecs, err := newXVMParserCodecs()
+	if err != nil {
+		return ids.Empty, err
+	}
 	parser, err := xchaintxs.NewParser(
+		codecs,
 		[]fxs.Fx{
 			&secp256k1fx.Fx{},
 		},

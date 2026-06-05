@@ -215,6 +215,13 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		return nil, err
 	}
 
+	// CertPolicy pin shard. Absent = LP-217 not pinned at genesis;
+	// node/genesis treats this as "no validation, no policy".
+	certPolicy, err := loadCertPolicyPin(networkName)
+	if err != nil {
+		return nil, err
+	}
+
 	// Build combined genesis config
 	config := genesis.ConfigOutput{
 		NetworkID:                  network.NetworkID,
@@ -235,6 +242,7 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		GChainGenesis:              chainShards.G,
 		KChainGenesis:              chainShards.K,
 		SecurityProfile:            securityProfile,
+		CertPolicy:                 certPolicy,
 		Message:                    network.Message,
 	}
 
@@ -357,6 +365,26 @@ func loadSecurityProfilePin(networkName string) (*genesis.SecurityProfile, error
 		return nil, fmt.Errorf("failed to parse %s/securityProfile.json: %w", networkName, err)
 	}
 	return &sp, nil
+}
+
+// loadCertPolicyPin reads the per-network certPolicy.json shard if present
+// in the embedded tree. Returns nil with no error when the file is absent
+// (the LP-217 pin is optional for backwards compatibility with genesis
+// files written before LP-217 activation). The shard layout matches the
+// pkg/genesis.CertPolicy struct (mode/variant/timeoutMs/fallback), kept
+// identical between the embedded tree and the on-disk operator file format
+// so a deploy can drop a certPolicy.json next to securityProfile.json with
+// no other change.
+func loadCertPolicyPin(networkName string) (*genesis.CertPolicy, error) {
+	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "certPolicy.json"))
+	if err != nil {
+		return nil, nil
+	}
+	var cp genesis.CertPolicy
+	if err := json.Unmarshal(data, &cp); err != nil {
+		return nil, fmt.Errorf("failed to parse %s/certPolicy.json: %w", networkName, err)
+	}
+	return &cp, nil
 }
 
 // loadEmbeddedPChainConfig loads only the P-Chain config from embedded.
