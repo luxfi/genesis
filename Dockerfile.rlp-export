@@ -1,0 +1,33 @@
+# Dockerfile for the rlp-export CronJob image. Symmetric with the
+# rlp-import image — both share the same minimal runtime (BusyBox
+# coreutils + the static Go binary).
+#
+# Build:
+#   docker build -f Dockerfile.rlp-export -t ghcr.io/luxfi/rlp-export:vX.Y.Z .
+#
+# Run (manual):
+#   docker run --rm -v $PWD/data:/data ghcr.io/luxfi/rlp-export:latest \
+#     --chain=C --output-file=/data/c-chain.rlp \
+#     --luxd-rpc=http://luxd:9630
+#
+# Reusable across the operator's CronJob template — the entrypoint is
+# the static binary; the CronJob template wraps it in a /bin/sh -c
+# script that injects a per-run timestamp.
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+ENV CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH}
+RUN go build -trimpath -ldflags="-s -w" \
+    -o /out/rlp-export \
+    ./cmd/rlp-export
+
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates tzdata
+COPY --from=builder /out/rlp-export /usr/local/bin/rlp-export
+ENTRYPOINT ["/usr/local/bin/rlp-export"]
