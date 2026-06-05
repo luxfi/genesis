@@ -1,0 +1,48 @@
+{
+  "_comment": "Brand L1 EVMs after the 2026-06-05 mainnet network reset. Full P-state wipe + re-bootstrap with --chain-name-override produces clean canonical chain names (hanzo, zoo, pars, spc) — no v4/v5/v6 suffixes, no gateway rewrites, no orphan CreateChainTx polluting platform.getBlockchains.",
+  "_method": "wipe-and-rebootstrap, see ~/work/lux/universe/k8s/lux-mainnet/scripts/ + bootstrap-chain --chain-name-override + state-chains canonical genesis (zoo+spc: matches RLP archive block-0 hashes)",
+  "_luxd_version": "v1.28.29",
+  "_deployer_bip44_idx": 5,
+  "_supersedes": "brand-l1-2026-06-05.json (initial deploy with orphan-prone naming)",
+  "envs": {
+    "mainnet": {
+      "deployer": "P-lux1jx9p2hxfemcgdlylth05zj20klsn4t06zddpv7",
+      "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
+      "generatedAt": "2026-06-05T19:28:55Z",
+      "chains": [
+        {
+          "brand": "hanzo",
+          "chainTxName": "hanzo",
+          "chainId": "2G74bnyxAnC4Ycwx3ScTfXA4DTnJAepAz5iSjBUF6HF5zybeWW",
+          "evmChainId": 36963,
+          "block0Hash": "0x388f2d1c7bef26c23379f4e620d3f810a624fad6dc38cee6963297d2722da639",
+          "historicRLP": null
+        },
+        {
+          "brand": "zoo",
+          "chainTxName": "zoo",
+          "chainId": "HzsCfsL7FVgi8N62swz24tGC567vQtGrxXgXd4ESG9wdZhzVP",
+          "evmChainId": 200200,
+          "block0Hash": "0x7c548af47de27560779ccc67dda32a540944accc71dac3343da3b9cd18f14933",
+          "historicRLP": "zoo-mainnet-200200.rlp (800 blocks, sha256 0850841a368dd1f85ae09d40f0552aecb679225b58ce4524b2d0a3337c7afc98)"
+        },
+        {
+          "brand": "pars",
+          "chainTxName": "pars",
+          "chainId": "2Yr6vaXiRMjxDjb6u1y2By6mCRFso6Hm9AKkixVhHgPfw3DY6k",
+          "evmChainId": 7070,
+          "block0Hash": "0x068d5d414e1f3d7c6a6f064381cb6c044815c04560ab01a2f6ce8aef20e4f1d8",
+          "historicRLP": null
+        },
+        {
+          "brand": "spc",
+          "chainTxName": "spc",
+          "chainId": "MsYh2WCzVTw3AGQiNkXfXTiR4gpPMHi7V4jpoVWbtmwVTKCwR",
+          "evmChainId": 36911,
+          "block0Hash": "0x4dc9fd5cf4ee64609f140ba0aa50f320cadf0ae8b59a29415979bc05b17cfac8",
+          "historicRLP": "spc-mainnet-36911.rlp (11 blocks, sha256 b72f2602ec72360d742bf234a93f113b6614ba1f2d1935f63d8659bf61990ffc)"
+        }
+      ]
+    }
+  }
+}
