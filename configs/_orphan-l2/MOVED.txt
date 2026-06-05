@@ -1,0 +1,12 @@
+The _orphan-l2/ directory was a transitional bucket from the brand-genesis
+migration (#109). Every brand now has its own home:
+
+  pars  → ~/work/pars/genesis/networks/<env>/genesis.json   (structured layout)
+  spc   → ~/work/spc/genesis/networks/<env>/genesis.json    (mirrors pars)
+  hanzo → ~/work/hanzo/universe/configs/genesis/<env>/      (universe-mounted)
+  zoo   → ~/work/zoo/universe/configs/genesis/<env>/        (universe-mounted)
+
+State-repo canonical at ~/work/lux/state/chains/<brand>-<env>/ is the empirical
+provenance archive — brand homes track it.
+
+Do not add anything to this directory. It is dead.
