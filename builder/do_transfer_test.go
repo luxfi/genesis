@@ -1,4 +1,4 @@
-package genesis_test
+package builder_test
 
 import (
 	"context"

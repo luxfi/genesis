@@ -109,6 +109,7 @@ func GetConfigFile(filepath string) (*Config, error) {
 		GChainGenesis:              output.GChainGenesis,
 		KChainGenesis:              output.KChainGenesis,
 		SecurityProfile:            output.SecurityProfile,
+		CertPolicy:                 output.CertPolicy,
 		Message:                    output.Message,
 	}, nil
 }
@@ -188,6 +189,20 @@ func GetConfigFromDir(dir string) (*Config, error) {
 		securityProfile = &sp
 	}
 
+	// CertPolicy pin shard — optional. Absent file leaves the pin nil and
+	// node/genesis treats this as "no LP-217 policy to validate". Present
+	// file binds the L1's CertPolicy (LP-217 §"Operator config"); the
+	// node/genesis gate calls consensus/config.ParseCertPolicy at boot
+	// and refuses to start the chain on Validate failure.
+	var certPolicy *CertPolicy
+	if cpData, err := os.ReadFile(filepath.Join(dir, "certPolicy.json")); err == nil {
+		var cp CertPolicy
+		if err := json.Unmarshal(cpData, &cp); err != nil {
+			return nil, fmt.Errorf("failed to parse certPolicy.json: %w", err)
+		}
+		certPolicy = &cp
+	}
+
 	cfg := &Config{
 		NetworkID:                  network.NetworkID,
 		Allocations:                allocations,
@@ -198,6 +213,7 @@ func GetConfigFromDir(dir string) (*Config, error) {
 		InitialStakers:             stakers,
 		CChainGenesis:              string(cchainData),
 		SecurityProfile:            securityProfile,
+		CertPolicy:                 certPolicy,
 		Message:                    network.Message,
 	}
 
@@ -380,6 +396,7 @@ func ParseConfigOutput(output *ConfigOutput, networkID uint32) (*Config, error) 
 		KChainGenesis:              output.KChainGenesis,
 		Chains:                     output.Chains,
 		SecurityProfile:            output.SecurityProfile,
+		CertPolicy:                 output.CertPolicy,
 		Message:                    output.Message,
 	}, nil
 }
