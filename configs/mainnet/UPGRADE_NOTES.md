@@ -9,7 +9,7 @@ excluded from the primary-network safe subset.
 
 - **Brand L2s** (hanzo, zoo, pars, spc) carry **42 precompiles** baked into
   their genesis at block 0 after the `eciesConfig` scrub in this patch.
-  See `~/work/lux/genesis/configs/hanzo-mainnet/genesis.json` for the
+  See `~/work/hanzo/universe/configs/genesis/mainnet/genesis.json` for the
   canonical L2 set; the precompile keys are identical across the four
   brand L2 genesis files.
 - **Primary C-Chain safe subset = 42** (the brand L2 set), plus three
