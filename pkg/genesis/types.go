@@ -53,6 +53,20 @@ type Config struct {
 	// bootstrap warns + refuses strict-PQ features when absent.
 	// Closes red-team finding F102.
 	SecurityProfile *SecurityProfile `json:"securityProfile,omitempty"`
+
+	// CertPolicy is the L1-wide CertPolicy pin per LP-217. Operator
+	// declares Mode / Variant / TimeoutMs / Fallback once in the
+	// L1's genesis; every chain-VM in Chains inherits this unless it
+	// supplies its own override in ChainEntry.CertPolicy (LP-204
+	// §"L1 chain-VM mode selection"). luxfi/node parses this via
+	// consensus/config.ParseCertPolicy at boot and refuses to start
+	// the chain when Validate fails (LP-217 §"Validation rules").
+	//
+	// Optional in JSON so genesis files written before LP-217
+	// activation keep parsing — the gate in node/genesis treats a
+	// missing pin as "no validation, no policy" rather than a fatal
+	// (parity with the SecurityProfile pin's missing-treatment).
+	CertPolicy *CertPolicy `json:"certPolicy,omitempty"`
 }
 
 // Allocation represents a genesis allocation.
@@ -256,6 +270,21 @@ type ChainEntry struct {
 	VMID        string `json:"vmID"`        // VM ID (base58 encoded)
 	Name        string `json:"name"`        // Human-readable chain name
 	GenesisData string `json:"genesisData"` // Genesis JSON (string-encoded)
+
+	// CertPolicy is the optional per-chain-VM override of the
+	// parent L1's CertPolicy (LP-204 §"L1 chain-VM mode selection").
+	// Nil means inherit the parent L1's CertPolicy verbatim. When
+	// set, the override is validated at boot under three gates:
+	//
+	//  1. consensus/config.CertPolicy.Validate() — the four LP-217
+	//     rules (Fallback ≤ Mode; Variant=Strict→Mode≥PQ-fast;
+	//     TimeoutMs ≥ 2×floor; Fallback valid under same Variant).
+	//  2. LP-204 inheritance — chain Mode MUST NOT exceed parent
+	//     L1 Mode (chain-VMs cannot synthesise legs the parent L1
+	//     never produces).
+	//  3. Fallback inheritance — chain Fallback MUST NOT exceed
+	//     parent L1 Fallback for the same reason as (2).
+	CertPolicy *CertPolicy `json:"certPolicy,omitempty"`
 }
 
 // Balance represents an EVM account balance
@@ -285,6 +314,7 @@ type ConfigOutput struct {
 	KChainGenesis              string           `json:"kChainGenesis,omitempty"` // K-Chain: KMS VM genesis
 	Chains                     []ChainEntry     `json:"chains,omitempty"`        // Additional genesis chains
 	SecurityProfile            *SecurityProfile `json:"securityProfile,omitempty"`
+	CertPolicy                 *CertPolicy      `json:"certPolicy,omitempty"`
 	Message                    string           `json:"message"`
 }
 
@@ -345,6 +375,7 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 		GChainGenesis:              c.GChainGenesis,
 		KChainGenesis:              c.KChainGenesis,
 		SecurityProfile:            c.SecurityProfile,
+		CertPolicy:                 c.CertPolicy,
 		Message:                    c.Message,
 	}
 }
