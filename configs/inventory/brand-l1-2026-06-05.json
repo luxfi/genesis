@@ -1,0 +1,100 @@
+{
+  "_comment": "Brand L1 EVMs spawned across mainnet/testnet/devnet via bootstrap-chain on 2026-06-05 \u2014 unblocked by luxfi/node v1.28.29 (LockedOutput dispatcher fix in vms/components/lux + vms/platformvm/stakeable init)",
+  "_luxd_version": "v1.28.29",
+  "_deployer_bip44_idx": 5,
+  "envs": {
+    "mainnet": {
+      "deployer": "P-lux1jx9p2hxfemcgdlylth05zj20klsn4t06zddpv7",
+      "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
+      "generatedAt": "2026-06-05T05:29:52Z",
+      "chains": [
+        {
+          "brand": "hanzo",
+          "chainId": "25gX3qJs1yGSEZ6zDcELzpJ3866ajxRXoza5EQNs5Wq87Rozs8",
+          "networkId": "2wfzqPcYrPhXYUq3ZZrDroPiZoLTwNzwnoKx9FmQp6A32zo2A1",
+          "evmChainId": 36963
+        },
+        {
+          "brand": "zoo",
+          "chainId": "oxDk6jU7W3JS3CyxCpzJ8mgytVwgHM8joWTPCoJZJo9yL9Cuf",
+          "networkId": "2bRwxy8SaxutXJphr4GkiGo6gYXdpqjGnvFf6ttKR7HQ7tMZtc",
+          "evmChainId": 200200
+        },
+        {
+          "brand": "pars",
+          "chainId": "2WyjE7bmGBAzJCUY5g1j5iTN5yGwgSzsmVB5QL2iW8MV2KF77p",
+          "networkId": "VDgtyrEFZVJS8EpidVXgPTZPQ733zRa65Rs7UogsSqqUzs5xu",
+          "evmChainId": 7070
+        },
+        {
+          "brand": "spc",
+          "chainId": "yCFh7wTNaXpE3AmFBX5vB4oH7fcApUHfDPN7NgDJL3QsqG8KT",
+          "networkId": "2Gb8GV4ssrJ2e5cAGbJ5om8ugfrCKEn1KHQMLCiETK6dqKpdrC",
+          "evmChainId": 36911
+        }
+      ]
+    },
+    "testnet": {
+      "deployer": "P-test1jx9p2hxfemcgdlylth05zj20klsn4t06p09v2y",
+      "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
+      "generatedAt": "2026-06-05T05:34:39Z",
+      "chains": [
+        {
+          "brand": "hanzo",
+          "chainId": "2CiV2dGGLqoD7dKhwAFZ11Y99178vkMbjSBmZHkfG7QcCF8X7L",
+          "networkId": "2k129CjznfVqBcWeZkGaEnfeq714Vu9Ha6PuMXFXqxUo1AWE6P",
+          "evmChainId": 36962
+        },
+        {
+          "brand": "zoo",
+          "chainId": "xHrak3kJ1HRats9rjMvesJxvhSm8nmEGPxQYC2dnq59175vEF",
+          "networkId": "CwyZyyAVyGEX3kETsKF9qauprK1fG5sdPVbH65cBXHSpbDkm4",
+          "evmChainId": 200201
+        },
+        {
+          "brand": "pars",
+          "chainId": "Rb3oNMz4yVc6kW1kyh9BwZSbgxcfyQQkDan4CDo8dJYeAnx6B",
+          "networkId": "2PPr5LYeVKFWEdS7gbZxryW2Nj1C75vh5MizepCEsC3ABF7X8p",
+          "evmChainId": 494950
+        },
+        {
+          "brand": "spc",
+          "chainId": "7ppNt9Za2bK2qBZdtLajuQdnRvWTLRtgNRkUkSNjLymCwwtjA",
+          "networkId": "2QR7ZPZ37ESsmko3oj7mvjJmzSKfy7msQic1kPckqnH32HAPe7",
+          "evmChainId": 36910
+        }
+      ]
+    },
+    "devnet": {
+      "deployer": "P-dev1jx9p2hxfemcgdlylth05zj20klsn4t06s0t5kv",
+      "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
+      "generatedAt": "2026-06-05T05:35:15Z",
+      "chains": [
+        {
+          "brand": "hanzo",
+          "chainId": "2chApP5kxVEG9XWjMctERBVsUz5FCbRqgF2Ga5TMiRR7H7aBYL",
+          "networkId": "2LVsv5NnHGyUQ5DRixkzsE5yHwJDrQ9HQWE3Jw3a58g8uzEHY2",
+          "evmChainId": 36964
+        },
+        {
+          "brand": "zoo",
+          "chainId": "2vfXbobJAyzzhKKp4YzVShjfA546oUuJyTCRAqS3unxzz4dxgA",
+          "networkId": "YQonbnEzTSReVqZYYephWUtwpMxAraQu4zJZvwTQ37im6YWLU",
+          "evmChainId": 200202
+        },
+        {
+          "brand": "pars",
+          "chainId": "5nBGS8fEM56ZiGGJ3nTeCnsCAVHMoa6SV4GYFSedyK4soXykr",
+          "networkId": "2vDrsrJLvwGKG22WTMgHUKHer9AGK9DRt52dsqtbarkBJoxPYt",
+          "evmChainId": 494951
+        },
+        {
+          "brand": "spc",
+          "chainId": "RbfR9MMKj8aGEGbraGcYjx1a3HvWuiQdXBX75KMuv4rCsg16v",
+          "networkId": "rGrTHFWfQZ1KRcLt3c5pNqmuCZ1SZbkwo2CH6ckfA2Vn9ti5b",
+          "evmChainId": 36912
+        }
+      ]
+    }
+  }
+}
