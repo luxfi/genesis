@@ -16,7 +16,7 @@ import "github.com/luxfi/constants"
 //	  constants.LocalID    (1337)   constants.LocalChainID   (31337)
 //
 // The primary network ID is SHARED across all Lux-derived L1s (Lux,
-// Hanzo, Zoo, Pars, …). EVM chain IDs are per-subnet, per-env.
+// Hanzo, Zoo, Pars, …). EVM chain IDs are per-chain, per-env.
 //
 // Mnemonic source (LUX_MNEMONIC):
 //   - mainnet/testnet/devnet (1/2/3): private hardware-RNG mnemonic from
