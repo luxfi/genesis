@@ -1,9 +1,9 @@
 {
-  "_comment": "Brand L1 EVMs after the 2026-06-05 network reset (mainnet + testnet + devnet). Full P-state wipe + re-bootstrap with --chain-name-override produces clean canonical chain names (hanzo, zoo, pars, spc, osage) — no v4/v5/v6 suffixes, no gateway rewrites, no orphan CreateChainTx polluting platform.getBlockchains.",
+  "_comment": "L2 EVMs after the 2026-06-05 network reset (mainnet + testnet + devnet). Full P-state wipe + re-bootstrap with --chain-name-override produces clean canonical chain names (hanzo, zoo, pars, spc, osage) — no v4/v5/v6 suffixes, no gateway rewrites, no orphan CreateChainTx polluting platform.getBlockchains.",
   "_method": "wipe-and-rebootstrap, see ~/work/lux/universe/k8s/lux-<env>/scripts/ + bootstrap-chain --chain-name-override + state-chains canonical genesis. Mainnet zoo+spc match RLP archive block-0 hashes; testnet+devnet fresh.",
   "_luxd_version": "v1.28.29",
   "_deployer_bip44_idx": 5,
-  "_supersedes": "brand-l1-2026-06-05.json (initial deploy with orphan-prone naming)",
+  "_supersedes": "l2-2026-06-05.json (initial deploy with orphan-prone naming)",
   "envs": {
     "mainnet": {
       "deployer": "P-lux1jx9p2hxfemcgdlylth05zj20klsn4t06zddpv7",
