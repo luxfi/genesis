@@ -1,5 +1,5 @@
 {
-  "_comment": "Brand L1 EVMs after the 2026-06-06 mainnet+testnet+devnet wipe+rebootstrap. RESET_TOKEN env hack killed; cluster wipes now use kubectl delete pvc. pars supply changed from 2T to 7B (matches chainId 7070/7071/7072 theme). spc unified to 1B across all envs (matches mainnet RLP truth). RLP-only state restore (zoo+spc+C mainnet have RLP archives; others are fresh).",
+  "_comment": "L2 EVMs after the 2026-06-06 mainnet+testnet+devnet wipe+rebootstrap. RESET_TOKEN env hack killed; cluster wipes now use kubectl delete pvc. pars supply changed from 2T to 7B (matches chainId 7070/7071/7072 theme). spc unified to 1B across all envs (matches mainnet RLP truth). RLP-only state restore (zoo+spc+C mainnet have RLP archives; others are fresh).",
   "_method": "kubectl scale sts luxd --replicas=0 + kubectl delete pvc data-luxd-* + scale=5 + bootstrap-chain + admin_importChain per pod for RLP'd chains",
   "_luxd_version": "v1.28.16",
   "_deployer_bip44_idx": 5,
