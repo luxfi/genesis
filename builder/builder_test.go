@@ -203,7 +203,10 @@ func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, ids.Empty, utxoAssetID, "mainnet has X-Chain → real asset ID")
 
-	full, err := pgenesis.Parse(bytes)
+	pgc, err := pvmGenesisCodec()
+	require.NoError(t, err)
+
+	full, err := pgenesis.Parse(pgc, bytes)
 	require.NoError(t, err)
 	require.Len(t, full.Chains, 10, "mainnet emits all 10 primary chains")
 
@@ -224,7 +227,7 @@ func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
 	require.NoError(t, err, "P-only build must succeed")
 	require.Equal(t, ids.Empty, utxoAssetID, "no X-Chain → no LUX asset → ids.Empty")
 
-	pOnly, err := pgenesis.Parse(bytes)
+	pOnly, err := pgenesis.Parse(pgc, bytes)
 	require.NoError(t, err, "P-only genesis bytes must parse")
 	require.Empty(t, pOnly.Chains, "P-only network has zero CreateChainTx entries")
 
