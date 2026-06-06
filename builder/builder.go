@@ -25,6 +25,7 @@ import (
 	"github.com/luxfi/container/sampler"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
+	pchainblock "github.com/luxfi/proto/p/block"
 	"github.com/luxfi/proto/p/genesis"
 	"github.com/luxfi/proto/p/reward"
 	"github.com/luxfi/proto/p/signer"
@@ -413,17 +414,30 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		if err != nil {
 			return nil, ids.Empty, err
 		}
+		// NewParser registers the canonical XVM tx types
+		// (BaseTx/CreateAsset/Operation/Import/Export) plus the fx-owned
+		// payload types (secp256k1fx) onto xvmCodecs.GenesisRegistry —
+		// without this, the GenesisCodec can't serialize TransferOutput
+		// and the like. proto/x stayed Codec-free after Wave 1A so the
+		// SDK owns type registration; we replicate that contract here.
+		xvmParser, err := xchaintxs.NewParser(xvmCodecs, []fxs.Fx{
+			&secp256k1fx.Fx{},
+		})
+		if err != nil {
+			return nil, ids.Empty, fmt.Errorf("couldn't construct xvm parser: %w", err)
+		}
+		xvmGenesisCodec := xvmParser.GenesisCodec()
 		xvmGenesis, err := xgenesis.NewGenesis(
 			config.NetworkID,
 			map[string]xgenesis.GenesisAssetDefinition{
 				asset.Symbol: primary,
 			},
-			xvmCodecs.GenesisCodec,
+			xvmGenesisCodec,
 		)
 		if err != nil {
 			return nil, ids.Empty, err
 		}
-		xvmGenesisBytes, err = xvmGenesis.Bytes(xvmCodecs.GenesisCodec)
+		xvmGenesisBytes, err = xvmGenesis.Bytes(xvmGenesisCodec)
 		if err != nil {
 			return nil, ids.Empty, fmt.Errorf("couldn't serialize xvm genesis: %w", err)
 		}
@@ -601,7 +615,12 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		})
 	}
 
+	pgc, err := pvmGenesisCodec()
+	if err != nil {
+		return nil, ids.Empty, fmt.Errorf("problem while constructing protocol chain's genesis codec: %w", err)
+	}
 	pChainGenesis, err := genesis.New(
+		pgc,
 		utxoAssetID,
 		config.NetworkID,
 		protocolAllocations,
@@ -614,7 +633,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 	if err != nil {
 		return nil, ids.Empty, fmt.Errorf("problem while building protocol chain's genesis state: %w", err)
 	}
-	pChainGenesisBytes, err := pChainGenesis.Bytes()
+	pChainGenesisBytes, err := pChainGenesis.Bytes(pgc)
 	if err != nil {
 		return nil, ids.Empty, fmt.Errorf("problem while serializing protocol chain's genesis state: %w", err)
 	}
@@ -683,7 +702,11 @@ func FromDatabase(networkID uint32, dbPath string, dbType string, stakingCfg *St
 
 // VMGenesis returns the genesis tx for a specific VM
 func VMGenesis(genesisBytes []byte, vmID ids.ID) (*pchaintxs.Tx, error) {
-	gen, err := genesis.Parse(genesisBytes)
+	pgc, err := pvmGenesisCodec()
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct genesis codec: %w", err)
+	}
+	gen, err := genesis.Parse(pgc, genesisBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse genesis: %w", err)
 	}
@@ -710,7 +733,11 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 		constants.PlatformChainID: PChainAliases,
 	}
 
-	gen, err := genesis.Parse(genesisBytes)
+	pgc, err := pvmGenesisCodec()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to construct genesis codec: %w", err)
+	}
+	gen, err := genesis.Parse(pgc, genesisBytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -793,6 +820,36 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 		}
 	}
 	return apiAliases, chainAliases, nil
+}
+
+// pvmGenesisCodec constructs the linearcodec-backed proto/p genesis
+// codec. proto/p carries no github.com/luxfi/codec import after the
+// Wave 2A rip (#101); callers supply the codec implementation.
+//
+// genesis.New, Genesis.Bytes and genesis.Parse all require the
+// genesis-sized codec (math.MaxInt32 budget) because the PVM genesis
+// blob can be significantly larger than runtime txs — the full set of
+// initial validator stake txs and CreateChainTx entries for every
+// primary-network chain (X/C/D/Q/A/B/T/Z/G/K) lives in a single blob.
+//
+// block.RegisterTypes pulls in the full Apricot/Banff/Durango/Quasar
+// block + tx type set in the canonical wire-byte order required by
+// proto/p (block.RegisterTypes is a superset of txs.RegisterTypes —
+// see proto/p/block/codec.go).
+//
+// Mirrors sdk/wallet/chain/p/signer/codec.go but uses the
+// math.MaxInt32 budget because genesis bytes are unbounded by runtime
+// tx-size limits.
+func pvmGenesisCodec() (pchaintxs.Codec, error) {
+	c := linearcodec.NewDefault()
+	cm := codec.NewManager(math.MaxInt32)
+	if err := pchainblock.RegisterTypes(c); err != nil {
+		return nil, err
+	}
+	if err := cm.RegisterCodec(pchaintxs.CodecVersion, c); err != nil {
+		return nil, err
+	}
+	return cm, nil
 }
 
 // newXVMParserCodecs constructs the linearcodec-backed ParserCodecs for
