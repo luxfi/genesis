@@ -11,15 +11,14 @@ replace github.com/luxfi/genesis => ../
 
 require (
 	github.com/luxfi/address v1.0.1
-	github.com/luxfi/codec v1.1.5
-	github.com/luxfi/constants v1.5.7
+	github.com/luxfi/constants v1.5.8-0.20260603055356-93c2c2ceb9ca
 	github.com/luxfi/container v0.0.4
 	github.com/luxfi/crypto v1.19.16
 	github.com/luxfi/formatting v1.0.1
 	github.com/luxfi/genesis v1.7.1
 	github.com/luxfi/ids v1.2.13
 	github.com/luxfi/math v1.4.1
-	github.com/luxfi/proto v1.1.0
+	github.com/luxfi/proto v1.3.0
 	github.com/luxfi/utxo v0.3.4
 	github.com/luxfi/vm v1.1.6
 	github.com/stretchr/testify v1.11.1
@@ -37,6 +36,7 @@ require (
 	github.com/luxfi/accel v1.1.8 // indirect
 	github.com/luxfi/atomic v1.0.0 // indirect
 	github.com/luxfi/cache v1.2.1 // indirect
+	github.com/luxfi/codec v1.1.5 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/consensus v1.25.0 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/luxfi/keychain v1.0.2 // indirect
 	github.com/luxfi/log v1.4.1 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
-	github.com/luxfi/metric v1.5.5 // indirect
+	github.com/luxfi/metric v1.5.7 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/ordering v0.0.1 // indirect
 	github.com/luxfi/p2p v1.19.2 // indirect
