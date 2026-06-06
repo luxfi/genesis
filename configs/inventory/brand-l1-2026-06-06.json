@@ -1,0 +1,43 @@
+{
+  "_comment": "Brand L1 EVMs after the 2026-06-06 mainnet+testnet+devnet wipe+rebootstrap. RESET_TOKEN env hack killed; cluster wipes now use kubectl delete pvc. pars supply changed from 2T to 7B (matches chainId 7070/7071/7072 theme). spc unified to 1B across all envs (matches mainnet RLP truth). RLP-only state restore (zoo+spc+C mainnet have RLP archives; others are fresh).",
+  "_method": "kubectl scale sts luxd --replicas=0 + kubectl delete pvc data-luxd-* + scale=5 + bootstrap-chain + admin_importChain per pod for RLP'd chains",
+  "_luxd_version": "v1.28.16",
+  "_deployer_bip44_idx": 5,
+  "envs": {
+    "mainnet": {
+      "deployer": "P-lux1jx9p2hxfemcgdlylth05zj20klsn4t06zddpv7",
+      "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
+      "generatedAt": "2026-06-06T01:28:47Z",
+      "chains": [
+        {"brand": "hanzo", "chainTxName": "hanzo", "chainId": "2TdhxqC31SuwuCoaucATqA2vBB9pgXEuMHA5157oUmshN1xEH1", "evmChainId": 36963, "totalSupply": "4T → 0x9011", "historicRLP": null},
+        {"brand": "zoo",   "chainTxName": "zoo",   "chainId": "tQzPnApH1xouMVfvt9hXYTcSiSePLpPymLpp4Sztc5BRoNo28",  "evmChainId": 200200, "totalSupply": "2T → 0x9011", "historicRLP": "zoo-mainnet-200200.rlp (800 blocks, imported)"},
+        {"brand": "pars",  "chainTxName": "pars",  "chainId": "SsbCrV3AC3ZnbEsb1Uz7BWsJzLe54wJU3tAWt4mbooF2GLU4J",  "evmChainId": 7070,   "totalSupply": "7B → 0x9011", "historicRLP": null},
+        {"brand": "spc",   "chainTxName": "spc",   "chainId": "yJ9tBVTrvsG2jycf5cNRZshGdPo9Dfb8snST3tsTWDa9i8ctC",  "evmChainId": 36911,  "totalSupply": "1B → 0x12c6EE1d (canonical)", "historicRLP": "spc-mainnet-36911.rlp (11 blocks, imported)"},
+        {"brand": "osage", "chainTxName": "osage", "chainId": "2FtVprwJcS2y7fqSwncdeJcRny1niRragrFtGiC7WQrgDJLc87", "evmChainId": 1872,   "totalSupply": "2T → 0x9011", "historicRLP": null}
+      ],
+      "cChainRLPImport": "lux-mainnet-96369.rlp (1,082,780 blocks, sha256 dd6b71f5...) importing 2026-06-06T01:28+ across all 5 validators"
+    },
+    "testnet": {
+      "deployer": "P-test1jx9p2hxfemcgdlylth05zj20klsn4t06p09v2y",
+      "generatedAt": "2026-06-06T01:20:49Z",
+      "chains": [
+        {"brand": "hanzo", "chainId": "N78F7argvptef5CvHqHm7NBiRH2wgpTxjV8iAjpXacNmzs3kw",  "evmChainId": 36964},
+        {"brand": "zoo",   "chainId": "Dny9DA6KmyQ8KNbRD2PYPr9NoFYXdUe6pcA7CUiTsxJX9Bq1E",  "evmChainId": 200201},
+        {"brand": "pars",  "chainId": "ehn72ekpYSN4mxfvgEwvcwPg3ePfyzjdpomD1eyoHiYxJPMuQ",  "evmChainId": 7071},
+        {"brand": "spc",   "chainId": "2GM3PgyBjAmGN8NwrM8S1VH9g4F7KMcEAaT4gCGpL5EiyXzxF3", "evmChainId": 36910},
+        {"brand": "osage", "chainId": "4ZoMDUrhYbRc7AEnsFjDxrmeRH3t1X7kyrWfJcSgzR9Bb7Udp",  "evmChainId": 1871}
+      ]
+    },
+    "devnet": {
+      "deployer": "P-dev1jx9p2hxfemcgdlylth05zj20klsn4t06s0t5kv",
+      "generatedAt": "2026-06-06T01:15:09Z",
+      "chains": [
+        {"brand": "hanzo", "chainId": "fKXPhdkpTiGwuv99BR2wCCoFNcRu1mGP82seDE4u6w8PvgQ9e",  "evmChainId": 36964},
+        {"brand": "zoo",   "chainId": "27JqPjNAoNPwswVzUH21PNYRtnPFAPKFiYtDL9js1KzJYSSzJb", "evmChainId": 200202},
+        {"brand": "pars",  "chainId": "2Qx3ZyAozazVY5m7VurYmKiAqYz5X1xr6gGpyUYt4kksqzRBYQ", "evmChainId": 7072},
+        {"brand": "spc",   "chainId": "MKPVgHwPhro55uLVVAgTMRw4ZnGQexZrs29KiZVKyK3aXM1oS",  "evmChainId": 36912},
+        {"brand": "osage", "chainId": "2HHn1JDBM8n6wffAwZsauJE5s1P2ydsEP6h2SAsde17EGfA1HL", "evmChainId": 1873}
+      ]
+    }
+  }
+}
