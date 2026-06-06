@@ -11,18 +11,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/luxfi/formatting"
 	"net/netip"
 	"path"
 	"time"
 
-	"math"
-
 	"github.com/luxfi/address"
-	"github.com/luxfi/codec"
-	"github.com/luxfi/codec/linearcodec"
 	"github.com/luxfi/constants"
 	"github.com/luxfi/container/sampler"
+	"github.com/luxfi/formatting"
 	"github.com/luxfi/ids"
 	"github.com/luxfi/math/set"
 	pchainblock "github.com/luxfi/proto/p/block"
@@ -358,7 +354,7 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 
 	var (
 		xvmGenesisBytes []byte
-		utxoAssetID        = ids.Empty
+		utxoAssetID     = ids.Empty
 	)
 	if config.XChainGenesis != "" {
 		var asset struct {
@@ -822,9 +818,13 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 	return apiAliases, chainAliases, nil
 }
 
-// pvmGenesisCodec constructs the linearcodec-backed proto/p genesis
-// codec. proto/p carries no github.com/luxfi/codec import after the
-// Wave 2A rip (#101); callers supply the codec implementation.
+// pvmGenesisCodec constructs the ZAP-native proto/p genesis codec.
+// proto/p carries no github.com/luxfi/codec import after the Wave 2A
+// rip (#101); construction is delegated to the local zap_codec helper
+// (zap_codec.go in this package) — a staging shim that mirrors
+// proto/zap_codec's public surface exactly. Once Wave 2G-Wallet lands
+// and tags `github.com/luxfi/proto/zap_codec`, the two helpers below
+// swap to that import and the local shim deletes.
 //
 // genesis.New, Genesis.Bytes and genesis.Parse all require the
 // genesis-sized codec (math.MaxInt32 budget) because the PVM genesis
@@ -837,42 +837,44 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 // proto/p (block.RegisterTypes is a superset of txs.RegisterTypes —
 // see proto/p/block/codec.go).
 //
-// Mirrors sdk/wallet/chain/p/signer/codec.go but uses the
-// math.MaxInt32 budget because genesis bytes are unbounded by runtime
-// tx-size limits.
+// Wave 2G-Genesis (#101): the linearcodec/codec.Manager construction
+// that previously lived here is gone. The returned codec is ZAP-native
+// little-endian — see zap_codec.go for the wire-format break vs the
+// legacy linearcodec wire bytes. The break is intentional and aligned
+// with LP-023 ZAP-native activation (ZAPActivationUnix=0 means "ZAP is
+// mandatory from genesis"), forward-only.
+//
+// Mirrors sdk/wallet/chain/p/pcodecs.NewPVMGenesisCodec.
 func pvmGenesisCodec() (pchaintxs.Codec, error) {
-	c := linearcodec.NewDefault()
-	cm := codec.NewManager(math.MaxInt32)
-	if err := pchainblock.RegisterTypes(c); err != nil {
-		return nil, err
-	}
-	if err := cm.RegisterCodec(pchaintxs.CodecVersion, c); err != nil {
+	cm := newZapCodecPVMGenesis(pchaintxs.CodecVersion)
+	if err := pchainblock.RegisterTypes(cm); err != nil {
 		return nil, err
 	}
 	return cm, nil
 }
 
-// newXVMParserCodecs constructs the linearcodec-backed ParserCodecs for
-// proto/x. Mirrors sdk/wallet/chain/x/constants.go::newXVMParserCodecs.
-// proto/x carries no codec import after the Wave 1A rip (#101); callers
-// supply the codec implementation. genesis/builder needs this for
-// UTXOAssetID's wire decode path.
+// newXVMParserCodecs constructs the ZAP-native ParserCodecs for proto/x.
+// Mirrors sdk/wallet/chain/x/constants.go::newXVMParserCodecs — both
+// thread the same ZAP-native zapcodec backend. proto/x carries no
+// github.com/luxfi/codec import after the Wave 1A rip (#101); the
+// local zap_codec helper provides the codec implementation until
+// proto/zap_codec ships.
+//
+// genesis/builder needs this for UTXOAssetID's wire decode path. The
+// runtime codec is 1 MiB-bounded and the genesis codec is
+// math.MaxInt32-bounded — both budgets are baked into
+// newZapCodecXVMParser.
+//
+// Tx-level and fx-owned wire payload types are registered when this
+// bundle is handed to xchaintxs.NewParser — see proto/x/txs/parser.go
+// (fxOwnedTypes).
 func newXVMParserCodecs() (xchaintxs.ParserCodecs, error) {
-	c := linearcodec.NewDefault()
-	gc := linearcodec.NewDefault()
-	cm := codec.NewDefaultManager()
-	gcm := codec.NewManager(math.MaxInt32)
-	if err := cm.RegisterCodec(xchaintxs.CodecVersion, c); err != nil {
-		return xchaintxs.ParserCodecs{}, err
-	}
-	if err := gcm.RegisterCodec(xchaintxs.CodecVersion, gc); err != nil {
-		return xchaintxs.ParserCodecs{}, err
-	}
+	runtime, genesis := newZapCodecXVMParser(xchaintxs.CodecVersion)
 	return xchaintxs.ParserCodecs{
-		Codec:           cm,
-		GenesisCodec:    gcm,
-		Registry:        c,
-		GenesisRegistry: gc,
+		Codec:           runtime,
+		GenesisCodec:    genesis,
+		Registry:        runtime,
+		GenesisRegistry: genesis,
 	}, nil
 }
 

@@ -11,6 +11,7 @@ replace github.com/luxfi/genesis => ../
 
 require (
 	github.com/luxfi/address v1.0.1
+	github.com/luxfi/codec v1.1.5
 	github.com/luxfi/constants v1.5.7
 	github.com/luxfi/container v0.0.4
 	github.com/luxfi/crypto v1.19.16
@@ -33,10 +34,9 @@ require (
 	github.com/gorilla/rpc v1.2.1 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
-	github.com/luxfi/accel v1.1.4 // indirect
+	github.com/luxfi/accel v1.1.8 // indirect
 	github.com/luxfi/atomic v1.0.0 // indirect
 	github.com/luxfi/cache v1.2.1 // indirect
-	github.com/luxfi/codec v1.1.4 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/consensus v1.25.0 // indirect
