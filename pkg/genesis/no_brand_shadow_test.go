@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-// TestNoBrandShadow guards Task #109: brand L1 genesis lives in per-brand
+// TestNoBrandShadow guards Task #109: L2 genesis lives in per-brand
 // universe repos (hanzoai/universe, zooai/universe), not in luxfi/genesis.
 //
 // It walks ./configs/ at repo root and asserts no genesis.json sits under
@@ -41,7 +41,7 @@ func TestNoBrandShadow(t *testing.T) {
 		dir := filepath.Join(configsDir, name)
 		if hasGenesisJSON(t, dir) {
 			t.Errorf("brand shadow detected: %s/genesis.json exists at top level configs/; "+
-				"per Task #109, brand L1 genesis must live in hanzoai/universe or zooai/universe, "+
+				"per Task #109, L2 genesis must live in hanzoai/universe or zooai/universe, "+
 				"not in luxfi/genesis. If this is a pars-*/spc-* dir, move it under configs/_orphan-l2/.",
 				name)
 		}
