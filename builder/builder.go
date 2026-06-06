@@ -30,6 +30,7 @@ import (
 	"github.com/luxfi/proto/x/fxs"
 	xgenesis "github.com/luxfi/proto/x/genesis"
 	xchaintxs "github.com/luxfi/proto/x/txs"
+	protozapcodec "github.com/luxfi/proto/zap_codec"
 	"github.com/luxfi/utxo/nftfx"
 	"github.com/luxfi/utxo/propertyfx"
 	"github.com/luxfi/utxo/secp256k1fx"
@@ -818,58 +819,49 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 	return apiAliases, chainAliases, nil
 }
 
-// pvmGenesisCodec constructs the ZAP-native proto/p genesis codec.
-// proto/p carries no github.com/luxfi/codec import after the Wave 2A
-// rip (#101); construction is delegated to the local zap_codec helper
-// (zap_codec.go in this package) — a staging shim that mirrors
-// proto/zap_codec's public surface exactly. Once Wave 2G-Wallet lands
-// and tags `github.com/luxfi/proto/zap_codec`, the two helpers below
-// swap to that import and the local shim deletes.
-//
-// genesis.New, Genesis.Bytes and genesis.Parse all require the
+// pvmGenesisCodec constructs the ZAP-native proto/p genesis codec via
+// the canonical proto/zap_codec.NewPVMGenesis constructor. proto/p
+// carries no github.com/luxfi/codec import after the Wave 2A rip;
+// genesis.New / Genesis.Bytes / genesis.Parse all require the
 // genesis-sized codec (math.MaxInt32 budget) because the PVM genesis
 // blob can be significantly larger than runtime txs — the full set of
 // initial validator stake txs and CreateChainTx entries for every
-// primary-network chain (X/C/D/Q/A/B/T/Z/G/K) lives in a single blob.
+// primary-network chain lives in a single blob.
 //
 // block.RegisterTypes pulls in the full Apricot/Banff/Durango/Quasar
 // block + tx type set in the canonical wire-byte order required by
 // proto/p (block.RegisterTypes is a superset of txs.RegisterTypes —
 // see proto/p/block/codec.go).
 //
-// Wave 2G-Genesis (#101): the linearcodec/codec.Manager construction
-// that previously lived here is gone. The returned codec is ZAP-native
-// little-endian — see zap_codec.go for the wire-format break vs the
-// legacy linearcodec wire bytes. The break is intentional and aligned
-// with LP-023 ZAP-native activation (ZAPActivationUnix=0 means "ZAP is
-// mandatory from genesis"), forward-only.
+// Wave 2G-Archive (#101): the local staging shim that previously
+// mirrored proto/zap_codec's surface has been deleted; this function
+// now imports the canonical constructor directly. The returned codec
+// is ZAP-native little-endian — forward-only, no rollback path,
+// aligned with LP-023 ZAP-native activation (ZAPActivationUnix=0).
 //
 // Mirrors sdk/wallet/chain/p/pcodecs.NewPVMGenesisCodec.
 func pvmGenesisCodec() (pchaintxs.Codec, error) {
-	cm := newZapCodecPVMGenesis(pchaintxs.CodecVersion)
+	cm := protozapcodec.NewPVMGenesis(pchaintxs.CodecVersion)
 	if err := pchainblock.RegisterTypes(cm); err != nil {
 		return nil, err
 	}
 	return cm, nil
 }
 
-// newXVMParserCodecs constructs the ZAP-native ParserCodecs for proto/x.
+// newXVMParserCodecs constructs the ZAP-native ParserCodecs for proto/x
+// via the canonical proto/zap_codec.NewXVMParser constructor.
+//
 // Mirrors sdk/wallet/chain/x/constants.go::newXVMParserCodecs — both
 // thread the same ZAP-native zapcodec backend. proto/x carries no
-// github.com/luxfi/codec import after the Wave 1A rip (#101); the
-// local zap_codec helper provides the codec implementation until
-// proto/zap_codec ships.
-//
-// genesis/builder needs this for UTXOAssetID's wire decode path. The
-// runtime codec is 1 MiB-bounded and the genesis codec is
-// math.MaxInt32-bounded — both budgets are baked into
-// newZapCodecXVMParser.
+// github.com/luxfi/codec import after the Wave 1A rip; the runtime
+// codec is 1 MiB-bounded and the genesis codec is math.MaxInt32-
+// bounded — both budgets are baked into NewXVMParser.
 //
 // Tx-level and fx-owned wire payload types are registered when this
 // bundle is handed to xchaintxs.NewParser — see proto/x/txs/parser.go
 // (fxOwnedTypes).
 func newXVMParserCodecs() (xchaintxs.ParserCodecs, error) {
-	runtime, genesis := newZapCodecXVMParser(xchaintxs.CodecVersion)
+	runtime, genesis := protozapcodec.NewXVMParser(xchaintxs.CodecVersion)
 	return xchaintxs.ParserCodecs{
 		Codec:           runtime,
 		GenesisCodec:    genesis,
