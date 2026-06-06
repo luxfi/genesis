@@ -10,23 +10,93 @@
       "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
       "generatedAt": "2026-06-05T19:28:55Z",
       "chains": [
-        {"brand": "hanzo", "chainTxName": "hanzo", "chainId": "2G74bnyxAnC4Ycwx3ScTfXA4DTnJAepAz5iSjBUF6HF5zybeWW", "evmChainId": 36963, "block0Hash": "0x388f2d1c7bef26c23379f4e620d3f810a624fad6dc38cee6963297d2722da639", "historicRLP": null},
-        {"brand": "zoo",   "chainTxName": "zoo",   "chainId": "HzsCfsL7FVgi8N62swz24tGC567vQtGrxXgXd4ESG9wdZhzVP", "evmChainId": 200200, "block0Hash": "0x7c548af47de27560779ccc67dda32a540944accc71dac3343da3b9cd18f14933", "historicRLP": "zoo-mainnet-200200.rlp (800 blocks, sha256 0850841a368dd1f85ae09d40f0552aecb679225b58ce4524b2d0a3337c7afc98)"},
-        {"brand": "pars",  "chainTxName": "pars",  "chainId": "2Yr6vaXiRMjxDjb6u1y2By6mCRFso6Hm9AKkixVhHgPfw3DY6k", "evmChainId": 7070,   "block0Hash": "0x068d5d414e1f3d7c6a6f064381cb6c044815c04560ab01a2f6ce8aef20e4f1d8", "historicRLP": null},
-        {"brand": "spc",   "chainTxName": "spc",   "chainId": "MsYh2WCzVTw3AGQiNkXfXTiR4gpPMHi7V4jpoVWbtmwVTKCwR", "evmChainId": 36911,  "block0Hash": "0x4dc9fd5cf4ee64609f140ba0aa50f320cadf0ae8b59a29415979bc05b17cfac8", "historicRLP": "spc-mainnet-36911.rlp (11 blocks, sha256 b72f2602ec72360d742bf234a93f113b6614ba1f2d1935f63d8659bf61990ffc)"},
-        {"brand": "osage", "chainTxName": "osage", "chainId": "2ahV62kvM1KWkgxL6MiF5hPYBVwWuwpPqwV3RhqM6hCxZT68uo", "evmChainId": 1872,   "block0Hash": "0xa223bef3448e7a698e49e086b6311e7cf05ba12e9bc2cd3e3e24cb4459c0b9d9", "historicRLP": null}
+        {
+          "brand": "hanzo",
+          "chainTxName": "hanzo",
+          "chainId": "2G74bnyxAnC4Ycwx3ScTfXA4DTnJAepAz5iSjBUF6HF5zybeWW",
+          "evmChainId": 36963,
+          "block0Hash": "0x388f2d1c7bef26c23379f4e620d3f810a624fad6dc38cee6963297d2722da639",
+          "historicRLP": null
+        },
+        {
+          "brand": "zoo",
+          "chainTxName": "zoo",
+          "chainId": "HzsCfsL7FVgi8N62swz24tGC567vQtGrxXgXd4ESG9wdZhzVP",
+          "evmChainId": 200200,
+          "block0Hash": "0x7c548af47de27560779ccc67dda32a540944accc71dac3343da3b9cd18f14933",
+          "historicRLP": "zoo-mainnet-200200.rlp (800 blocks, sha256 0850841a368dd1f85ae09d40f0552aecb679225b58ce4524b2d0a3337c7afc98)"
+        },
+        {
+          "brand": "pars",
+          "chainTxName": "pars",
+          "chainId": "2Yr6vaXiRMjxDjb6u1y2By6mCRFso6Hm9AKkixVhHgPfw3DY6k",
+          "evmChainId": 7070,
+          "block0Hash": "0x068d5d414e1f3d7c6a6f064381cb6c044815c04560ab01a2f6ce8aef20e4f1d8",
+          "historicRLP": null
+        },
+        {
+          "brand": "spc",
+          "chainTxName": "spc",
+          "chainId": "MsYh2WCzVTw3AGQiNkXfXTiR4gpPMHi7V4jpoVWbtmwVTKCwR",
+          "evmChainId": 36911,
+          "block0Hash": "0x4dc9fd5cf4ee64609f140ba0aa50f320cadf0ae8b59a29415979bc05b17cfac8",
+          "historicRLP": "spc-mainnet-36911.rlp (11 blocks, sha256 b72f2602ec72360d742bf234a93f113b6614ba1f2d1935f63d8659bf61990ffc)"
+        },
+        {
+          "brand": "osage",
+          "chainTxName": "osage",
+          "chainId": "2ahV62kvM1KWkgxL6MiF5hPYBVwWuwpPqwV3RhqM6hCxZT68uo",
+          "evmChainId": 1872,
+          "block0Hash": "0xa223bef3448e7a698e49e086b6311e7cf05ba12e9bc2cd3e3e24cb4459c0b9d9",
+          "historicRLP": null
+        }
       ]
     },
     "testnet": {
       "deployer": "P-test1jx9p2hxfemcgdlylth05zj20klsn4t06p09v2y",
       "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
-      "generatedAt": "2026-06-05T20:30:35Z",
+      "generatedAt": "2026-06-05T23:58:42Z",
       "chains": [
-        {"brand": "hanzo", "chainTxName": "hanzo", "chainId": "N78F7argvptef5CvHqHm7NBiRH2wgpTxjV8iAjpXacNmzs3kw",  "evmChainId": 36964,  "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "zoo",   "chainTxName": "zoo",   "chainId": "2gDeyS6E5qsAt5XbjymdLNYgdRCekDdnuBeudq6yNjqR3Jzneq", "evmChainId": 200201, "block0Hash": "pending-verify", "historicRLP": "zoo-testnet-200201.rlp (85 blocks, sha256 739c96ba8e8173e5b9133802928cb81c7c4b30f9ee8e50bbae734f57eabc4055)"},
-        {"brand": "pars",  "chainTxName": "pars",  "chainId": "ibabSRvJwFrJzbb6Xo8TgdkYHax1BARVDa4jtrmaPsze1uC7R",  "evmChainId": 494950, "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "spc",   "chainTxName": "spc",   "chainId": "oZzWCB5h9hWem4vPcNfNdMjzVv5vC4fBSmpZmrbQbau6smAMD",  "evmChainId": 36910,  "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "osage", "chainTxName": "osage", "chainId": "2HUAGzDFsE6Bw5ShYG5qXZ2U5XN5yMNxoLZe7ytv9VvfUsLggE", "evmChainId": 1871,   "block0Hash": "pending-verify", "historicRLP": null}
+        {
+          "brand": "hanzo",
+          "chainTxName": "hanzo",
+          "chainId": "N78F7argvptef5CvHqHm7NBiRH2wgpTxjV8iAjpXacNmzs3kw",
+          "evmChainId": 36964,
+          "block0Hash": "live-rebootstrap-2026-06-05-T2358Z",
+          "historicRLP": null
+        },
+        {
+          "brand": "zoo",
+          "chainTxName": "zoo",
+          "chainId": "2ZQzn3ac994B2xDn6MND5p2jK2NPhm4EzaTWYnmTuZbtA5mJLA",
+          "evmChainId": 200201,
+          "block0Hash": "live-rebootstrap-2026-06-05-T2358Z",
+          "historicRLP": "zoo-testnet-200201.rlp"
+        },
+        {
+          "brand": "pars",
+          "chainTxName": "pars",
+          "chainId": "bSwKvLDpa5hefjguMAshhfus7UbCpQjn234qrNLf76QeQpj9V",
+          "evmChainId": 7071,
+          "block0Hash": "live-rebootstrap-2026-06-05-T2358Z",
+          "historicRLP": null
+        },
+        {
+          "brand": "spc",
+          "chainTxName": "spc",
+          "chainId": "2sMidUQgH3KzdK7b15hw9sPVRUEBf8X5eJ7ACZdJWMGdrE3E3F",
+          "evmChainId": 36910,
+          "block0Hash": "live-rebootstrap-2026-06-05-T2358Z",
+          "historicRLP": null
+        },
+        {
+          "brand": "osage",
+          "chainTxName": "osage",
+          "chainId": "kEm2oLEfcGvmf5LeMvXu1jQVifTduoUKvf5c5yu8218wVhDiz",
+          "evmChainId": 1871,
+          "block0Hash": "live-rebootstrap-2026-06-05-T2358Z",
+          "historicRLP": null
+        }
       ]
     },
     "devnet": {
@@ -34,11 +104,46 @@
       "vmId": "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6",
       "generatedAt": "2026-06-05T20:27:42Z",
       "chains": [
-        {"brand": "hanzo", "chainTxName": "hanzo", "chainId": "fKXPhdkpTiGwuv99BR2wCCoFNcRu1mGP82seDE4u6w8PvgQ9e",  "evmChainId": 36964,  "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "zoo",   "chainTxName": "zoo",   "chainId": "2W5ZJEJVU5742FmxY3N7SYTANXwrSmEQu8g8Jqt5yTGU6LF4ci", "evmChainId": 200202, "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "pars",  "chainTxName": "pars",  "chainId": "95VKeHHqRgsZjD7dYJykqG8YvJuapRpXPoxbmzUMu6Y5LotwX",  "evmChainId": 494951, "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "spc",   "chainTxName": "spc",   "chainId": "2b9BcEvNvJxRkT5kho9yJ7ajFSywkQNnMVkXDPN8GA9xwpswr4", "evmChainId": 36912,  "block0Hash": "pending-verify", "historicRLP": null},
-        {"brand": "osage", "chainTxName": "osage", "chainId": "2TSGgLroJU7yiaCvWzLSVM1hkQdkF1XWDWajpiGZRCysEt6hH2", "evmChainId": 1873,   "block0Hash": "pending-verify", "historicRLP": null}
+        {
+          "brand": "hanzo",
+          "chainTxName": "hanzo",
+          "chainId": "fKXPhdkpTiGwuv99BR2wCCoFNcRu1mGP82seDE4u6w8PvgQ9e",
+          "evmChainId": 36964,
+          "block0Hash": "pending-verify",
+          "historicRLP": null
+        },
+        {
+          "brand": "zoo",
+          "chainTxName": "zoo",
+          "chainId": "2W5ZJEJVU5742FmxY3N7SYTANXwrSmEQu8g8Jqt5yTGU6LF4ci",
+          "evmChainId": 200202,
+          "block0Hash": "pending-verify",
+          "historicRLP": null
+        },
+        {
+          "brand": "pars",
+          "chainTxName": "pars",
+          "chainId": "95VKeHHqRgsZjD7dYJykqG8YvJuapRpXPoxbmzUMu6Y5LotwX",
+          "evmChainId": 494951,
+          "block0Hash": "pending-verify",
+          "historicRLP": null
+        },
+        {
+          "brand": "spc",
+          "chainTxName": "spc",
+          "chainId": "2b9BcEvNvJxRkT5kho9yJ7ajFSywkQNnMVkXDPN8GA9xwpswr4",
+          "evmChainId": 36912,
+          "block0Hash": "pending-verify",
+          "historicRLP": null
+        },
+        {
+          "brand": "osage",
+          "chainTxName": "osage",
+          "chainId": "2TSGgLroJU7yiaCvWzLSVM1hkQdkF1XWDWajpiGZRCysEt6hH2",
+          "evmChainId": 1873,
+          "block0Hash": "pending-verify",
+          "historicRLP": null
+        }
       ]
     }
   }
