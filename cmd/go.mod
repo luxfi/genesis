@@ -17,7 +17,7 @@ replace github.com/luxfi/genesis => ../
 replace github.com/luxfi/node => ../../node
 
 require (
-	github.com/luxfi/constants v1.5.7
+	github.com/luxfi/constants v1.5.8-0.20260603055356-93c2c2ceb9ca
 	github.com/luxfi/crypto v1.19.17
 	github.com/luxfi/genesis v1.13.8
 	github.com/luxfi/geth v1.16.98
@@ -25,8 +25,8 @@ require (
 	github.com/luxfi/go-bip39 v1.1.2
 	github.com/luxfi/ids v1.2.14
 	github.com/luxfi/math v1.4.1
-	github.com/luxfi/node v1.28.0
-	github.com/luxfi/sdk v1.17.0
+	github.com/luxfi/node v1.29.3
+	github.com/luxfi/sdk v1.17.6
 	github.com/luxfi/utxo v0.3.7
 )
 
@@ -86,7 +86,7 @@ require (
 	github.com/luxfi/api v1.0.12 // indirect
 	github.com/luxfi/atomic v1.0.0 // indirect
 	github.com/luxfi/cache v1.2.1 // indirect
-	github.com/luxfi/codec v1.1.4 // indirect
+	github.com/luxfi/codec v1.1.5 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
 	github.com/luxfi/consensus v1.25.13 // indirect
@@ -103,9 +103,9 @@ require (
 	github.com/luxfi/metric v1.5.7 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/net v0.0.4 // indirect
-	github.com/luxfi/p2p v1.19.2 // indirect
+	github.com/luxfi/p2p v1.21.1 // indirect
 	github.com/luxfi/pq v1.0.3 // indirect
-	github.com/luxfi/proto v1.1.0 // indirect
+	github.com/luxfi/proto v1.3.0 // indirect
 	github.com/luxfi/rpc v1.0.2 // indirect
 	github.com/luxfi/runtime v1.1.0 // indirect
 	github.com/luxfi/sampler v1.0.0 // indirect
@@ -113,11 +113,11 @@ require (
 	github.com/luxfi/timer v1.0.2 // indirect
 	github.com/luxfi/tls v1.0.3 // indirect
 	github.com/luxfi/trace v0.1.4 // indirect
-	github.com/luxfi/upgrade v1.0.0 // indirect
-	github.com/luxfi/utils v1.1.4 // indirect
+	github.com/luxfi/upgrade v1.0.1-0.20260603055252-f51810805436 // indirect
+	github.com/luxfi/utils v1.1.5 // indirect
 	github.com/luxfi/validators v1.2.0 // indirect
 	github.com/luxfi/version v1.0.1 // indirect
-	github.com/luxfi/vm v1.0.40 // indirect
+	github.com/luxfi/vm v1.1.11 // indirect
 	github.com/luxfi/warp v1.18.6 // indirect
 	github.com/luxfi/zap v0.7.2 // indirect
 	github.com/luxfi/zapdb v1.10.0 // indirect
@@ -177,7 +177,5 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
-
-replace github.com/luxfi/codec => ../../codec
 
 replace github.com/luxfi/utxo => ../../utxo
