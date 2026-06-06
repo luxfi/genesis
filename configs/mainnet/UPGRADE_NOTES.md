@@ -7,12 +7,12 @@ excluded from the primary-network safe subset.
 
 ## Safe-subset framing
 
-- **Brand L2s** (hanzo, zoo, pars, spc) carry **42 precompiles** baked into
+- **L2** (hanzo, zoo, pars, spc) carry **42 precompiles** baked into
   their genesis at block 0 after the `eciesConfig` scrub in this patch.
   See `~/work/hanzo/universe/configs/genesis/mainnet/genesis.json` for the
   canonical L2 set; the precompile keys are identical across the four
-  brand L2 genesis files.
-- **Primary C-Chain safe subset = 42** (the brand L2 set), plus three
+  L2 genesis files.
+- **Primary C-Chain safe subset = 42** (the L2 set), plus three
   burn-handler precompiles (`deadConfig`, `deadFullConfig`,
   `deadZeroConfig`) that exist only on the primary network, plus
   `warpConfig` and the AI-Mining / DEX / Router stack already activated
@@ -52,7 +52,7 @@ permissionless by design — there is no admin address to assign — so
 activating these would either (a) hand admin to an arbitrary address and
 create a trust hazard, or (b) activate them empty and leave the gate
 dormant, which is strictly worse than not activating them at all. They
-remain available for brand L2 / subnet activation where an admin role makes
+remain available for L2 / subnet activation where an admin role makes
 sense.
 
 ### `feeManagerConfig` — removed from canonical
@@ -71,7 +71,7 @@ already pins `feeConfig` directly, so no behavioural change.
 | Tier | Timestamp (Unix) | Timestamp (UTC) | Count | Notes |
 |------|------------------|-----------------|-------|-------|
 | Genesis    | `0`          | block 0       | 19 | `warpConfig` + 18 already-live precompiles (the set inlined in `~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml` `UPGRADE_JSON`). DO NOT RESCHEDULE — luxd's `checkPrecompileCompatible` refuses to boot if any already-live precompile is moved to a different timestamp. The `IsForwardCompatibleWithLiveActivations` rollout test pins this contract. |
-| Safe-subset extension (this patch) | `1782864000` | 2026-07-01 00:00 UTC | 27 | Forward-dated 29 days from patch authorship date (2026-06-02) to give validators upgrade buffer. Brand L2s already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included in this patch — they are unregistered in `luxfi/precompile v0.5.27` and would brick boot. See *Exclusions* and *Followup* sections. |
+| Safe-subset extension (this patch) | `1782864000` | 2026-07-01 00:00 UTC | 27 | Forward-dated 29 days from patch authorship date (2026-06-02) to give validators upgrade buffer. L2 already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included in this patch — they are unregistered in `luxfi/precompile v0.5.27` and would brick boot. See *Exclusions* and *Followup* sections. |
 
 Total entries: **46** (1 warp + 18 live + 27 forward-dated).
 
@@ -110,8 +110,8 @@ surfaces that consume it:
    StatefulSet ConfigMap. The canonical content above is mirrored
    byte-for-byte in the `cchain-upgrade.json` data key. The startup
    script copies that file to `/data/configs/chains/C/upgrade.json`
-   at boot (PRIMARY C-CHAIN ONLY). Brand L2 chain config directories
-   are NOT touched — brand L2 genesis files carry their precompile
+   at boot (PRIMARY C-CHAIN ONLY). L2 chain config directories
+   are NOT touched — L2 genesis files carry their precompile
    activations baked at block 0 and overwriting their upgrade.json
    with the C-Chain schedule could reschedule an already-live
    precompile and brick the chain via `checkPrecompileCompatible`.
@@ -141,7 +141,7 @@ surfaces that consume it:
 `eciesConfig` is deliberately not registered in
 `luxfi/evm/precompile/registry/registry.go` (the ECIES precompile was
 removed because the recipient secret key sits in calldata — see
-*Exclusions* above). The brand L2 genesis files at
+*Exclusions* above). The L2 genesis files at
 `~/work/lux/genesis/configs/{hanzo,zoo,pars,spc}-{mainnet,testnet,devnet}/genesis.json`
 (11 of 12) carried `eciesConfig` in their block-0
 `precompileUpgrades` array, which would fail the same
@@ -189,7 +189,7 @@ After luxd reads this file at boot, validators on Lux mainnet should see:
       (`~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml`): new
       `cchain-upgrade.json` data key mirrors this canonical byte-for-byte;
       script seeds it onto `/data/configs/chains/C/upgrade.json` only;
-      the 4 brand L2 chain dirs are NOT touched.
+      the 4 L2 chain dirs are NOT touched.
 - [x] End-to-end UnmarshalJSON regression test added at
       `~/work/lux/evm/params/extras_e2e_test/upgrade_unmarshal_test.go`
       (Red vector 9 MEDIUM): asserts the canonical parses cleanly via

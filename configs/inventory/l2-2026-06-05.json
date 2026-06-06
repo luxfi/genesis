@@ -1,5 +1,5 @@
 {
-  "_comment": "Brand L1 EVMs spawned across mainnet/testnet/devnet via bootstrap-chain on 2026-06-05 \u2014 unblocked by luxfi/node v1.28.29 (LockedOutput dispatcher fix in vms/components/lux + vms/platformvm/stakeable init)",
+  "_comment": "L2 EVMs spawned across mainnet/testnet/devnet via bootstrap-chain on 2026-06-05 \u2014 unblocked by luxfi/node v1.28.29 (LockedOutput dispatcher fix in vms/components/lux + vms/platformvm/stakeable init)",
   "_luxd_version": "v1.28.29",
   "_deployer_bip44_idx": 5,
   "envs": {
