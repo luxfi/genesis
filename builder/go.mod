@@ -7,8 +7,6 @@ go 1.26.3
 // that only need genesis data types (luxd v1.23.x line, indexers)
 // don't pull these heavy deps.
 
-replace github.com/luxfi/genesis => ../
-
 require (
 	github.com/luxfi/address v1.0.1
 	github.com/luxfi/constants v1.5.8-0.20260603055356-93c2c2ceb9ca
@@ -20,7 +18,7 @@ require (
 	github.com/luxfi/math v1.4.1
 	github.com/luxfi/proto v1.3.0
 	github.com/luxfi/utxo v0.3.7
-	github.com/luxfi/vm v1.1.11
+	github.com/luxfi/vm v1.2.0
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -58,7 +56,7 @@ require (
 	github.com/luxfi/pq v1.0.3 // indirect
 	github.com/luxfi/rpc v1.0.2 // indirect
 	github.com/luxfi/runtime v1.1.0 // indirect
-	github.com/luxfi/sampler v1.0.0 // indirect
+	github.com/luxfi/sampler v1.1.0 // indirect
 	github.com/luxfi/timer v1.0.2 // indirect
 	github.com/luxfi/tls v1.0.3 // indirect
 	github.com/luxfi/utils v1.1.5 // indirect

@@ -7,7 +7,6 @@ go 1.26.3
 // need genesis data types don't pull luxfi/consensus + its
 // post-quantum threshold deps.
 
-replace github.com/luxfi/genesis => ../../../
 
 require (
 	github.com/luxfi/consensus v1.25.1
