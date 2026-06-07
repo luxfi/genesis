@@ -39,7 +39,7 @@ require (
 	github.com/luxfi/metric v1.5.5 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/rpc v1.0.2
-	github.com/luxfi/sampler v1.0.0 // indirect
+	github.com/luxfi/sampler v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
