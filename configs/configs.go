@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/luxfi/genesis/pkg/genesis"
@@ -153,10 +154,10 @@ func loadDynamicPChainAllocations(networkName string) *genesis.PChainConfig {
 // loadEmbeddedGenesisWithDynamic loads genesis with optional dynamic P-Chain allocations.
 func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.PChainConfig) ([]byte, error) {
 	// Load network.json from embedded
-	networkData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "network.json"))
+	networkData, err := embeddedGenesis.ReadFile(path.Join(networkName, "network.json"))
 	if err != nil {
 		// Fall back to single genesis.json file
-		return embeddedGenesis.ReadFile(filepath.Join(networkName, "genesis.json"))
+		return embeddedGenesis.ReadFile(path.Join(networkName, "genesis.json"))
 	}
 	var network genesis.NetworkConfig
 	if err := json.Unmarshal(networkData, &network); err != nil {
@@ -164,11 +165,11 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	}
 
 	// Check if split pchain.json/cchain.json exist - if not, fall back to genesis.json
-	_, pchainErr := embeddedGenesis.ReadFile(filepath.Join(networkName, "pchain.json"))
-	_, cchainErr := embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
+	_, pchainErr := embeddedGenesis.ReadFile(path.Join(networkName, "pchain.json"))
+	_, cchainErr := embeddedGenesis.ReadFile(path.Join(networkName, "cchain.json"))
 	if pchainErr != nil || cchainErr != nil {
 		// No split files, fall back to combined genesis.json (devnet case)
-		return embeddedGenesis.ReadFile(filepath.Join(networkName, "genesis.json"))
+		return embeddedGenesis.ReadFile(path.Join(networkName, "genesis.json"))
 	}
 
 	// Load P-Chain config - use dynamic if provided, otherwise embedded
@@ -186,7 +187,7 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 			}
 		}
 	} else {
-		pchainData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "pchain.json"))
+		pchainData, err := embeddedGenesis.ReadFile(path.Join(networkName, "pchain.json"))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read pchain.json: %w", err)
 		}
@@ -323,7 +324,7 @@ func readAllChainShards(dir string) (chainSet, error) {
 // is one entry in primaryChainShardFiles plus a slot on chainSet,
 // not a new env knob and not a new branch in the builder.
 func loadOptionalChainShard(networkName, filename string) (string, error) {
-	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, filename))
+	data, err := embeddedGenesis.ReadFile(path.Join(networkName, filename))
 	if err != nil {
 		// Absent shard means the chain isn't part of this network's primary
 		// genesis. Distinct from a real read error — empty FS embed returns
@@ -356,7 +357,7 @@ func readDirShard(dir, filename string) (string, error) {
 // pkg/genesis.SecurityProfile struct (profileID + profileHashHex), keeping
 // the embedded tree and the on-disk operator file format identical.
 func loadSecurityProfilePin(networkName string) (*genesis.SecurityProfile, error) {
-	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "securityProfile.json"))
+	data, err := embeddedGenesis.ReadFile(path.Join(networkName, "securityProfile.json"))
 	if err != nil {
 		return nil, nil
 	}
@@ -376,7 +377,7 @@ func loadSecurityProfilePin(networkName string) (*genesis.SecurityProfile, error
 // so a deploy can drop a certPolicy.json next to securityProfile.json with
 // no other change.
 func loadCertPolicyPin(networkName string) (*genesis.CertPolicy, error) {
-	data, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "certPolicy.json"))
+	data, err := embeddedGenesis.ReadFile(path.Join(networkName, "certPolicy.json"))
 	if err != nil {
 		return nil, nil
 	}
@@ -389,7 +390,7 @@ func loadCertPolicyPin(networkName string) (*genesis.CertPolicy, error) {
 
 // loadEmbeddedPChainConfig loads only the P-Chain config from embedded.
 func loadEmbeddedPChainConfig(networkName string) (*genesis.PChainConfig, error) {
-	pchainData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "pchain.json"))
+	pchainData, err := embeddedGenesis.ReadFile(path.Join(networkName, "pchain.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -494,7 +495,7 @@ func GetCanonicalGenesisBytes(networkID uint32) ([]byte, error) {
 // This ensures cChainGenesis is properly serialized as a JSON string.
 func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 	// Load network.json
-	networkData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "network.json"))
+	networkData, err := embeddedGenesis.ReadFile(path.Join(networkName, "network.json"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read network.json: %w", err)
 	}
@@ -504,7 +505,7 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 	}
 
 	// Load pchain.json
-	pchainData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "pchain.json"))
+	pchainData, err := embeddedGenesis.ReadFile(path.Join(networkName, "pchain.json"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read pchain.json: %w", err)
 	}
