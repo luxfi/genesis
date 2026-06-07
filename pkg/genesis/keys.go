@@ -574,7 +574,6 @@ func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
 	return addr, nil
 }
 
-
 // keccakBytes returns Keccak256(data) as a []byte slice (saves the
 // two-step assignment-then-slice that Go requires for function-returned
 // arrays).
@@ -1123,4 +1122,3 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		Message:                    genesisMessage(networkID),
 	}, nil
 }
-
