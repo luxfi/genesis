@@ -73,7 +73,8 @@ type Config struct {
 //
 // EVMAddr is the 20-byte H160 EVM address (C-Chain and other EVM chains).
 // UTXOAddr is the 20-byte ShortID used by both P-Chain and X-Chain UTXOs
-//   (same bytes; bech32 prefix differentiates the chain).
+//
+//	(same bytes; bech32 prefix differentiates the chain).
 type Allocation struct {
 	EVMAddr        ids.ShortID    `json:"evmAddr"`
 	UTXOAddr       ids.ShortID    `json:"utxoAddr"`
@@ -200,7 +201,6 @@ type StakerJSON struct {
 	// EndTime is the Unix timestamp when staking ends (optional)
 	EndTime uint64 `json:"endTime,omitempty"`
 }
-
 
 // CChainConfig is the C-Chain genesis configuration
 type CChainConfig struct {
@@ -385,4 +385,3 @@ func (c *Config) MarshalJSON() ([]byte, error) {
 	hrp := constants.GetHRP(c.NetworkID)
 	return json.Marshal(c.ToJSON(hrp))
 }
-
