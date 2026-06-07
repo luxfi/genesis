@@ -1,6 +1,6 @@
 module github.com/luxfi/genesis/builder
 
-go 1.26.3
+go 1.26.4
 
 // Builder tier — uses luxfi/utxo / vm / database / proto for
 // chain-genesis construction. Kept SEPARATE so downstream consumers
