@@ -60,10 +60,10 @@ import (
 // Exit codes — K8s + the operator's status reconciler read these to
 // distinguish "bad input" (no retry) from "transient" (retry).
 const (
-	exitOK             = 0
-	exitBadInput       = 1
-	exitLuxdUnreach    = 2
-	exitAdminRPCError  = 3
+	exitOK            = 0
+	exitBadInput      = 1
+	exitLuxdUnreach   = 2
+	exitAdminRPCError = 3
 )
 
 // importHTTPClient is a package-level client so tests can swap a stub.

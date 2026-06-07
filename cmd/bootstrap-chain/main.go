@@ -22,9 +22,9 @@
 // by CreateChainTx. Three IDs, three roles, never aliased:
 //
 //   - `networkID` — identifies a validator network. Comes in two scopes:
-//       * primary networkID (uint32: 1=mainnet, 2=testnet, 3=local, 1337=dev)
-//       * per-chain networkID (ids.ID 32 bytes) — the CreateNetworkTx ID
-//         that owns one or more chains.
+//   - primary networkID (uint32: 1=mainnet, 2=testnet, 3=local, 1337=dev)
+//   - per-chain networkID (ids.ID 32 bytes) — the CreateNetworkTx ID
+//     that owns one or more chains.
 //   - `chainID` — the blockchain's own globally unique ID (ids.ID 32 bytes).
 //   - `evmChainID` — EIP-155 chain ID (uint64). EVM JSON-RPC only.
 //

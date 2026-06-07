@@ -15,56 +15,56 @@ func TestChainPrefixFormat_KnownVectors(t *testing.T) {
 	// Known test addresses from mainnet genesis
 	testCases := []struct {
 		name        string
-		addrHex  string
+		addrHex     string
 		chainPrefix string
 		hrp         string
 		expected    string
 	}{
 		{
 			name:        "node1_mainnet",
-			addrHex:  "9011E888251AB053B7bD1cdB598Db4f9DEd94714",
+			addrHex:     "9011E888251AB053B7bD1cdB598Db4f9DEd94714",
 			chainPrefix: "P",
 			hrp:         "lux",
 			expected:    "P-lux1jqg73zp9r2c98daarnd4nrd5l80dj3c5eha5fl",
 		},
 		{
 			name:        "node2_mainnet",
-			addrHex:  "EAbCC110fAcBfebabC66Ad6f9E7B67288e720B59",
+			addrHex:     "EAbCC110fAcBfebabC66Ad6f9E7B67288e720B59",
 			chainPrefix: "P",
 			hrp:         "lux",
 			expected:    "P-lux1a27vzy86e0lt40rx44heu7m89z88yz6ey7av5e",
 		},
 		{
 			name:        "node3_mainnet",
-			addrHex:  "8d5081153aE1cfb41f5c932fe0b6Beb7E159cF84",
+			addrHex:     "8d5081153aE1cfb41f5c932fe0b6Beb7E159cF84",
 			chainPrefix: "P",
 			hrp:         "lux",
 			expected:    "P-lux134ggz9f6u88mg86ujvh7pd47kls4nnuy3hx4yp",
 		},
 		{
 			name:        "node4_mainnet",
-			addrHex:  "f8f12D0592e6d1bFe92ee16CaBCC4a6F26dAAe23",
+			addrHex:     "f8f12D0592e6d1bFe92ee16CaBCC4a6F26dAAe23",
 			chainPrefix: "P",
 			hrp:         "lux",
 			expected:    "P-lux1lrcj6pvjumgml6fwu9k2hnz2dund4t3rpsjuxu",
 		},
 		{
 			name:        "node5_mainnet",
-			addrHex:  "Fb66808f708e1d4D7D43a8c75596e84f94e06806",
+			addrHex:     "Fb66808f708e1d4D7D43a8c75596e84f94e06806",
 			chainPrefix: "P",
 			hrp:         "lux",
 			expected:    "P-lux1ldngprms3cw56l2r4rr4t9hgf72wq6qx057vd2",
 		},
 		{
 			name:        "x_chain_testnet",
-			addrHex:  "9011E888251AB053B7bD1cdB598Db4f9DEd94714",
+			addrHex:     "9011E888251AB053B7bD1cdB598Db4f9DEd94714",
 			chainPrefix: "X",
 			hrp:         "test",
 			expected:    "X-test1jqg73zp9r2c98daarnd4nrd5l80dj3c5644e09",
 		},
 		{
 			name:        "local_dev",
-			addrHex:  "9011E888251AB053B7bD1cdB598Db4f9DEd94714",
+			addrHex:     "9011E888251AB053B7bD1cdB598Db4f9DEd94714",
 			chainPrefix: "P",
 			hrp:         "local",
 			expected:    "P-local1jqg73zp9r2c98daarnd4nrd5l80dj3c56acgey",

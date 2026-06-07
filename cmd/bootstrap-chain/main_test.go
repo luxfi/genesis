@@ -77,9 +77,9 @@ func TestNormalizeAllocKey_PreservesBodyCase(t *testing.T) {
 func TestNormalizeAllocKey_RejectsShortBody(t *testing.T) {
 	// 39 hex chars after 0x — one short of a valid address. Must fail.
 	cases := []string{
-		"0x111111111111111111111111111111111111111",  // 39
-		"0x11111111111111111111111111111111111111",   // 38
-		"0x",                                          // empty body
+		"0x111111111111111111111111111111111111111", // 39
+		"0x11111111111111111111111111111111111111",  // 38
+		"0x", // empty body
 	}
 	for _, k := range cases {
 		_, _, valid := normalizeAllocKey(k)
