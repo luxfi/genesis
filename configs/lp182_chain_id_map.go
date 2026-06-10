@@ -34,12 +34,8 @@ const (
 	// FamilySPC is the SPC L2 family hosted on the Lux primary network's
 	// validator set (validators==0 per LP-018).
 	FamilySPC NetworkFamily = "spc"
-	// FamilyLiquid is the Liquid network family. Runs as Anchored on a
-	// Lux primary (validators>0 with networkID in {1,2,3,1337}) or as
-	// Independent (own networkID = 8675309/8675310/8675312 per env).
-	FamilyFamily = "liquid"
 	// FamilyPars is the Pars network family. Runs as Anchored on a Lux
-	// primary or as Independent — same dual-mode option as Liquid.
+	// primary or as Independent with its own networkID.
 	FamilyPars NetworkFamily = "pars"
 	// FamilyOsage is the Osage network family (placeholder pending
 	// genesis publication).
@@ -100,15 +96,6 @@ func EVMChainID(family NetworkFamily, env uint32) (uint64, bool) {
 		case DevnetID:
 			return 36912, true
 		}
-	case FamilyLiquid:
-		switch env {
-		case MainnetID:
-			return 8675309, true
-		case TestnetID:
-			return 8675310, true
-		case DevnetID:
-			return 8675312, true
-		}
 	case FamilyPars:
 		switch env {
 		case MainnetID:
@@ -143,8 +130,6 @@ func NetworkFamilyOf(chainID uint64) (NetworkFamily, bool) {
 		return FamilyZoo, true
 	case 36911, 36910, 36912:
 		return FamilySPC, true
-	case 8675309, 8675310, 8675312:
-		return FamilyLiquid, true
 	case 7070, 494950, 494951:
 		return FamilyPars, true
 	}
@@ -165,8 +150,6 @@ func ParseNetworkFamily(s string) (NetworkFamily, bool) {
 		return FamilyZoo, true
 	case FamilySPC:
 		return FamilySPC, true
-	case FamilyLiquid:
-		return FamilyLiquid, true
 	case FamilyPars:
 		return FamilyPars, true
 	case FamilyOsage:
