@@ -17,8 +17,8 @@
 //     a. --mnemonic-file=<path>          (raw file, mnemonic is the only content)
 //     b. LUX_MNEMONIC env var
 //     c. KMS via env vars KMS_ENDPOINT + KMS_TOKEN + KMS_WORKSPACE_ID, fetching
-//        secret at path lux/<env>/staking with key `mnemonic` (Infisical REST
-//        v3 raw API: GET /api/v3/secrets/raw?workspaceId=&secretPath=&environment=)
+//     secret at path lux/<env>/staking with key `mnemonic` (Infisical REST
+//     v3 raw API: GET /api/v3/secrets/raw?workspaceId=&secretPath=&environment=)
 //
 //  2. Derives a single secp256k1 funding key on the canonical Lux BIP-44 UTXO
 //     path m/44'/9000'/0'/0/<index> (purpose=44', coin_type=9000', account=0',
@@ -29,8 +29,8 @@
 //     to use a different funded allocation slot.
 //
 //     Distinct paths exist for other key purposes — they are NOT this funding key:
-//       * device Lux key  (Lux-internal hardened): m/44'/9000'/<nid>'/1'/<i>'
-//       * device PQ key   (ML-DSA-65 staking):     m/44'/9000'/<nid>'/0'/<i>'
+//     * device Lux key  (Lux-internal hardened): m/44'/9000'/<nid>'/1'/<i>'
+//     * device PQ key   (ML-DSA-65 staking):     m/44'/9000'/<nid>'/0'/<i>'
 //     where <nid> is the primary-network ID (1/2/3/1337), NOT an EVM chainID.
 //
 //  3. For each of the 5 brand specs, loads the canonical brand genesis bytes
@@ -122,11 +122,12 @@ const defaultVMID = "mgj786NP7uDwBCcq6YwThhaN8FLyybkCa4zBWTQbNgmK6k9A6"
 // coinType=60 (ETH) — out of scope here, CreateChainTx is a P-Chain op.
 //
 // The funded mainnet genesis allocations match this derivation:
-//   index 0..4  -> initialStakedFunds (bonded as initial validator stake,
-//                  500M LUX each, locked until validator end-time)
-//   index 5..99 -> 100 unlock-schedule allocations, ~35M LUX unlocked
-//                  per address at network start. CreateChainTx fee is
-//                  trivial vs that — any non-staking slot is funded.
+//
+//	index 0..4  -> initialStakedFunds (bonded as initial validator stake,
+//	               500M LUX each, locked until validator end-time)
+//	index 5..99 -> 100 unlock-schedule allocations, ~35M LUX unlocked
+//	               per address at network start. CreateChainTx fee is
+//	               trivial vs that — any non-staking slot is funded.
 //
 // Default --index = 5 (first free-spendable slot). Override with --index
 // for any allocations[<N>].utxoAddr address you control.
@@ -169,12 +170,12 @@ var brandSpecs = []brandSpec{
 // downstream consumers (chain-aliases CM templating, gateway routes,
 // explorer-chains CM) can index into a single document for all envs.
 type result struct {
-	Env        string             `json:"env"`
-	URI        string             `json:"uri"`
-	ControlKey string             `json:"controlKey"`
-	VMID       string             `json:"vmId"`
-	GeneratedAt string            `json:"generatedAt"`
-	Chains     map[string]chainRow `json:"chains"`
+	Env         string              `json:"env"`
+	URI         string              `json:"uri"`
+	ControlKey  string              `json:"controlKey"`
+	VMID        string              `json:"vmId"`
+	GeneratedAt string              `json:"generatedAt"`
+	Chains      map[string]chainRow `json:"chains"`
 }
 
 // chainRow records one brand's outcome. NetworkID is the per-chain
@@ -525,7 +526,9 @@ func loadMnemonic(mnemonicFile, env string) (string, string, error) {
 // env they target — the secretPath disambiguates).
 //
 // Endpoint shape: GET ${KMS_ENDPOINT}/api/v3/secrets/raw?
-//   workspaceId=<ws>&environment=prod&secretPath=/lux/<env>/staking
+//
+//	workspaceId=<ws>&environment=prod&secretPath=/lux/<env>/staking
+//
 // Auth: Authorization: Bearer ${KMS_TOKEN}
 // Response: {"secrets": [{"secretKey": "mnemonic", "secretValue": "..."}]}
 func fetchKMSMnemonic(endpoint, token, wsID, env string) (string, error) {
