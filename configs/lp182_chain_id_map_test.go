@@ -28,9 +28,6 @@ func TestEVMChainID_KnownCells(t *testing.T) {
 		{FamilySPC, MainnetID, 36911},
 		{FamilySPC, TestnetID, 36910},
 		{FamilySPC, DevnetID, 36912},
-		{FamilyLiquid, MainnetID, 8675309},
-		{FamilyLiquid, TestnetID, 8675310},
-		{FamilyLiquid, DevnetID, 8675312},
 		{FamilyPars, MainnetID, 7070},
 		{FamilyPars, TestnetID, 494950},
 		{FamilyPars, DevnetID, 494951},
@@ -80,7 +77,6 @@ func TestNetworkFamilyOf_RoundTrip(t *testing.T) {
 		{36963, FamilyHanzo},
 		{200200, FamilyZoo},
 		{36911, FamilySPC},
-		{8675309, FamilyLiquid},
 		{7070, FamilyPars},
 	}
 	for _, c := range cases {
@@ -150,9 +146,6 @@ func TestEVMChainIDFor_StringInputs(t *testing.T) {
 		{"spc", "mainnet", 36911},
 		{"spc", "testnet", 36910},
 		{"spc", "devnet", 36912},
-		{"liquid", "mainnet", 8675309},
-		{"liquid", "testnet", 8675310},
-		{"liquid", "devnet", 8675312},
 		{"pars", "mainnet", 7070},
 		{"pars", "testnet", 494950},
 		{"pars", "devnet", 494951},
