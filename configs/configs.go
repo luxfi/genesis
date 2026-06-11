@@ -200,7 +200,7 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	// is emitted). Shard absent → empty string, builder skips the entry.
 	// Runtime gate is luxd's --track-chains, not bake-time env knobs.
 	//
-	// To run a P-only network (Liquidity L1 etc.), ship a config tree
+	// To run a P-only network (a regulated securities L1, etc.), ship a config tree
 	// that omits every {x,c,d,q,a,b,t,z,g,k}chain.json. No knob, no
 	// hack — chain set is purely data-driven by which shards are
 	// present.
