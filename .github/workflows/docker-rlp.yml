@@ -40,7 +40,7 @@ jobs:
       image-name: luxfi/rlp-export
       dockerfile: Dockerfile.rlp-export
       platforms: linux/amd64
-      runner-amd64: lux-build-linux-amd64
+      runner-amd64: '["self-hosted", "linux", "amd64"]'
       build-arm64:
         if: false
     secrets: inherit
@@ -52,7 +52,7 @@ jobs:
       image-name: luxfi/rlp-import
       dockerfile: Dockerfile.rlp-import
       platforms: linux/amd64
-      runner-amd64: lux-build-linux-amd64
+      runner-amd64: '["self-hosted", "linux", "amd64"]'
       build-arm64:
         if: false
     secrets: inherit
