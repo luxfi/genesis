@@ -52,7 +52,7 @@ func TestGetGenesis_CChainShardPresentEmbedsCChainGenesis(t *testing.T) {
 // presence is a file-tree edit, not an operator switch. The previous
 // hardcoded `Symbol: "LUX", Name: "Lux", Denomination: 9` literal in
 // builder.FromConfig is now sourced from the shard, so a P-only
-// network (Liquidity-shape) can opt out by simply omitting the file.
+// network (P-only shape) can opt out by simply omitting the file.
 func TestGetGenesis_XChainShardPresentEmbedsXChainGenesis(t *testing.T) {
 	for _, name := range []string{"mainnet", "testnet", "localnet"} {
 		t.Run(name, func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestBuildGenesisFromDir_AbsentShardEmptyOptIn(t *testing.T) {
 		}
 	}
 	// Minimal shards: network + P-Chain only. No X/C/Q/Z. This is the
-	// P-only Liquidity shape — every primary-network chain (X included)
+	// P-only shape — every primary-network chain (X included)
 	// is opt-in by shard presence.
 	write("network.json", `{"networkID":1337,"startTime":1735689600,"message":"P-only test"}`)
 	write("pchain.json", `{
@@ -165,7 +165,7 @@ func networkIDFromName(t *testing.T, name string) uint32 {
 // registry; it has no shard slot because it isn't a CreateChainTx entry.
 //
 // If a future genesis intentionally needs to omit a chain (e.g. a P+X-only
-// Liquidity-shape L1), that's a NEW config-tree, not a regression on the
+// regulated-securities L1), that's a NEW config-tree, not a regression on the
 // canonical Lux primary networks. Editing this test to drop a chain on
 // mainnet/testnet/devnet is a load-bearing decision — bring it to design
 // review.
