@@ -70,10 +70,12 @@ already pins `feeConfig` directly, so no behavioural change.
 
 | Tier | Timestamp (Unix) | Timestamp (UTC) | Count | Notes |
 |------|------------------|-----------------|-------|-------|
-| Genesis    | `0`          | block 0       | 19 | `warpConfig` + 18 already-live precompiles (the set inlined in `~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml` `UPGRADE_JSON`). DO NOT RESCHEDULE — luxd's `checkPrecompileCompatible` refuses to boot if any already-live precompile is moved to a different timestamp. The `IsForwardCompatibleWithLiveActivations` rollout test pins this contract. |
-| Safe-subset extension (this patch) | `1782864000` | 2026-07-01 00:00 UTC | 27 | Forward-dated 29 days from patch authorship date (2026-06-02) to give validators upgrade buffer. L2 already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included in this patch — they are unregistered in `luxfi/precompile v0.5.27` and would brick boot. See *Exclusions* and *Followup* sections. |
+| Live-at-genesis | `0` | block 0 | 17 | The exact set inlined in `~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml` `UPGRADE_JSON` (`aiMiningConfig`, `blake3Config`, `cggmp21Verify`, `deadZeroConfig`, `deadConfig`, `deadFullConfig`, `routerConfig`, `fheConfig`, `frostVerify`, `graphConfig`, `hpkeConfig`, `mldsaVerify`, `mlkemConfig`, `pqcryptoConfig`, `ringConfig`, `slhdsaVerify`, `zkConfig`). These are ACTIVE AT BLOCK 0 on the running mainnet. They MUST stay pinned to `blockTimestamp: 0`. RESCHEDULING ANY OF THEM to a post-genesis timestamp is a relaunch fork / boot-refusal hazard: a relaunched node would treat them as inactive before that timestamp and diverge from the canonical chain (or `checkPrecompileCompatible` refuses boot). Pinned and proven by `IsForwardCompatibleWithLiveActivations` and `relaunch_safety_test.go`. `warpConfig` is NOT in this tier — it lives in the genesis chainConfig (`cchain.json` `config.warpConfig` at the genesis timestamp `1730446786`). |
+| Strict-PQ warp toggle | `1766708399` / `1766708400` | 2025-12-26 00:19:59 / 00:20:00 UTC | 2 | `warpConfig` disable@`1766708399` then re-enable@`1766708400` with the PQ-hardened policy (`quorumNumerator: 67`, `requirePrimaryNetworkSigners: true`). Both are strictly AFTER genesis time, so this is a genuine FUTURE upgrade, not a reschedule of the genesis warp. |
+| BLS12-381 family | `1766708400` | 2025-12-26 00:20:00 UTC | 7 | EIP-2537 G1/G2 add/mul/MSM + pairing, activated at the strict-PQ fork so each is gated by `RefuseUnderStrictPQ` from its first active block. |
+| Quasar-Edition safe-subset | `1782864000` | 2026-07-01 00:00 UTC | 20 | Forward-dated to a clean Q3 boundary, after the strict-PQ gate, so every classical primitive in the tier is registered behind the gate. L2 already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included — see *Exclusions* and *Followup*. |
 
-Total entries: **46** (1 warp + 18 live + 27 forward-dated).
+Total entries: **46** (17 live-at-`0` + 2 warp toggle + 7 BLS + 20 forward-dated). All entries with a non-zero timestamp are strictly greater than the C-Chain genesis timestamp `1730446786`, so a relaunch from the canonical genesis re-fires NO already-applied activation. The array is ordered so all `blockTimestamp: 0` entries come first, satisfying the non-decreasing monotonicity rule in `verifyPrecompileUpgrades`.
 
 ## Strict-PQ profile gate
 
@@ -181,8 +183,14 @@ After luxd reads this file at boot, validators on Lux mainnet should see:
       `rewardManagerConfig`, or `*MinterConfig` in the activation list.
 - [x] No `kzg4844Config`, `secp256r1Config`, or `ed25519Config` in this
       patch (Red vector 8 CRITICAL — deferred to v2 per *Followup*).
-- [x] All 18 already-live precompiles stay at `blockTimestamp: 0` so
-      `checkPrecompileCompatible` does not refuse boot.
+- [x] All 17 already-live precompiles stay at `blockTimestamp: 0` so
+      `checkPrecompileCompatible` does not refuse boot AND a relaunch from
+      genesis does not re-fire an already-applied activation. Pinned by
+      `IsForwardCompatibleWithLiveActivations` and the new
+      `relaunch_safety_test.go` (mainnet + testnet). `warpConfig` is in the
+      genesis chainConfig, not this tier; its strict-PQ disable/re-enable
+      toggle is strictly future (`1766708399`/`1766708400` > genesis
+      `1730446786`).
 - [x] Monotonicity test passes (no entry has a smaller blockTimestamp than
       its predecessor in the list).
 - [x] k8s StatefulSet startup script patched in lockstep
