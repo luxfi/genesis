@@ -441,11 +441,6 @@
         }
       },
       {
-        "dexConfig": {
-          "blockTimestamp": 0
-        }
-      },
-      {
         "fheConfig": {
           "blockTimestamp": 0
         }
