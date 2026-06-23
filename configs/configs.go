@@ -54,11 +54,11 @@ const (
 	// Chain ID constants (C-Chain EVM).
 	MainnetChainID = 96369
 	TestnetChainID = 96368
-	DevnetChainID  = 96370
+	DevnetChainID  = 96367
 	// LocalChainID is the canonical local C-Chain EVM ID (Anvil convention).
 	LocalChainID = 31337
 	// CustomChainID is the sentinel C-Chain EVM ID for any chain outside
-	// the well-known {96369, 96368, 96370, 31337} set. Mirrors CustomID
+	// the well-known {96369, 96368, 96367, 31337} set. Mirrors CustomID
 	// at the network-ID layer; the two should always be paired (a peer
 	// presenting CustomID at the network layer also presents
 	// CustomChainID at the EVM layer unless overridden via genesis-file).
@@ -435,7 +435,7 @@ func IsCustom(networkID uint32) bool {
 }
 
 // networkNameFromID returns the network directory name for a network ID.
-// Accepts both network IDs (1, 2, 3, 1337) and chain IDs (96369, 96368, 96370, 31337)
+// Accepts both network IDs (1, 2, 3, 1337) and chain IDs (96369, 96368, 96367, 31337)
 // as aliases. User-defined custom networks return "" — callers must
 // supply a genesis file (`--genesis-file`) for them since there are no
 // embedded canonical configs to load from disk.

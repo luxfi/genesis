@@ -15,7 +15,7 @@ genesis/
 ├── testnet/           # LUX Testnet (Chain ID: 96368)
 │   ├── cchain.json    # C-Chain genesis (EVM compatible)
 │   └── genesis.json   # Full testnet genesis
-├── devnet/            # LUX Devnet (Chain ID: 96370) - Fast iteration network
+├── devnet/            # LUX Devnet (Chain ID: 96367) - Fast iteration network
 │   └── cchain.json    # C-Chain genesis (EVM compatible)
 ├── local/             # Local development network (Chain ID: 1337)
 │   ├── cchain.json    # C-Chain genesis (EVM compatible)
@@ -45,7 +45,7 @@ The mainnet C-Chain was initialized with a single genesis allocation:
 |---------|----------|------------|---------|
 | LUX Mainnet | 96369 | 96369 | Production network |
 | LUX Testnet | 96368 | 96368 | Public test network |
-| LUX Devnet | 96370 | 96370 | Fast iteration dev network |
+| LUX Devnet | 96367 | 3 | Fast iteration dev network |
 | Local | 1337 | 1337 | Local development |
 
 ## Network Configurations
@@ -62,7 +62,7 @@ The mainnet C-Chain was initialized with a single genesis allocation:
 - **Min Base Fee**: 25 gwei
 - **Genesis Account**: `0x9011...` with 2T LUX (same as mainnet)
 
-### Devnet (96370)
+### Devnet (96367)
 - **Block Rate**: 1 second (faster)
 - **Gas Limit**: 20M
 - **Min Base Fee**: 1 gwei (cheaper)
