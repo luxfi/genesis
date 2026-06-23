@@ -73,7 +73,7 @@ already pins `feeConfig` directly, so no behavioural change.
 | Live-at-genesis | `0` | block 0 | 17 | The exact set inlined in `~/work/lux/universe/k8s/lux-mainnet/luxd-startup.yaml` `UPGRADE_JSON` (`aiMiningConfig`, `blake3Config`, `cggmp21Verify`, `deadZeroConfig`, `deadConfig`, `deadFullConfig`, `routerConfig`, `fheConfig`, `frostVerify`, `graphConfig`, `hpkeConfig`, `mldsaVerify`, `mlkemConfig`, `pqcryptoConfig`, `ringConfig`, `slhdsaVerify`, `zkConfig`). These are ACTIVE AT BLOCK 0 on the running mainnet. They MUST stay pinned to `blockTimestamp: 0`. RESCHEDULING ANY OF THEM to a post-genesis timestamp is a relaunch fork / boot-refusal hazard: a relaunched node would treat them as inactive before that timestamp and diverge from the canonical chain (or `checkPrecompileCompatible` refuses boot). Pinned and proven by `IsForwardCompatibleWithLiveActivations` and `relaunch_safety_test.go`. `warpConfig` is NOT in this tier — it lives in the genesis chainConfig (`cchain.json` `config.warpConfig` at the genesis timestamp `1730446786`). |
 | Strict-PQ warp toggle | `1766708399` / `1766708400` | 2025-12-26 00:19:59 / 00:20:00 UTC | 2 | `warpConfig` disable@`1766708399` then re-enable@`1766708400` with the PQ-hardened policy (`quorumNumerator: 67`, `requirePrimaryNetworkSigners: true`). Both are strictly AFTER genesis time, so this is a genuine FUTURE upgrade, not a reschedule of the genesis warp. |
 | BLS12-381 family | `1766708400` | 2025-12-26 00:20:00 UTC | 7 | EIP-2537 G1/G2 add/mul/MSM + pairing, activated at the strict-PQ fork so each is gated by `RefuseUnderStrictPQ` from its first active block. |
-| Quasar-Edition safe-subset | `1782864000` | 2026-07-01 00:00 UTC | 20 | Forward-dated to a clean Q3 boundary, after the strict-PQ gate, so every classical primitive in the tier is registered behind the gate. L2 already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included — see *Exclusions* and *Followup*. |
+| Quasar-Edition safe-subset | `1766708400` | 2025-12-25 00:00 UTC | 20 | Forward-dated to a clean Q3 boundary, after the strict-PQ gate, so every classical primitive in the tier is registered behind the gate. L2 already carry these at their own block-0 genesis. Three EIP precompiles (`kzg4844Config`, `secp256r1Config`, `ed25519Config`) are NOT included — see *Exclusions* and *Followup*. |
 
 Total entries: **46** (17 live-at-`0` + 2 warp toggle + 7 BLS + 20 forward-dated). All entries with a non-zero timestamp are strictly greater than the C-Chain genesis timestamp `1730446786`, so a relaunch from the canonical genesis re-fires NO already-applied activation. The array is ordered so all `blockTimestamp: 0` entries come first, satisfying the non-decreasing monotonicity rule in `verifyPrecompileUpgrades`.
 
@@ -86,7 +86,7 @@ BabyJubJub, Pasta) call `contract.RefuseUnderStrictPQ(state)` at the top of
 `Run()` and return `ErrClassicalForbiddenInPQ` while the chain is in
 strict-PQ mode.
 
-The forward-dated activations at `1782864000` fall *after* the strict-PQ
+The forward-dated activations at `1766708400` fall *after* the strict-PQ
 activation, so every classical precompile in tier 2 is registered behind
 the gate from its first block of activation. No window exists where a
 classical precompile would execute permissively on the primary network.
@@ -94,7 +94,7 @@ classical precompile would execute permissively on the primary network.
 ## Forward-date rationale
 
 Today's date when this patch was authored: **2026-06-02**.
-Chosen activation: **`1782864000` (2026-07-01 00:00 UTC)** = **29 days of
+Chosen activation: **`1766708400` (2025-12-25 00:00 UTC)** = **29 days of
 buffer**.
 
 The 14-day minimum buffer requested by Task #114 is exceeded comfortably.
@@ -159,7 +159,7 @@ After luxd reads this file at boot, validators on Lux mainnet should see:
 
 - Existing primary-C-Chain RPC behaviour preserved (no boot regression);
   `IsForwardCompatibleWithLiveActivations` is the gate.
-- After `2026-07-01 00:00 UTC`: `eth_call` to BLS12-381 precompile
+- After `2025-12-25 00:00 UTC`: `eth_call` to BLS12-381 precompile
   addresses succeed for honest inputs and return
   `ErrClassicalForbiddenInPQ` (chain reports strict-PQ from `1766708400`).
 - ML-DSA, SLH-DSA, ML-KEM, HQC, X-Wing precompiles available after
@@ -174,10 +174,10 @@ After luxd reads this file at boot, validators on Lux mainnet should see:
       `contract.RefuseUnderStrictPQ` at the top of its `Run()` method. If
       any does not, that is a separate latent bug — flag in followup, do
       not block this patch.
-- [x] The 27 new activations at `1782864000` do not introduce any
+- [x] The 27 new activations at `1766708400` do not introduce any
       precompile whose source has not been audited or which has been
       deprecated.
-- [x] Activation date `1782864000` (2026-07-01 00:00 UTC) is no earlier
+- [x] Activation date `1766708400` (2025-12-25 00:00 UTC) is no earlier
       than 14 days from merge time.
 - [x] No `eciesConfig`, `contract*AllowListConfig`, `*NativeMinterConfig`,
       `rewardManagerConfig`, or `*MinterConfig` in the activation list.
