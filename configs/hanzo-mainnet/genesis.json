@@ -12,6 +12,9 @@
   "baseFeePerGas": "0x5d21dba00",
   "coinbase": "0x0000000000000000000000000000000000000000",
   "config": {
+    "aiMiningConfig": {
+      "blockTimestamp": 0
+    },
     "arrowGlacierBlock": 0,
     "berlinBlock": 0,
     "blobSchedule": {
