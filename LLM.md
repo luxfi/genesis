@@ -113,7 +113,7 @@ If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the litera
 |---------|------------|----------|--------------|----------|
 | Mainnet | 1 | 96369 | `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e` | 2T LUX |
 | Testnet | 2 | 96368 | `0xfc909f7e992d9cb91485f114f6d333f3823a12f2c72bbf51ed2c8eea749b2d2e` | 2T LUX |
-| Devnet | 3 | 96370 | `0x836f6053473e4331bb347afc45b641f12075c63a302f4e56e64239a3ba4acd4b` | 2T LUX |
+| Devnet | 3 | 96367 | `0x836f6053473e4331bb347afc45b641f12075c63a302f4e56e64239a3ba4acd4b` | 2T LUX |
 | Local | 1337 | 1337 | - | 2T LUX |
 
 > **Historical note**: testnet was `0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995`
@@ -139,7 +139,7 @@ on the same VM IDs (`builder.TChainAliases`, `builder.KChainAliases`).
 | Letter | VM           | Mainnet | Testnet | Devnet | Localnet |
 |--------|--------------|---------|---------|--------|----------|
 | X      | XVM (UTXO)   | —       | —       | —      | —        |
-| C      | EVM          | 96369   | 96368   | 96370  | 31337    |
+| C      | EVM          | 96369   | 96368   | 96367  | 31337    |
 | D      | DexVM        | 96469   | 96468   | 96470  | 31447    |
 | Q      | QuantumVM    | 96569   | 96568   | 96570  | 31557    |
 | A      | AIVM         | 96669   | 96668   | 96670  | 31667    |
@@ -239,7 +239,7 @@ configs/
 | Block Rate | 2s | 2s | 1s | 1s |
 | Gas Limit | 12M | 12M | 20M | 15M |
 | Min Base Fee | 25 gwei | 25 gwei | 1 gwei | 1 gwei |
-| Chain ID | 96369 | 96368 | 96370 | 1337 |
+| Chain ID | 96369 | 96368 | 96367 | 1337 |
 
 ### Warp Precompile (Required for Genesis Hash)
 

@@ -17,7 +17,7 @@ func TestEVMChainID_KnownCells(t *testing.T) {
 	}{
 		{FamilyLux, MainnetID, 96369},
 		{FamilyLux, TestnetID, 96368},
-		{FamilyLux, DevnetID, 96370},
+		{FamilyLux, DevnetID, 96367},
 		{FamilyLux, LocalID, 31337},
 		{FamilyHanzo, MainnetID, 36963},
 		{FamilyHanzo, TestnetID, 36962},
@@ -72,7 +72,7 @@ func TestNetworkFamilyOf_RoundTrip(t *testing.T) {
 	}{
 		{96369, FamilyLux},
 		{96368, FamilyLux},
-		{96370, FamilyLux},
+		{96367, FamilyLux},
 		{31337, FamilyLux},
 		{36963, FamilyHanzo},
 		{200200, FamilyZoo},
@@ -133,7 +133,7 @@ func TestEVMChainIDFor_StringInputs(t *testing.T) {
 	}{
 		{"lux", "mainnet", 96369},
 		{"lux", "testnet", 96368},
-		{"lux", "devnet", 96370},
+		{"lux", "devnet", 96367},
 		{"lux", "localnet", 31337},
 		{"LUX", "MAINNET", 96369},
 		{"Lux", "Main", 96369},
