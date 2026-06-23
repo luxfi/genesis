@@ -209,9 +209,14 @@ func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 //	letter base = 96369 + 100*(idx_in_alphabet_relative_to_C)
 //	per-network offset: testnet = base-1, devnet = base+1 (mirrors C-Chain)
 //
+// Exception: the C-Chain devnet EVM chainID is the owner-locked canonical
+// value 96367 (see DevnetChainID), NOT base+1 (96370). The +1 rule holds
+// for the D/Q/A/... shards below; C is the one cell pinned by the
+// canonical map rather than derived from the arithmetic.
+//
 // This produces:
 //
-//	C(96369/96368/96370), D(96469/96468/96470), Q(96569/96568/96570),
+//	C(96369/96368/96367), D(96469/96468/96470), Q(96569/96568/96570),
 //	A(96669/96668/96670), B(96769/96768/96770), T(96869/96868/96870),
 //	Z(96969/96968/96970), G(97069/97068/97070), K(97169/97168/97170)
 //
