@@ -41,7 +41,7 @@ func TestGetGenesis_CChainShardPresentEmbedsCChainGenesis(t *testing.T) {
 // TestGetGenesis_XChainShardPresentEmbedsXChainGenesis is the X-Chain
 // equivalent of the C-Chain test above. Every Lux network ships an
 // xchain.json shard (the small asset descriptor
-// `{"symbol":"LUX","name":"Lux","denomination":9}`); the loader must
+// `{"symbol":"LUX","name":"Lux","denomination":N}`); the loader must
 // thread it into the marshalled primary genesis JSON as the
 // xChainGenesis field, where the builder later parses it to construct
 // the XVM genesis and CreateChainTx.
@@ -53,7 +53,20 @@ func TestGetGenesis_CChainShardPresentEmbedsCChainGenesis(t *testing.T) {
 // hardcoded `Symbol: "LUX", Name: "Lux", Denomination: 9` literal in
 // builder.FromConfig is now sourced from the shard, so a P-only
 // network (P-only shape) can opt out by simply omitting the file.
+//
+// Denomination is the X-Chain LUX asset's decimal count and is
+// serialized into the asset definition (it feeds AssetIDFromBytes), so
+// it is consensus-relevant, not cosmetic. The canonical LUX unit is
+// 6 decimals (units.Lux = 1e6 microLUX), so mainnet pins denomination
+// 6. testnet/localnet still carry the legacy 9 pending their own
+// re-genesis; this test locks the per-network value so any further
+// drift is caught.
 func TestGetGenesis_XChainShardPresentEmbedsXChainGenesis(t *testing.T) {
+	wantDenomination := map[string]byte{
+		"mainnet":  6, // 6-decimal LUX unit (units.Lux = 1e6 microLUX)
+		"testnet":  9, // legacy; unchanged pending testnet re-genesis
+		"localnet": 9, // legacy; unchanged pending localnet re-genesis
+	}
 	for _, name := range []string{"mainnet", "testnet", "localnet"} {
 		t.Run(name, func(t *testing.T) {
 			data, err := GetGenesis(networkIDFromName(t, name))
@@ -77,8 +90,9 @@ func TestGetGenesis_XChainShardPresentEmbedsXChainGenesis(t *testing.T) {
 			if err := json.Unmarshal([]byte(got), &asset); err != nil {
 				t.Fatalf("%s: xChainGenesis shard unparseable: %v", name, err)
 			}
-			if asset.Symbol != "LUX" || asset.Name != "Lux" || asset.Denomination != 9 {
-				t.Fatalf("%s: xChainGenesis shard drift: got %+v want {LUX Lux 9}", name, asset)
+			wantDenom := wantDenomination[name]
+			if asset.Symbol != "LUX" || asset.Name != "Lux" || asset.Denomination != wantDenom {
+				t.Fatalf("%s: xChainGenesis shard drift: got %+v want {LUX Lux %d}", name, asset, wantDenom)
 			}
 		})
 	}
