@@ -78,11 +78,6 @@
       }
     },
     {
-      "pqcryptoConfig": {
-        "blockTimestamp": 0
-      }
-    },
-    {
       "ringConfig": {
         "blockTimestamp": 0
       }
