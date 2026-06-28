@@ -1,12 +1,11 @@
 {
-  "_comment": "Localnet upgrade.json \u2014 single-node dev (networkID=1337). Everything active from genesis. No PQ-strict gate (localnet is a 1-of-1 testbed).",
+  "_comment": "Localnet upgrade.json — single-node dev (networkID=1337). Everything active from genesis. No PQ-strict gate (localnet is a 1-of-1 testbed).",
   "networkUpgradeOverrides": {
     "evmTimestamp": 0,
     "durangoTimestamp": 0,
     "quasarTimestamp": 0,
     "fortunaTimestamp": 0,
-    "graniteTimestamp": 0,
-    "strictPQTimestamp": 0
+    "graniteTimestamp": 0
   },
   "precompileUpgrades": [
     {

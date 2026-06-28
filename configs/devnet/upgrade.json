@@ -1,12 +1,11 @@
 {
-  "_comment": "Devnet upgrade.json \u2014 Quasar Edition active from genesis (block 0). All PQ precompiles active from genesis; no forward-dated strict-PQ gate (devnet is the always-current-canary).",
+  "_comment": "Devnet upgrade.json — Quasar Edition active from genesis (block 0). All PQ precompiles active from genesis; no forward-dated strict-PQ gate (devnet is the always-current-canary).",
   "networkUpgradeOverrides": {
     "evmTimestamp": 0,
     "durangoTimestamp": 0,
     "quasarTimestamp": 0,
     "fortunaTimestamp": 0,
-    "graniteTimestamp": 0,
-    "strictPQTimestamp": 0
+    "graniteTimestamp": 0
   },
   "precompileUpgrades": [
     {
