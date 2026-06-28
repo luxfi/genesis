@@ -1,12 +1,11 @@
 {
-  "_comment": "Local upgrade.json \u2014 single-node dev (networkID=1337, EVM chainID=31337). Mirror of localnet/upgrade.json; the two envs are aliases (local = LocalID, localnet = deprecated alias).",
+  "_comment": "Local upgrade.json — single-node dev (networkID=1337, EVM chainID=31337). Mirror of localnet/upgrade.json; the two envs are aliases (local = LocalID, localnet = deprecated alias).",
   "networkUpgradeOverrides": {
     "evmTimestamp": 0,
     "durangoTimestamp": 0,
     "quasarTimestamp": 0,
     "fortunaTimestamp": 0,
-    "graniteTimestamp": 0,
-    "strictPQTimestamp": 0
+    "graniteTimestamp": 0
   },
   "precompileUpgrades": [
     {
