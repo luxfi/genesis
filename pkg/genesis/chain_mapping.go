@@ -14,17 +14,21 @@ import (
 type ChainRole string
 
 const (
-	RoleProtocol  ChainRole = "P" // Protocol chain — validator set, chain registry, ordering
-	RoleExchange  ChainRole = "X" // Exchange/asset transfer chain
-	RoleContract  ChainRole = "C" // Contract/EVM chain
-	RoleQuantum   ChainRole = "Q" // Quantum-resistant chain
-	RoleAttest    ChainRole = "A" // Attestation chain
-	RoleBridge    ChainRole = "B" // Bridge chain
-	RoleThreshold ChainRole = "T" // Threshold/MPC chain
-	RoleZK        ChainRole = "Z" // Zero-knowledge chain
-	RoleGraph     ChainRole = "G" // Graph/data chain (future)
-	RoleIdentity  ChainRole = "I" // Identity chain (future)
-	RoleKMS       ChainRole = "K" // KMS chain (future)
+	RoleProtocol ChainRole = "P" // Protocol chain — validator set, chain registry, ordering
+	RoleExchange ChainRole = "X" // Exchange/asset transfer chain
+	RoleContract ChainRole = "C" // Contract/EVM chain
+	RoleQuantum  ChainRole = "Q" // Quantum-resistant chain
+	RoleAttest   ChainRole = "A" // Attestation chain
+	RoleBridge   ChainRole = "B" // Bridge chain
+	// LP-134: the retired RoleThreshold ("T") is split into RoleFHE ("F") and
+	// RoleMPC ("M"). The ThresholdVM substrate serves both — F-Chain in FHE
+	// mode (confidential compute) and M-Chain in MPC mode (bridge custody).
+	RoleFHE      ChainRole = "F" // Threshold-FHE chain (confidential compute)
+	RoleMPC      ChainRole = "M" // Threshold-MPC chain (bridge custody signing)
+	RoleZK       ChainRole = "Z" // Zero-knowledge chain
+	RoleGraph    ChainRole = "G" // Graph/data chain (future)
+	RoleIdentity ChainRole = "I" // Identity chain (future)
+	RoleKMS      ChainRole = "K" // KMS chain (future)
 )
 
 // ChainConfig represents a single chain's configuration
@@ -228,12 +232,28 @@ func DefaultMainnetMapping() *ChainMapping {
 				Name:    "Bridge Chain",
 				Aliases: []string{"B", "bridge"},
 			},
-			RoleThreshold: {
-				ChainID: ids.TChainID,
-				VMID:    ids.Empty, // Threshold VM ID
-				Role:    RoleThreshold,
-				Name:    "Threshold Chain",
-				Aliases: []string{"T", "threshold", "mpc"},
+			RoleFHE: {
+				// LP-134: F-Chain runs ThresholdVM in FHE mode. The canonical
+				// native chain ID awaits luxfi/ids.FChainID — the ids native-
+				// chain set (P/C/X/Q/A/B/T/Z/G/I/K/D) is closed, so adding F/M
+				// is a separate luxfi/ids change. The active genesis path pins
+				// the EVM chainId in fchain.json (97269/97268/97270/32327).
+				ChainID: ids.Empty,
+				VMID:    ids.Empty, // ThresholdVM (FHE mode)
+				Role:    RoleFHE,
+				Name:    "F-Chain",
+				Aliases: []string{"F", "fhe", "fhevm"},
+			},
+			RoleMPC: {
+				// LP-134: M-Chain runs ThresholdVM in MPC mode (CGGMP21 / FROST
+				// bridge custody). Canonical native chain ID awaits
+				// luxfi/ids.MChainID; the active genesis path pins the EVM
+				// chainId in mchain.json (97369/97368/97370/32437).
+				ChainID: ids.Empty,
+				VMID:    ids.Empty, // ThresholdVM (MPC mode)
+				Role:    RoleMPC,
+				Name:    "M-Chain",
+				Aliases: []string{"M", "mpc", "mpcvm"},
 			},
 			RoleZK: {
 				ChainID: ids.ZChainID,

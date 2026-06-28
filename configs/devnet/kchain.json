@@ -1,13 +1,12 @@
 {
   "aliases": [
-    "M",
-    "mpc",
-    "mpcvm"
+    "K",
+    "key",
+    "keyvm",
+    "kms"
   ],
-  "description": "KMS \u2014 MPC key management + threshold sigs",
+  "description": "KMS — key management (ML-KEM / ML-DSA / BLS)",
   "message": "Lux K-Chain Genesis",
-  "mpcParties": 10,
-  "mpcThreshold": 7,
   "name": "K-Chain",
   "networkId": 3,
   "timestamp": 1730531602,

@@ -143,12 +143,14 @@ func networkIDFromName(t *testing.T, name string) uint32 {
 }
 
 // TestGetGenesis_AllPrimaryChainsBakedIn locks the contract that every
-// primary network (mainnet, testnet, devnet, localnet) ships ALL 10
+// primary network (mainnet, testnet, devnet, localnet) ships ALL 11
 // primary-network chain shards baked into its genesis. This means the
 // chains spawn at network startup with NO post-launch CreateBlockchainTx —
 // chain set is fully data-driven by which shards are committed.
 //
-// The 10 primary-network chains, in canonical order:
+// The 11 primary-network chains, in canonical order (LP-134: the legacy
+// T-Chain/ThresholdVM is retired and split into F-Chain + M-Chain, both
+// served by the same ThresholdVM substrate in FHE / MPC mode respectively):
 //
 //	X  XVM         exchange / UTXO asset
 //	C  EVM         contracts
@@ -156,10 +158,11 @@ func networkIDFromName(t *testing.T, name string) uint32 {
 //	Q  QuantumVM   post-quantum consensus (Quasar / ML-DSA / ML-KEM)
 //	A  AIVM        AI verification / attestation
 //	B  BridgeVM    cross-chain bridge (MPC signing)
-//	T  ThresholdVM threshold FHE encrypted compute (LP-?? F-chain semantic)
+//	F  ThresholdVM threshold-FHE confidential compute (LP-134; FHE mode, T's slot)
 //	Z  ZKVM        zero-knowledge proofs / private state
 //	G  GraphVM     graph database
-//	K  KeyVM       KMS — MPC topology (LP-?? M-chain semantic)
+//	K  KeyVM       KMS — key management
+//	M  ThresholdVM threshold-MPC bridge-custody signing (LP-134; MPC mode)
 //
 // P-Chain is the primary network itself and carries the validator set + chain
 // registry; it has no shard slot because it isn't a CreateChainTx entry.
@@ -177,10 +180,11 @@ func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 		"qChainGenesis",
 		"aChainGenesis",
 		"bChainGenesis",
-		"tChainGenesis",
+		"fChainGenesis",
 		"zChainGenesis",
 		"gChainGenesis",
 		"kChainGenesis",
+		"mChainGenesis",
 	}
 	for _, name := range []string{"mainnet", "testnet", "devnet", "localnet"} {
 		t.Run(name, func(t *testing.T) {
@@ -214,11 +218,16 @@ func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 // for the D/Q/A/... shards below; C is the one cell pinned by the
 // canonical map rather than derived from the arithmetic.
 //
+// LP-134: the legacy T-Chain (idx 5, 96869-series) is retired. F-Chain and
+// M-Chain take the next free indices 9 and 10 — fresh IDs, T's are not
+// recycled. (localnet base = 31337 + 110*idx.)
+//
 // This produces:
 //
 //	C(96369/96368/96367), D(96469/96468/96470), Q(96569/96568/96570),
-//	A(96669/96668/96670), B(96769/96768/96770), T(96869/96868/96870),
-//	Z(96969/96968/96970), G(97069/97068/97070), K(97169/97168/97170)
+//	A(96669/96668/96670), B(96769/96768/96770), F(97269/97268/97270),
+//	Z(96969/96968/96970), G(97069/97068/97070), K(97169/97168/97170),
+//	M(97369/97368/97370)
 //
 // Each ID is unique across {network × letter} so a misrouted tx cannot
 // be replayed against the wrong chain.
@@ -226,19 +235,19 @@ func TestPrimaryChainShards_PerChainCanonicalChainID(t *testing.T) {
 	want := map[string]map[string]int{
 		"mainnet": {
 			"d": 96469, "q": 96569, "a": 96669, "b": 96769,
-			"t": 96869, "z": 96969, "g": 97069, "k": 97169,
+			"f": 97269, "z": 96969, "g": 97069, "k": 97169, "m": 97369,
 		},
 		"testnet": {
 			"d": 96468, "q": 96568, "a": 96668, "b": 96768,
-			"t": 96868, "z": 96968, "g": 97068, "k": 97168,
+			"f": 97268, "z": 96968, "g": 97068, "k": 97168, "m": 97368,
 		},
 		"devnet": {
 			"d": 96470, "q": 96570, "a": 96670, "b": 96770,
-			"t": 96870, "z": 96970, "g": 97070, "k": 97170,
+			"f": 97270, "z": 96970, "g": 97070, "k": 97170, "m": 97370,
 		},
 		"localnet": {
 			"d": 31447, "q": 31557, "a": 31667, "b": 31777,
-			"t": 31887, "z": 31997, "g": 32107, "k": 32217,
+			"f": 32327, "z": 31997, "g": 32107, "k": 32217, "m": 32437,
 		},
 	}
 	for net, byLetter := range want {
