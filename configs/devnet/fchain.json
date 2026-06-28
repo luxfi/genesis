@@ -1,0 +1,21 @@
+{
+  "aliases": [
+    "F",
+    "fhe",
+    "fhevm"
+  ],
+  "description": "Threshold FHE confidential compute — off-EVM threshold DECRYPT (TFHE, ring N=1024 q=12289)",
+  "dkgParties": 10,
+  "dkgThreshold": 7,
+  "fhePrecompilePrefix": "0x07",
+  "message": "Lux F-Chain Genesis",
+  "mode": "fhe",
+  "name": "F-Chain",
+  "networkId": 3,
+  "ringDegreeN": 1024,
+  "ringModulusQ": 12289,
+  "timestamp": 1730531602,
+  "version": 1,
+  "vm": "ThresholdVM",
+  "chainId": 97270
+}

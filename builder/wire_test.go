@@ -39,7 +39,7 @@ func TestWire_PVMGenesisRoundtrip(t *testing.T) {
 	gen, err := pgenesis.Parse(pgc, bytes1)
 	require.NoError(t, err)
 	require.NotNil(t, gen)
-	require.Equal(t, 10, len(gen.Chains), "mainnet ships all 10 primary chains")
+	require.Equal(t, 11, len(gen.Chains), "mainnet ships all 11 primary chains (LP-134: T split into F+M)")
 
 	// Re-marshal.
 	bytes2, err := gen.Bytes(pgc)

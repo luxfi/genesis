@@ -56,21 +56,24 @@ var (
 	AChainAliases = []string{"A", "ai", "aivm"}
 	// BChainAliases are the default aliases for the B-Chain (Bridge)
 	BChainAliases = []string{"B", "bridge", "bridgevm"}
-	// TChainAliases are the default aliases for the T-Chain (Threshold-FHE).
-	// "F" / "fhe" alias the threshold-FHE chain since this is the
-	// encrypted-compute chain in conceptual letter-chain taxonomy
-	// (LP-134 / "F-Chain" in user-facing docs). The on-disk shard
-	// stays tchain.json — letter is decomplected from product name.
-	TChainAliases = []string{"T", "threshold", "thresholdvm", "F", "fhe", "fhevm"}
+	// FChainAliases are the default aliases for the F-Chain (threshold-FHE).
+	// LP-134: F-Chain runs the ThresholdVM substrate in FHE mode (confidential
+	// compute / off-EVM threshold DECRYPT). It supersedes the retired T-Chain;
+	// the legacy "T"/"threshold" labels now belong only to teleportvm
+	// (LP-6332). On-disk shard: fchain.json.
+	FChainAliases = []string{"F", "fhe", "fhevm"}
 	// ZChainAliases are the default aliases for the Z-Chain (ZK)
 	ZChainAliases = []string{"Z", "zk", "zkvm"}
 	// GChainAliases are the default aliases for the G-Chain (Graph)
 	GChainAliases = []string{"G", "graph", "graphvm"}
-	// KChainAliases are the default aliases for the K-Chain (KMS / MPC).
-	// "M" / "mpc" alias the KMS chain since this is the MPC-topology
-	// chain in conceptual letter-chain taxonomy (LP-134 / "M-Chain"
-	// in user-facing docs). The on-disk shard stays kchain.json.
-	KChainAliases = []string{"K", "kms", "kmsvm", "M", "mpc", "mpcvm"}
+	// KChainAliases are the default aliases for the K-Chain (KMS).
+	// LP-134: "K stays keyvm" — the threshold-MPC labels M/mpc/mpcvm moved off
+	// K onto the M-Chain (MChainAliases). K-Chain is pure KMS key management.
+	KChainAliases = []string{"K", "key", "keyvm", "kms", "kmsvm"}
+	// MChainAliases are the default aliases for the M-Chain (threshold-MPC).
+	// LP-134: M-Chain runs the ThresholdVM substrate in MPC mode (CGGMP21 /
+	// FROST threshold SIGNING for bridge custody). On-disk shard: mchain.json.
+	MChainAliases = []string{"M", "mpc", "mpcvm"}
 
 	// VMAliases are the default aliases for VMs
 	VMAliases = map[ids.ID][]string{
@@ -576,10 +579,15 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 	// chains exist is a function of which shards the operator shipped,
 	// not a runtime knob.
 	//
-	// Order is fixed (X→C→D→Q→A→B→T→Z→G→K) and preserved across
+	// Order is fixed (X→C→D→Q→A→B→F→Z→G→K→M) and preserved across
 	// presence/absence so byte-identical genesis holds when the same
 	// shard set is supplied. Append-only — reordering shifts the
 	// P-Chain genesis byte layout.
+	//
+	// LP-134: F-Chain and M-Chain both run the ThresholdVM substrate (F in
+	// FHE mode, M in MPC mode) — they share constants.ThresholdVMID and are
+	// disambiguated by BlockchainName. F-Chain occupies the retired T-Chain's
+	// slot (same VM); M-Chain is appended, keeping Z/G/K byte-stable.
 	chainEntries := []struct {
 		GenesisData []byte
 		VMID        ids.ID
@@ -593,10 +601,11 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		{GenesisData: []byte(config.QChainGenesis), VMID: constants.QuantumVMID, Name: "Q-Chain"},
 		{GenesisData: []byte(config.AChainGenesis), VMID: constants.AIVMID, Name: "A-Chain"},
 		{GenesisData: []byte(config.BChainGenesis), VMID: constants.BridgeVMID, Name: "B-Chain"},
-		{GenesisData: []byte(config.TChainGenesis), VMID: constants.ThresholdVMID, Name: "T-Chain"},
+		{GenesisData: []byte(config.FChainGenesis), VMID: constants.ThresholdVMID, Name: "F-Chain"},
 		{GenesisData: []byte(config.ZChainGenesis), VMID: constants.ZKVMID, Name: "Z-Chain"},
 		{GenesisData: []byte(config.GChainGenesis), VMID: constants.GraphVMID, Name: "G-Chain"},
 		{GenesisData: []byte(config.KChainGenesis), VMID: constants.KeyVMID, Name: "K-Chain"},
+		{GenesisData: []byte(config.MChainGenesis), VMID: constants.ThresholdVMID, Name: "M-Chain"},
 	}
 	chains := []genesis.Chain{}
 	for _, e := range chainEntries {
@@ -787,12 +796,25 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 			}
 			chainAliases[chainID] = BChainAliases
 		case constants.ThresholdVMID:
-			apiAliases[endpoint] = []string{
-				"T", "threshold", "thresholdvm",
-				path.Join(constants.ChainAliasPrefix, "T"),
-				path.Join(constants.ChainAliasPrefix, "threshold"),
+			// LP-134: F-Chain (FHE mode) and M-Chain (MPC mode) both run the
+			// ThresholdVM substrate, so they share constants.ThresholdVMID.
+			// They are distinct chains — disambiguate by the CreateChainTx's
+			// BlockchainName (set from the chain entry Name in FromConfig).
+			if uChain.BlockchainName == "M-Chain" {
+				apiAliases[endpoint] = []string{
+					"M", "mpc", "mpcvm",
+					path.Join(constants.ChainAliasPrefix, "M"),
+					path.Join(constants.ChainAliasPrefix, "mpc"),
+				}
+				chainAliases[chainID] = MChainAliases
+			} else {
+				apiAliases[endpoint] = []string{
+					"F", "fhe", "fhevm",
+					path.Join(constants.ChainAliasPrefix, "F"),
+					path.Join(constants.ChainAliasPrefix, "fhe"),
+				}
+				chainAliases[chainID] = FChainAliases
 			}
-			chainAliases[chainID] = TChainAliases
 		case constants.ZKVMID:
 			apiAliases[endpoint] = []string{
 				"Z", "zk", "zkvm",
@@ -809,9 +831,9 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 			chainAliases[chainID] = GChainAliases
 		case constants.KeyVMID:
 			apiAliases[endpoint] = []string{
-				"K", "kms", "kmsvm",
+				"K", "key", "keyvm", "kms",
 				path.Join(constants.ChainAliasPrefix, "K"),
-				path.Join(constants.ChainAliasPrefix, "kms"),
+				path.Join(constants.ChainAliasPrefix, "key"),
 			}
 			chainAliases[chainID] = KChainAliases
 		}
