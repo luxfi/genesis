@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/hero.svg" alt="genesis" width="880"></p>
+
 # Lux Network Genesis Configurations
 
 This repository contains the canonical genesis configurations for all Lux networks.
