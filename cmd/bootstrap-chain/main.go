@@ -9,9 +9,12 @@
 //  3. IssueAddChainValidatorTx — adds every primary network validator
 //  4. Probes eth_blockNumber and info.isBootstrapped — fails if either is bad
 //
-// Designed to bootstrap the four canonical Lux devnet chains (hanzo, zoo,
-// pars, spc) in one pass, but the list is data-driven so it can bootstrap
-// any subset.
+// Creates lux-native chains on a luxd network. The chain list is data-driven
+// (--track-chain-ids). Brand names (hanzo/zoo/pars/spc/osage) are REFUSED:
+// per the brand_sovereign_node_one_way law luxd runs the LUX primary network
+// ONLY, and each brand runs its own sovereign node (zood/hanzod/parsd/…). The
+// historical "bootstrap the four brand L2s into luxd" purpose is retired
+// alongside cmd/createchaintx.
 //
 // Idempotency: before any P-chain spend, the tool queries
 // platform.getBlockchains and skips any chain whose alias already exists.
@@ -22,9 +25,9 @@
 // by CreateChainTx. Three IDs, three roles, never aliased:
 //
 //   - `networkID` — identifies a validator network. Comes in two scopes:
-//       * primary networkID (uint32: 1=mainnet, 2=testnet, 3=local, 1337=dev)
-//       * per-chain networkID (ids.ID 32 bytes) — the CreateNetworkTx ID
-//         that owns one or more chains.
+//   - primary networkID (uint32: 1=mainnet, 2=testnet, 3=local, 1337=dev)
+//   - per-chain networkID (ids.ID 32 bytes) — the CreateNetworkTx ID
+//     that owns one or more chains.
 //   - `chainID` — the blockchain's own globally unique ID (ids.ID 32 bytes).
 //   - `evmChainID` — EIP-155 chain ID (uint64). EVM JSON-RPC only.
 //
@@ -36,7 +39,7 @@
 //	  --bip44-idx=5 \
 //	  --network-label=devnet \
 //	  --configs-dir=/path/to/genesis/configs \
-//	  --track-chain-ids=hanzo,zoo,pars,spc \
+//	  --track-chain-ids=<lux-native-chain-ids> \
 //	  --output=/dev/stdout
 package main
 
@@ -117,11 +120,17 @@ func main() {
 	hrp := flag.String("hrp", "dev", "P-chain bech32 HRP: test|dev")
 	bipIdx := flag.Uint("bip44-idx", 5, "BIP44 derivation index at m/44'/9000'/0'/0/<idx>")
 	configsDir := flag.String("configs-dir", "", "directory containing <chain>-<network>/genesis.json files (required)")
-	// --track-chain-ids mirrors luxd's existing --track-chain-ids flag. One
-	// concept, one flag — this is the declared list of chains this network
-	// serves. The tool reads it, queries the P-chain, and idempotently
-	// creates the missing ones.
-	trackChainIDs := flag.String("track-chain-ids", "hanzo,zoo,pars,spc", "comma-separated brand names (matches luxd --track-chain-ids). Each name resolves a (brand,env) → configs/<brand>-<env>/genesis.json and a content-hashed CreateChainTx name.")
+	// --track-chain-ids is the declared list of non-brand chains to create on
+	// the target luxd network. The tool reads it, queries the P-chain, and
+	// idempotently creates the missing ones.
+	//
+	// DEFAULT IS EMPTY by design. The historical default "hanzo,zoo,pars,spc"
+	// created brand L2 EVMs INSIDE luxd — the dead WAY-1 retired by the
+	// brand_sovereign_node_one_way law: luxd runs the LUX primary network
+	// ONLY, and each brand (hanzo/zoo/pars/spc/osage) runs its OWN sovereign
+	// node (zood/hanzod/parsd/…). Brand names are now hard-refused below; this
+	// flag exists only for legitimate lux-native chain creation.
+	trackChainIDs := flag.String("track-chain-ids", "", "comma-separated chain ids to create on the target luxd network. Brand names (hanzo/zoo/pars/spc/osage) are REFUSED — brands run their own sovereign node, never inside luxd.")
 	vmIDStr := flag.String("vm-id", defaultEVMID, "EVM VM ID present in luxd's --plugin-dir")
 	// --chain-name-override pins an explicit CreateChainTx name for a single
 	// brand (format: <brand>=<name>, repeatable). Bypasses the content-hash
@@ -193,6 +202,19 @@ func main() {
 
 	if *uri == "" || *configsDir == "" {
 		log.Fatal("--uri and --configs-dir are required")
+	}
+
+	// brand_sovereign_node_one_way law: luxd runs the LUX primary network
+	// ONLY. Brand L2 EVMs are NEVER created inside luxd — each brand runs its
+	// own sovereign node (zood/hanzod/parsd/…) and the unified DEX is the
+	// shared 0x9999 V4 precompile compiled into every brand EVM, not a chain
+	// hosted on luxd. Refuse brand names so this tool can never re-create the
+	// phantom brand chains that decayed into dangling chain-aliases.
+	for _, name := range strings.Split(*trackChainIDs, ",") {
+		switch strings.ToLower(strings.TrimSpace(name)) {
+		case "hanzo", "zoo", "pars", "spc", "osage":
+			log.Fatalf("refusing to bootstrap brand chain %q inside luxd: brands run their own sovereign node (zood/hanzod/parsd/…), not luxd — see brand_sovereign_node_one_way", strings.TrimSpace(name))
+		}
 	}
 
 	vmID, err := ids.FromString(*vmIDStr)
