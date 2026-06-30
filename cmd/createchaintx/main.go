@@ -200,10 +200,37 @@ func main() {
 	homeOverride := flag.String("home", "", "override $HOME for the brand-genesis path template (empty = use real $HOME)")
 	forceNew := flag.Bool("force-new", false, "ignore pre-existing chains with the same brand name on P-chain; always issue a fresh CreateChainTx")
 	derivIndex := flag.Uint("index", uint(defaultStakingPath.index), "BIP-44 leaf index at m/44'/9000'/0'/0/<index> (default 5: first allocation slot not bonded to initial validator stake)")
+	brandsCSV := flag.String("brands", "", "comma-separated subset of brands to process in list order (empty = all five). E.g. --brands=hanzo,zoo")
 	flag.Parse()
 
 	if *uri == "" || *env == "" {
 		log.Fatal("--uri and --env are required (try --help)")
+	}
+
+	// Optional brand subset: process only the named brands (preserving the
+	// canonical list order so chain-creation ordering stays deterministic).
+	// Unknown brand names are a hard error — a typo must not silently create
+	// a different set of chains than intended.
+	if csv := strings.TrimSpace(*brandsCSV); csv != "" {
+		want := map[string]bool{}
+		for _, b := range strings.Split(csv, ",") {
+			want[strings.ToLower(strings.TrimSpace(b))] = true
+		}
+		filtered := brandSpecs[:0:0]
+		seen := map[string]bool{}
+		for _, bs := range brandSpecs {
+			if want[bs.brand] {
+				filtered = append(filtered, bs)
+				seen[bs.brand] = true
+			}
+		}
+		for b := range want {
+			if !seen[b] {
+				log.Fatalf("--brands: unknown brand %q (known: hanzo,zoo,pars,spc,osage)", b)
+			}
+		}
+		brandSpecs = filtered
+		log.Printf("brand subset: %s", csv)
 	}
 	resolvedHRP := *hrp
 	if resolvedHRP == "" {
