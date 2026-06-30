@@ -26,14 +26,15 @@ type Config struct {
 	QChainGenesis              string        `json:"qChainGenesis,omitempty"` // Q-Chain: Quantum VM genesis
 	AChainGenesis              string        `json:"aChainGenesis,omitempty"` // A-Chain: Attestation/AI VM genesis
 	BChainGenesis              string        `json:"bChainGenesis,omitempty"` // B-Chain: Bridge VM genesis
-	TChainGenesis              string        `json:"tChainGenesis,omitempty"` // T-Chain: Threshold VM genesis
+	FChainGenesis              string        `json:"fChainGenesis,omitempty"` // F-Chain: Threshold-FHE VM genesis (LP-134; supersedes T-Chain)
 	ZChainGenesis              string        `json:"zChainGenesis,omitempty"` // Z-Chain: ZK VM genesis
 	GChainGenesis              string        `json:"gChainGenesis,omitempty"` // G-Chain: Graph VM genesis
 	KChainGenesis              string        `json:"kChainGenesis,omitempty"` // K-Chain: KMS VM genesis
+	MChainGenesis              string        `json:"mChainGenesis,omitempty"` // M-Chain: Threshold-MPC VM genesis (LP-134; supersedes T-Chain)
 	Message                    string        `json:"message"`
 
 	// Chains defines additional chains to include in genesis beyond the
-	// built-in alphabet chains (C, D, Q, B, T, Z, G, K). Each entry becomes
+	// built-in alphabet chains (C, D, Q, A, B, F, Z, G, K, M). Each entry becomes
 	// a CreateChainTx in the P-Chain genesis. This allows chains to be
 	// embedded directly for automatic bootstrap.
 	Chains []ChainEntry `json:"chains,omitempty"`
@@ -73,7 +74,8 @@ type Config struct {
 //
 // EVMAddr is the 20-byte H160 EVM address (C-Chain and other EVM chains).
 // UTXOAddr is the 20-byte ShortID used by both P-Chain and X-Chain UTXOs
-//   (same bytes; bech32 prefix differentiates the chain).
+//
+//	(same bytes; bech32 prefix differentiates the chain).
 type Allocation struct {
 	EVMAddr        ids.ShortID    `json:"evmAddr"`
 	UTXOAddr       ids.ShortID    `json:"utxoAddr"`
@@ -201,7 +203,6 @@ type StakerJSON struct {
 	EndTime uint64 `json:"endTime,omitempty"`
 }
 
-
 // CChainConfig is the C-Chain genesis configuration
 type CChainConfig struct {
 	Config     CChainParams       `json:"config"`
@@ -308,10 +309,11 @@ type ConfigOutput struct {
 	QChainGenesis              string           `json:"qChainGenesis,omitempty"` // Q-Chain: Quantum VM genesis
 	AChainGenesis              string           `json:"aChainGenesis,omitempty"` // A-Chain: Attestation/AI VM genesis
 	BChainGenesis              string           `json:"bChainGenesis,omitempty"` // B-Chain: Bridge VM genesis
-	TChainGenesis              string           `json:"tChainGenesis,omitempty"` // T-Chain: Threshold VM genesis
+	FChainGenesis              string           `json:"fChainGenesis,omitempty"` // F-Chain: Threshold-FHE VM genesis (LP-134; supersedes T-Chain)
 	ZChainGenesis              string           `json:"zChainGenesis,omitempty"` // Z-Chain: ZK VM genesis
 	GChainGenesis              string           `json:"gChainGenesis,omitempty"` // G-Chain: Graph VM genesis
 	KChainGenesis              string           `json:"kChainGenesis,omitempty"` // K-Chain: KMS VM genesis
+	MChainGenesis              string           `json:"mChainGenesis,omitempty"` // M-Chain: Threshold-MPC VM genesis (LP-134; supersedes T-Chain)
 	Chains                     []ChainEntry     `json:"chains,omitempty"`        // Additional genesis chains
 	SecurityProfile            *SecurityProfile `json:"securityProfile,omitempty"`
 	CertPolicy                 *CertPolicy      `json:"certPolicy,omitempty"`
@@ -370,10 +372,11 @@ func (c *Config) ToJSON(hrp string) *ConfigOutput {
 		QChainGenesis:              c.QChainGenesis,
 		AChainGenesis:              c.AChainGenesis,
 		BChainGenesis:              c.BChainGenesis,
-		TChainGenesis:              c.TChainGenesis,
+		FChainGenesis:              c.FChainGenesis,
 		ZChainGenesis:              c.ZChainGenesis,
 		GChainGenesis:              c.GChainGenesis,
 		KChainGenesis:              c.KChainGenesis,
+		MChainGenesis:              c.MChainGenesis,
 		SecurityProfile:            c.SecurityProfile,
 		CertPolicy:                 c.CertPolicy,
 		Message:                    c.Message,
@@ -385,4 +388,3 @@ func (c *Config) MarshalJSON() ([]byte, error) {
 	hrp := constants.GetHRP(c.NetworkID)
 	return json.Marshal(c.ToJSON(hrp))
 }
-

@@ -201,7 +201,7 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 	// Runtime gate is luxd's --track-chains, not bake-time env knobs.
 	//
 	// To run a P-only network (a regulated securities L1, etc.), ship a config tree
-	// that omits every {x,c,d,q,a,b,t,z,g,k}chain.json. No knob, no
+	// that omits every {x,c,d,q,a,b,f,z,g,k,m}chain.json. No knob, no
 	// hack — chain set is purely data-driven by which shards are
 	// present.
 	chainShards, err := loadAllChainShards(networkName)
@@ -237,10 +237,11 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 		QChainGenesis:              chainShards.Q,
 		AChainGenesis:              chainShards.A,
 		BChainGenesis:              chainShards.B,
-		TChainGenesis:              chainShards.T,
+		FChainGenesis:              chainShards.F,
 		ZChainGenesis:              chainShards.Z,
 		GChainGenesis:              chainShards.G,
 		KChainGenesis:              chainShards.K,
+		MChainGenesis:              chainShards.M,
 		SecurityProfile:            securityProfile,
 		CertPolicy:                 certPolicy,
 		Message:                    network.Message,
@@ -255,13 +256,19 @@ func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.P
 // in the builder's chains slice — the operator's filesystem is the
 // declarative source of truth for which primary-network chains exist.
 type chainSet struct {
-	X, C, D, Q, A, B, T, Z, G, K string
+	X, C, D, Q, A, B, F, Z, G, K, M string
 }
 
 // primaryChainShardFiles lists every primary-network chain shard
 // filename in canonical order. Order matters: builder.FromConfig
 // preserves it when assembling the chains slice, so changing this
 // list shifts the P-Chain genesis byte layout. Append-only.
+//
+// LP-134: the legacy tchain.json (ThresholdVM) is retired; the threshold
+// substrate is split into fchain.json (F-Chain, threshold-FHE) — which
+// takes T's vacated slot since it runs the same ThresholdVM — and
+// mchain.json (M-Chain, threshold-MPC bridge custody), appended at the
+// end. Z/G/K positions are unchanged so their genesis layout is stable.
 var primaryChainShardFiles = [...]string{
 	"xchain.json",
 	"cchain.json",
@@ -269,10 +276,11 @@ var primaryChainShardFiles = [...]string{
 	"qchain.json",
 	"achain.json",
 	"bchain.json",
-	"tchain.json",
+	"fchain.json",
 	"zchain.json",
 	"gchain.json",
 	"kchain.json",
+	"mchain.json",
 }
 
 // chainSetSlots returns the address-of-field slots for s in the
@@ -280,7 +288,7 @@ var primaryChainShardFiles = [...]string{
 // FS loaders to bind shard files to ConfigOutput fields without
 // repeating the per-chain switch.
 func (s *chainSet) slots() []*string {
-	return []*string{&s.X, &s.C, &s.D, &s.Q, &s.A, &s.B, &s.T, &s.Z, &s.G, &s.K}
+	return []*string{&s.X, &s.C, &s.D, &s.Q, &s.A, &s.B, &s.F, &s.Z, &s.G, &s.K, &s.M}
 }
 
 // loadAllChainShards reads every primary-network chain shard from the
@@ -535,10 +543,11 @@ func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
 		QChainGenesis:              chainShards.Q,
 		AChainGenesis:              chainShards.A,
 		BChainGenesis:              chainShards.B,
-		TChainGenesis:              chainShards.T,
+		FChainGenesis:              chainShards.F,
 		ZChainGenesis:              chainShards.Z,
 		GChainGenesis:              chainShards.G,
 		KChainGenesis:              chainShards.K,
+		MChainGenesis:              chainShards.M,
 		Message:                    network.Message,
 	}
 
@@ -642,10 +651,11 @@ func buildGenesisFromDir(dir string) ([]byte, error) {
 		QChainGenesis:              chainShards.Q,
 		AChainGenesis:              chainShards.A,
 		BChainGenesis:              chainShards.B,
-		TChainGenesis:              chainShards.T,
+		FChainGenesis:              chainShards.F,
 		ZChainGenesis:              chainShards.Z,
 		GChainGenesis:              chainShards.G,
 		KChainGenesis:              chainShards.K,
+		MChainGenesis:              chainShards.M,
 		SecurityProfile:            securityProfile,
 		Message:                    network.Message,
 	}
