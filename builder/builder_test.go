@@ -208,7 +208,7 @@ func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
 
 	full, err := pgenesis.Parse(pgc, bytes)
 	require.NoError(t, err)
-	require.Len(t, full.Chains, 10, "mainnet emits all 10 primary chains")
+	require.Len(t, full.Chains, 11, "mainnet emits all 11 primary chains (LP-134: X,C,D,Q,A,B,F,Z,G,K,M)")
 
 	// Strip every chain shard. Allocations + validators stay intact —
 	// the P-Chain itself is the foundation, not a CreateChainTx entry.
@@ -218,10 +218,11 @@ func TestFromConfig_ChainSetIsShardDriven(t *testing.T) {
 	cfg.QChainGenesis = ""
 	cfg.AChainGenesis = ""
 	cfg.BChainGenesis = ""
-	cfg.TChainGenesis = ""
+	cfg.FChainGenesis = ""
 	cfg.ZChainGenesis = ""
 	cfg.GChainGenesis = ""
 	cfg.KChainGenesis = ""
+	cfg.MChainGenesis = ""
 
 	bytes, utxoAssetID, err = FromConfig(cfg)
 	require.NoError(t, err, "P-only build must succeed")
