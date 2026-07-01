@@ -18,8 +18,8 @@
 //     same PVC as luxd) and if it shows Status=done + matching {first,last,
 //     firstHash,lastHash} for THIS run's range, exit 0 without calling luxd.
 //     This is the "operator schedules the same export every hour" optimization.
-//  2. Health probe. Confirm luxd is reachable on ${LuxdRPC}/ext/health.
-//  3. RPC call. POST admin_exportChain to ${LuxdRPC}/ext/bc/${ChainAlias}/rpc
+//  2. Health probe. Confirm luxd is reachable on ${LuxdRPC}/v1/health.
+//  3. RPC call. POST admin_exportChain to ${LuxdRPC}/v1/bc/${ChainAlias}/rpc
 //     with {file, first, last}. Respect KMS_AUTH_TOKEN bearer auth same as
 //     rlp-import.
 //  4. Translate the response status into an exit code:
@@ -248,10 +248,10 @@ func resolveToHeight(s string) (uint64, error) {
 	return v, nil
 }
 
-// waitForLuxd polls ${rpc}/ext/health until 200, capped at timeout.
+// waitForLuxd polls ${rpc}/v1/health until 200, capped at timeout.
 func waitForLuxd(ctx context.Context, rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/ext/health"
+	url := rpc + "/v1/health"
 	for time.Now().Before(deadline) {
 		select {
 		case <-ctx.Done():
@@ -311,7 +311,7 @@ type exportResult struct {
 	Message         string `json:"message,omitempty"`
 }
 
-// callAdminExportChain POSTs admin_exportChain to the per-alias /ext/bc/
+// callAdminExportChain POSTs admin_exportChain to the per-alias /v1/bc/
 // endpoint. Returns the parsed result on success, err on luxd-side failure.
 func callAdminExportChain(ctx context.Context, rpc, alias, file string, first, last uint64) (*exportResult, error) {
 	body, err := json.Marshal(jsonRPCRequest{
@@ -325,7 +325,7 @@ func callAdminExportChain(ctx context.Context, rpc, alias, file string, first, l
 	if err != nil {
 		return nil, err
 	}
-	url := rpc + "/ext/bc/" + alias + "/rpc"
+	url := rpc + "/v1/bc/" + alias + "/rpc"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
