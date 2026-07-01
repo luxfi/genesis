@@ -120,9 +120,9 @@ func TestRun_HappyPath(t *testing.T) {
 		case r.URL.Path == "/rlp":
 			w.Header().Set("Content-Type", "application/octet-stream")
 			_, _ = w.Write(body)
-		case r.URL.Path == "/ext/health":
+		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/ext/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
 			importCalled = true
 			importBodyRaw, _ = io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
@@ -193,7 +193,7 @@ func TestRun_SHAMismatchExits1(t *testing.T) {
 		switch r.URL.Path {
 		case "/rlp":
 			_, _ = w.Write([]byte("real-rlp"))
-		case "/ext/health":
+		case "/v1/health":
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.NotFound(w, r)
@@ -261,9 +261,9 @@ func TestRun_AdminRPCErrorExits3(t *testing.T) {
 		switch {
 		case r.URL.Path == "/rlp":
 			_, _ = w.Write([]byte("x"))
-		case r.URL.Path == "/ext/health":
+		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/ext/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","error":{"code":-32601,"message":"admin API not enabled"},"id":1}`))
 		default:
 			http.NotFound(w, r)

@@ -206,9 +206,9 @@ func TestRun_HappyPath(t *testing.T) {
 	var exportBodyRaw []byte
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.URL.Path == "/ext/health":
+		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/ext/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
 			exportCalled = true
 			exportBodyRaw, _ = io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
@@ -266,9 +266,9 @@ func TestRun_HappyPath(t *testing.T) {
 func TestRun_NoopFromServer(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.URL.Path == "/ext/health":
+		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/ext/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","result":{
 				"success": true,
 				"status": "noop",
@@ -305,9 +305,9 @@ func TestRun_NoopFromServer(t *testing.T) {
 func TestRun_InterruptedFromServer(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.URL.Path == "/ext/health":
+		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/ext/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","result":{
 				"success": false,
 				"status": "interrupted",
@@ -367,9 +367,9 @@ func TestRun_LuxdUnreachable(t *testing.T) {
 func TestRun_AdminRPCError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.URL.Path == "/ext/health":
+		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/ext/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","error":{"code":-32601,"message":"admin API not enabled"},"id":1}`))
 		default:
 			http.NotFound(w, r)
