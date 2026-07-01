@@ -90,7 +90,7 @@ func getBalance(rpc, paddr string) (uint64, string, error) {
 		},
 	}
 	body, _ := json.Marshal(req)
-	httpReq, err := http.NewRequest("POST", rpc+"/ext/bc/P", bytes.NewReader(body))
+	httpReq, err := http.NewRequest("POST", rpc+"/v1/bc/P", bytes.NewReader(body))
 	if err != nil {
 		return 0, "", err
 	}
