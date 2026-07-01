@@ -657,12 +657,12 @@ type platformBlockchain struct {
 }
 
 // platformGetBlockchains issues a single JSON-RPC POST to
-// /ext/bc/P with method="platform.getBlockchains" and parses the
+// /v1/bc/P with method="platform.getBlockchains" and parses the
 // response. We hand-roll this RPC because info.getBlockchainID(alias)
 // would re-introduce the X-Chain coupling we exist to avoid.
 func platformGetBlockchains(ctx context.Context, uri string) ([]platformBlockchain, error) {
 	body := strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"platform.getBlockchains","params":{}}`)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(uri, "/")+"/ext/bc/P", body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(uri, "/")+"/v1/bc/P", body)
 	if err != nil {
 		return nil, err
 	}
