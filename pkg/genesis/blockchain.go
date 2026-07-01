@@ -244,7 +244,7 @@ func GetBlockchainIDFromAlias(endpoint string, alias string) (ids.ID, error) {
 	type getBlockchainIDReply struct {
 		BlockchainID ids.ID `json:"blockchainID"`
 	}
-	requester := rpc.NewEndpointRequester(endpoint + "/ext/info")
+	requester := rpc.NewEndpointRequester(endpoint + "/v1/info")
 	ctx, cancel := GetAPIContext()
 	defer cancel()
 	reply := &getBlockchainIDReply{}
