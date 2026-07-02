@@ -26,7 +26,7 @@ func TestDeriveContentHash_StableAndShort(t *testing.T) {
 		tenant:       "hanzo",
 		chainAlias:   "C",
 		blockchainID: "BCID",
-		sourceURL:    "https://s3.lux.network/h.rlp",
+		sourceURL:    "https://s3.lux.cloud/h.rlp",
 		sha256Hex:    "deadbeef",
 	}
 	got := deriveContentHash(c)
@@ -34,7 +34,7 @@ func TestDeriveContentHash_StableAndShort(t *testing.T) {
 		t.Fatalf("hash length = %d, want 12", len(got))
 	}
 	// Compute it the way the operator does, byte-for-byte.
-	h := sha256.Sum256([]byte("hanzo|C|BCID|https://s3.lux.network/h.rlp|deadbeef"))
+	h := sha256.Sum256([]byte("hanzo|C|BCID|https://s3.lux.cloud/h.rlp|deadbeef"))
 	want := hex.EncodeToString(h[:])[:12]
 	if got != want {
 		t.Fatalf("hash mismatch: got=%s want=%s", got, want)
