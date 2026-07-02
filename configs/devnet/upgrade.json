@@ -1,5 +1,5 @@
 {
-  "_comment": "Devnet upgrade.json — Quasar Edition active from genesis (block 0). All PQ precompiles active from genesis; no forward-dated strict-PQ gate (devnet is the always-current-canary).",
+  "_comment": "Devnet upgrade.json \u2014 Quasar Edition active from genesis (block 0). All PQ precompiles active from genesis; no forward-dated strict-PQ gate (devnet is the always-current-canary).",
   "networkUpgradeOverrides": {
     "evmTimestamp": 0,
     "durangoTimestamp": 0,
@@ -101,137 +101,137 @@
     },
     {
       "pulsarVerify": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "magnetarVerify": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "p3qVerify": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "coronaThreshold": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "hqcEncapsulate": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381G1AddConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381G1MulConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381G1MSMConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381G2AddConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381G2MulConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381G2MSMConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bls12381PairingConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "curve25519Config": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "x25519Config": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "sr25519Verify": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "babyjubjubConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "pedersenConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "poseidonConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "pastaConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "xwingConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "computeMarketConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "bridgeRegistrarConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "stableSwapConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "vrfConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "attestationConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "anchorConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "fixedPointMathConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     }
   ],
