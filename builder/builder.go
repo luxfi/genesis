@@ -84,7 +84,8 @@ var (
 		constants.QuantumVMID:   {"quantumvm", "quantum"},
 		constants.AIVMID:        {"aivm", "ai"},
 		constants.BridgeVMID:    {"bridgevm", "bridge"},
-		constants.ThresholdVMID: {"thresholdvm", "threshold"},
+		constants.MPCVMID:       {"mpc", "mpcvm"},
+		constants.FHEVMID:       {"fhe", "fhevm"},
 		constants.ZKVMID:        {"zkvm", "zk"},
 		constants.GraphVMID:     {"graphvm", "graph"},
 		constants.KeyVMID:       {"kmsvm", "kms"},
@@ -584,10 +585,9 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 	// shard set is supplied. Append-only — reordering shifts the
 	// P-Chain genesis byte layout.
 	//
-	// LP-134: F-Chain and M-Chain both run the ThresholdVM substrate (F in
-	// FHE mode, M in MPC mode) — they share constants.ThresholdVMID and are
-	// disambiguated by BlockchainName. F-Chain occupies the retired T-Chain's
-	// slot (same VM); M-Chain is appended, keeping Z/G/K byte-stable.
+	// LP-0130: F-Chain (FHEVMID) and M-Chain (MPCVMID) run distinct VMs.
+	// The legacy shared substrate is retired; F occupies the retired
+	// T slot for byte-order stability, M is appended.
 	chainEntries := []struct {
 		GenesisData []byte
 		VMID        ids.ID
@@ -601,11 +601,11 @@ func FromConfig(config *genesiscfg.Config) ([]byte, ids.ID, error) {
 		{GenesisData: []byte(config.QChainGenesis), VMID: constants.QuantumVMID, Name: "Q-Chain"},
 		{GenesisData: []byte(config.AChainGenesis), VMID: constants.AIVMID, Name: "A-Chain"},
 		{GenesisData: []byte(config.BChainGenesis), VMID: constants.BridgeVMID, Name: "B-Chain"},
-		{GenesisData: []byte(config.FChainGenesis), VMID: constants.ThresholdVMID, Name: "F-Chain"},
+		{GenesisData: []byte(config.FChainGenesis), VMID: constants.FHEVMID, Name: "F-Chain"},
 		{GenesisData: []byte(config.ZChainGenesis), VMID: constants.ZKVMID, Name: "Z-Chain"},
 		{GenesisData: []byte(config.GChainGenesis), VMID: constants.GraphVMID, Name: "G-Chain"},
 		{GenesisData: []byte(config.KChainGenesis), VMID: constants.KeyVMID, Name: "K-Chain"},
-		{GenesisData: []byte(config.MChainGenesis), VMID: constants.ThresholdVMID, Name: "M-Chain"},
+		{GenesisData: []byte(config.MChainGenesis), VMID: constants.MPCVMID, Name: "M-Chain"},
 	}
 	chains := []genesis.Chain{}
 	for _, e := range chainEntries {
@@ -795,26 +795,20 @@ func Aliases(genesisBytes []byte) (map[string][]string, map[ids.ID][]string, err
 				path.Join(constants.ChainAliasPrefix, "bridge"),
 			}
 			chainAliases[chainID] = BChainAliases
-		case constants.ThresholdVMID:
-			// LP-134: F-Chain (FHE mode) and M-Chain (MPC mode) both run the
-			// ThresholdVM substrate, so they share constants.ThresholdVMID.
-			// They are distinct chains — disambiguate by the CreateChainTx's
-			// BlockchainName (set from the chain entry Name in FromConfig).
-			if uChain.BlockchainName == "M-Chain" {
-				apiAliases[endpoint] = []string{
-					"M", "mpc", "mpcvm",
-					path.Join(constants.ChainAliasPrefix, "M"),
-					path.Join(constants.ChainAliasPrefix, "mpc"),
-				}
-				chainAliases[chainID] = MChainAliases
-			} else {
-				apiAliases[endpoint] = []string{
-					"F", "fhe", "fhevm",
-					path.Join(constants.ChainAliasPrefix, "F"),
-					path.Join(constants.ChainAliasPrefix, "fhe"),
-				}
-				chainAliases[chainID] = FChainAliases
+		case constants.MPCVMID:
+			apiAliases[endpoint] = []string{
+				"M", "mpc", "mpcvm",
+				path.Join(constants.ChainAliasPrefix, "M"),
+				path.Join(constants.ChainAliasPrefix, "mpc"),
 			}
+			chainAliases[chainID] = MChainAliases
+		case constants.FHEVMID:
+			apiAliases[endpoint] = []string{
+				"F", "fhe", "fhevm",
+				path.Join(constants.ChainAliasPrefix, "F"),
+				path.Join(constants.ChainAliasPrefix, "fhe"),
+			}
+			chainAliases[chainID] = FChainAliases
 		case constants.ZKVMID:
 			apiAliases[endpoint] = []string{
 				"Z", "zk", "zkvm",

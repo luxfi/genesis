@@ -111,7 +111,7 @@ func TestLP134_FChainIsFHEOnly(t *testing.T) {
 					t.Fatalf("F-Chain aliases must include %q", want)
 				}
 			}
-			for _, banned := range []string{"m", "mpc", "mpcvm", "t", "threshold", "thresholdvm"} {
+			for _, banned := range []string{"m", "mpc", "mpcvm", "t", "threshold", "mpcvm"} {
 				if al[banned] {
 					t.Fatalf("F-Chain must not claim alias %q", banned)
 				}
@@ -174,7 +174,10 @@ func TestLP134_MChainIsMPCOnly(t *testing.T) {
 					t.Fatalf("M-Chain aliases must include %q", want)
 				}
 			}
-			for _, banned := range []string{"f", "fhe", "fhevm", "t", "threshold", "thresholdvm"} {
+			// M-Chain IS mpcvm (LP-134), so it claims m/mpc/mpcvm (asserted above);
+			// it must not claim the F-Chain or retired-T aliases. ("mpcvm" was
+			// erroneously in this banned list, contradicting the required set.)
+			for _, banned := range []string{"f", "fhe", "fhevm", "t", "threshold"} {
 				if al[banned] {
 					t.Fatalf("M-Chain must not claim alias %q", banned)
 				}
