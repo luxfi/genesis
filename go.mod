@@ -3,7 +3,7 @@ module github.com/luxfi/genesis
 go 1.26.4
 
 require (
-	github.com/luxfi/constants v1.5.7
+	github.com/luxfi/constants v1.6.1
 	github.com/luxfi/crypto v1.19.15
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
