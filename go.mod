@@ -35,6 +35,7 @@ require (
 	github.com/luxfi/cache v1.2.1 // indirect
 	github.com/luxfi/codec v1.1.4 // indirect
 	github.com/luxfi/geth v1.16.98 // indirect
+	github.com/luxfi/light v1.0.0
 	github.com/luxfi/math/big v0.1.0 // indirect
 	github.com/luxfi/metric v1.5.5 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
