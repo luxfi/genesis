@@ -28,6 +28,7 @@ import (
 	"github.com/luxfi/go-bip32"
 	"github.com/luxfi/go-bip39"
 	"github.com/luxfi/ids"
+	"github.com/luxfi/light"
 	"github.com/luxfi/log"
 	luxtls "github.com/luxfi/tls"
 	"golang.org/x/crypto/sha3"
@@ -74,7 +75,11 @@ const (
 	// value of LUX_MNEMONIC to bootstrap a local network (network ID >=
 	// 1337). RefuseLightMnemonicOnProduction enforces it cannot be used
 	// on mainnet/testnet/devnet (network IDs 1/2/3).
-	LightMnemonic = "light light light light light light light light light light light energy"
+	//
+	// Single source of truth: github.com/luxfi/light.Mnemonic. This is a
+	// backward-compat re-export so existing genesis.LightMnemonic callers
+	// keep working; do not re-declare the literal here.
+	LightMnemonic = light.Mnemonic
 )
 
 // KeyInfo contains parsed key information for a node
@@ -573,7 +578,6 @@ func privateKeyToEVMAddress(privKey []byte) (ids.ShortID, error) {
 	copy(addr[:], evmAddr[:])
 	return addr, nil
 }
-
 
 // keccakBytes returns Keccak256(data) as a []byte slice (saves the
 // two-step assignment-then-slice that Go requires for function-returned
@@ -1123,4 +1127,3 @@ func buildConfigFromKeyInfos(networkID uint32, validatorKeys []KeyInfo, allKeys 
 		Message:                    genesisMessage(networkID),
 	}, nil
 }
-
