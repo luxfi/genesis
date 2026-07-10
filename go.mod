@@ -7,7 +7,7 @@ require (
 	github.com/luxfi/crypto v1.19.15
 	github.com/luxfi/go-bip32 v1.0.2
 	github.com/luxfi/go-bip39 v1.1.2
-	github.com/luxfi/ids v1.2.10
+	github.com/luxfi/ids v1.3.1
 	github.com/luxfi/log v1.4.1
 	github.com/luxfi/tls v1.0.3
 	golang.org/x/crypto v0.50.0
