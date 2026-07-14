@@ -18,7 +18,7 @@ empirical provenance archive. Brand homes are deployment-side consumers
 Chain ID assignments:
 - hanzo:  mainnet 36963, testnet 36962, devnet 36964
 - zoo:    mainnet 200200, testnet 200201, devnet 200202
-- pars:   mainnet 7070,   testnet 494950, devnet 494951
+- pars:   mainnet 494949, testnet 494950, devnet 494951
 - spc:    mainnet 36911,  testnet 36910,  devnet 36912
 - osage:  mainnet 1872,   testnet 1871,   devnet 1873
 

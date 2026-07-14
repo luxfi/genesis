@@ -99,7 +99,9 @@ func EVMChainID(family NetworkFamily, env uint32) (uint64, bool) {
 	case FamilyPars:
 		switch env {
 		case MainnetID:
-			return 7070, true
+			// 494949 = live api.pars.network eth_chainId 0x78d65 / net_version.
+			// (Was 7070 — a stale value the live chain never adopted.)
+			return 494949, true
 		case TestnetID:
 			return 494950, true
 		case DevnetID:
@@ -130,7 +132,7 @@ func NetworkFamilyOf(chainID uint64) (NetworkFamily, bool) {
 		return FamilyZoo, true
 	case 36911, 36910, 36912:
 		return FamilySPC, true
-	case 7070, 494950, 494951:
+	case 494949, 494950, 494951:
 		return FamilyPars, true
 	}
 	return "", false
