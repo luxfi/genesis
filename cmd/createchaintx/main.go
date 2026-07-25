@@ -532,11 +532,14 @@ func loadMnemonic(mnemonicFile, env string) (string, string, error) {
 	}
 	endpoint := strings.TrimRight(strings.TrimSpace(os.Getenv("KMS_ENDPOINT")), "/")
 	token := strings.TrimSpace(os.Getenv("KMS_TOKEN"))
-	wsID := strings.TrimSpace(os.Getenv("KMS_WORKSPACE_ID"))
-	if endpoint == "" || token == "" || wsID == "" {
-		return "", "", errors.New("no mnemonic source: set --mnemonic-file, LUX_MNEMONIC env, or KMS_ENDPOINT+KMS_TOKEN+KMS_WORKSPACE_ID env")
+	org := strings.TrimSpace(os.Getenv("KMS_ORG"))
+	if org == "" {
+		org = "lux"
 	}
-	mn, err := fetchKMSMnemonic(endpoint, token, wsID, env)
+	if endpoint == "" || token == "" {
+		return "", "", errors.New("no mnemonic source: set --mnemonic-file, LUX_MNEMONIC env, or KMS_ENDPOINT+KMS_TOKEN env")
+	}
+	mn, err := fetchKMSMnemonic(endpoint, token, org, env)
 	if err != nil {
 		return "", "", fmt.Errorf("kms fetch: %w", err)
 	}
@@ -546,24 +549,30 @@ func loadMnemonic(mnemonicFile, env string) (string, string, error) {
 	return mn, fmt.Sprintf("KMS %s lux/%s/staking[mnemonic]", endpoint, env), nil
 }
 
-// fetchKMSMnemonic calls the Infisical v3 raw secrets API to retrieve the
-// `mnemonic` key under secretPath /lux/<env>/staking, environment "prod"
-// (Infisical environments are independent of luxd network envs; we always
-// store mnemonics under the prod Infisical env regardless of which luxd
-// env they target — the secretPath disambiguates).
+// fetchKMSMnemonic reads the `mnemonic` secret at path lux/<env>/staking from
+// luxfi/kms — the one place secrets live.
 //
-// Endpoint shape: GET ${KMS_ENDPOINT}/api/v3/secrets/raw?
+//	GET ${KMS_ENDPOINT}/v1/kms/orgs/<org>/secrets/lux/<env>/staking/mnemonic
+//	Authorization: Bearer ${KMS_TOKEN}   (IAM-signed, resolved to <org>)
+//	-> {"secret": {"value": "..."}}
 //
-//	workspaceId=<ws>&environment=prod&secretPath=/lux/<env>/staking
+// The server splits the path at its last "/" into (path, name), so the secret
+// path disambiguates the luxd env; the ?env= slug is the KMS environment and
+// defaults to "default", matching the luxfi/kms client's KMS_ENV.
 //
-// Auth: Authorization: Bearer ${KMS_TOKEN}
-// Response: {"secrets": [{"secretKey": "mnemonic", "secretValue": "..."}]}
-func fetchKMSMnemonic(endpoint, token, wsID, env string) (string, error) {
+// This previously called Infisical's /api/v3/secrets/raw. That endpoint is not
+// served by kms.lux.network or kms.hanzo.ai — a request there returns the
+// console SPA's HTML, so the JSON decode failed and no mnemonic was ever
+// retrievable through this path.
+func fetchKMSMnemonic(endpoint, token, org, env string) (string, error) {
+	kmsEnv := strings.TrimSpace(os.Getenv("KMS_ENV"))
+	if kmsEnv == "" {
+		kmsEnv = "default"
+	}
 	q := url.Values{}
-	q.Set("workspaceId", wsID)
-	q.Set("environment", "prod")
-	q.Set("secretPath", fmt.Sprintf("/lux/%s/staking", env))
-	reqURL := endpoint + "/api/v3/secrets/raw?" + q.Encode()
+	q.Set("env", kmsEnv)
+	reqURL := fmt.Sprintf("%s/v1/kms/orgs/%s/secrets/lux/%s/staking/mnemonic?%s",
+		endpoint, url.PathEscape(org), url.PathEscape(env), q.Encode())
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return "", err
@@ -580,20 +589,17 @@ func fetchKMSMnemonic(endpoint, token, wsID, env string) (string, error) {
 		return "", fmt.Errorf("kms http %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	var doc struct {
-		Secrets []struct {
-			SecretKey   string `json:"secretKey"`
-			SecretValue string `json:"secretValue"`
-		} `json:"secrets"`
+		Secret struct {
+			Value string `json:"value"`
+		} `json:"secret"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
 		return "", fmt.Errorf("decode kms response: %w", err)
 	}
-	for _, s := range doc.Secrets {
-		if s.SecretKey == "mnemonic" {
-			return strings.TrimSpace(s.SecretValue), nil
-		}
+	if v := strings.TrimSpace(doc.Secret.Value); v != "" {
+		return v, nil
 	}
-	return "", errors.New("no `mnemonic` key in kms response")
+	return "", errors.New("kms returned an empty mnemonic")
 }
 
 // deriveStakingKey derives a secp256k1 private key from a BIP-39 mnemonic
