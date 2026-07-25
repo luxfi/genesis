@@ -14,7 +14,7 @@
   ],
   "name": "M-Chain",
   "networkId": 1337,
-  "policy": "3-of-5",
+  "policy": "2-of-3",
   "timestamp": 1735689600,
   "version": 1,
   "vm": "mpcvm"
