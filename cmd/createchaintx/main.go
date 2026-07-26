@@ -16,9 +16,9 @@
 //  1. Loads a BIP-39 mnemonic from one of three sources, in order of priority:
 //     a. --mnemonic-file=<path>          (raw file, mnemonic is the only content)
 //     b. LUX_MNEMONIC env var
-//     c. KMS via env vars KMS_ENDPOINT + KMS_TOKEN + KMS_WORKSPACE_ID, fetching
-//     secret at path lux/<env>/staking with key `mnemonic` (Infisical REST
-//     v3 raw API: GET /api/v3/secrets/raw?workspaceId=&secretPath=&environment=)
+//     c. KMS via env vars KMS_ENDPOINT + KMS_TOKEN + KMS_ORG, fetching the
+//     secret at path lux/<env>/staking named `mnemonic`:
+//     GET ${KMS_ENDPOINT}/v1/kms/orgs/<org>/secrets/lux/<env>/staking/mnemonic
 //
 //  2. Derives a single secp256k1 funding key on the canonical Lux BIP-44 UTXO
 //     path m/44'/9000'/0'/0/<index> (purpose=44', coin_type=9000', account=0',
@@ -69,7 +69,7 @@
 //	# Devnet, mnemonic from KMS, also emit aliases patch for kubectl apply
 //	export KMS_ENDPOINT=https://kms.hanzo.ai
 //	export KMS_TOKEN=...
-//	export KMS_WORKSPACE_ID=...
+//	export KMS_ORG=lux
 //	createchaintx \
 //	  --uri=http://luxd-0.lux-devnet.svc.cluster.local:9650 \
 //	  --env=devnet \
