@@ -19,6 +19,7 @@
     "shanghaiTime": 0,
     "cancunTime": 0,
     "evmTimestamp": 0,
+    "feeSplitTimestamp": 1785715200,
     "blobSchedule": {
       "cancun": {
         "baseFeeUpdateFraction": 3338477,
