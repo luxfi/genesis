@@ -88,9 +88,13 @@ These genesis files are used by:
 
 ## RPC Endpoints
 
-- **Mainnet**: `http://localhost:9630/ext/bc/C/rpc`
-- **Testnet**: `http://localhost:9630/ext/bc/C/rpc` (testnet node)
-- **Devnet**: `http://localhost:9630/ext/bc/C/rpc` (devnet node)
+`/v1` is luxd's only HTTP prefix (`node/server/http/server.go`, `baseURL`).
+The port differs per fleet — read `spec.ports.http` off that net's
+`LuxNetwork` CR, never assume one:
+
+- **Mainnet**: `http://localhost:9630/v1/bc/C/rpc`
+- **Testnet**: `http://localhost:9640/v1/bc/C/rpc`
+- **Devnet**: `http://localhost:9650/v1/bc/C/rpc`
 
 ## Genesis Account
 
