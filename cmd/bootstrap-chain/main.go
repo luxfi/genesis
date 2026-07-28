@@ -719,7 +719,7 @@ type platformBlockchain struct {
 func platformGetBlockchains(ctx context.Context, uri string) ([]platformBlockchain, error) {
 	body := strings.NewReader(
 		`{"jsonrpc":"2.0","id":1,"method":"platform.getBlockchains","params":{}}`)
-	req, _ := http.NewRequestWithContext(ctx, "POST", uri+"/ext/P", body)
+	req, _ := http.NewRequestWithContext(ctx, "POST", uri+"/v1/P", body)
 	req.Header.Set("Content-Type", "application/json")
 	httpc := &http.Client{Timeout: 15 * time.Second}
 	resp, err := httpc.Do(req)
@@ -865,7 +865,7 @@ func formatPAddr(hrp string, a ids.ShortID) string {
 	return "P-" + b32
 }
 
-// waitBootstrap polls /ext/info.isBootstrapped(chain=<id>) until true or timeout.
+// waitBootstrap polls /v1/info.isBootstrapped(chain=<id>) until true or timeout.
 func waitBootstrap(ctx context.Context, uri, chainID string, timeout, interval time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	httpc := &http.Client{Timeout: 10 * time.Second}
@@ -900,7 +900,7 @@ func evmHeartbeat(ctx context.Context, uri, chainID string, evmChainID uint64, k
 	httpc := &http.Client{Timeout: 10 * time.Second}
 
 	// Fetch nonce + suggested gas + chain baseFee
-	rpc := fmt.Sprintf("%s/ext/bc/%s/rpc", uri, chainID)
+	rpc := fmt.Sprintf("%s/v1/bc/%s/rpc", uri, chainID)
 	nonce, err := ethGetTransactionCount(ctx, httpc, rpc, from)
 	if err != nil {
 		return fmt.Errorf("nonce: %w", err)
@@ -988,7 +988,7 @@ func ethGetTransactionCount(ctx context.Context, c *http.Client, rpc string, add
 	return n.Uint64(), nil
 }
 
-// probeChain polls /ext/info isBootstrapped + /ext/bc/<id>/rpc eth_blockNumber
+// probeChain polls /v1/info isBootstrapped + /v1/bc/<id>/rpc eth_blockNumber
 // until both return success or timeout elapses. Returns the first eth_blockNumber
 // observed (hex). Fails with a descriptive error if the deadline is missed.
 func probeChain(ctx context.Context, uri, chainID string, timeout, interval time.Duration) (string, error) {
@@ -1018,7 +1018,7 @@ func probeChain(ctx context.Context, uri, chainID string, timeout, interval time
 func infoIsBootstrapped(ctx context.Context, c *http.Client, uri, chainID string) (bool, error) {
 	body := strings.NewReader(fmt.Sprintf(
 		`{"jsonrpc":"2.0","id":1,"method":"info.isBootstrapped","params":{"chain":%q}}`, chainID))
-	req, _ := http.NewRequestWithContext(ctx, "POST", uri+"/ext/info", body)
+	req, _ := http.NewRequestWithContext(ctx, "POST", uri+"/v1/info", body)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {
@@ -1045,7 +1045,7 @@ func infoIsBootstrapped(ctx context.Context, c *http.Client, uri, chainID string
 
 func ethBlockNumber(ctx context.Context, c *http.Client, uri, chainID string) (string, error) {
 	body := strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`)
-	url := fmt.Sprintf("%s/ext/bc/%s/rpc", uri, chainID)
+	url := fmt.Sprintf("%s/v1/bc/%s/rpc", uri, chainID)
 	req, _ := http.NewRequestWithContext(ctx, "POST", url, body)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.Do(req)

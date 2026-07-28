@@ -185,4 +185,6 @@ cmd/archive/*/check-balance
 migrated-ethdb.disabled/
 *.mem
 *.sst
-bootstrap-chain
+# the compiled binary, not cmd/bootstrap-chain/ — an unanchored pattern here
+# silently swallows the source directory and every new file added to it
+/bootstrap-chain
