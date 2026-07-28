@@ -58,8 +58,8 @@ permanently squats its `BlockchainName` on the P-chain ledger — you
 cannot reuse the name even after fixing the genesis. Work-around used
 on zoo testnet/devnet: issue under a throwaway name (`ZOOTEST123` /
 `ZOODEVTEST123`), then rewrite the krakend gateway endpoint so
-`/ext/bc/zoo/rpc` → `/ext/bc/<new-bcID>/rpc`. The route
-`/ext/bc/<name>/rpc` is registered by `luxfi/node/chains/manager.go`
+`/v1/bc/zoo/rpc` → `/v1/bc/<new-bcID>/rpc`. The route
+`/v1/bc/<name>/rpc` is registered by `luxfi/node/chains/manager.go`
 *only* on successful VM init — broken chains never claim the route, so
 gateway-side rewrite is sufficient.
 
@@ -592,13 +592,13 @@ netrunner start --networks mainnet
 # Verify genesis hash
 curl -X POST -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x0",false],"id":1}' \
-  http://127.0.0.1:9630/ext/bc/C/rpc | jq '.result.hash'
+  http://127.0.0.1:9630/v1/bc/C/rpc | jq '.result.hash'
 # Expected: "0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e"
 
 # Verify warp precompile in state
 curl -X POST -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","method":"eth_getCode","params":["0x0200000000000000000000000000000000000005","0x0"],"id":1}' \
-  http://127.0.0.1:9630/ext/bc/C/rpc | jq '.result'
+  http://127.0.0.1:9630/v1/bc/C/rpc | jq '.result'
 # Expected: "0x01"
 ```
 
