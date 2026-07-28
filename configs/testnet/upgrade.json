@@ -225,6 +225,15 @@
       "fixedPointMathConfig": {
         "blockTimestamp": 1766708400
       }
+    },
+    {
+      "rewardManagerConfig": {
+        "blockTimestamp": 1784063913,
+        "adminAddresses": ["0x9011E888251AB053B7bD1cdB598Db4f9DEd94714"],
+        "initialRewardConfig": {
+          "rewardAddress": "0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59"
+        }
+      }
     }
   ],
   "stateUpgrades": []
