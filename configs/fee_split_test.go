@@ -11,15 +11,25 @@ import (
 // The 50/50 fee split decides HOW MUCH of a transaction fee is kept; the
 // RewardManager precompile decides WHERE the kept half goes. Enabling the first
 // without the second burns half of every fee and strands the other half at the
-// keyless blackhole 0x0100..00 — the C-Chain already holds ~3867 LUX there.
-// luxfi/evm refuses such a config outright (extras.ChainConfig.verifyFeeSplit,
-// reached from plugin/evm parseGenesis -> ChainConfig.Verify), so a network
-// whose cchain.json schedules feeSplitTimestamp with no matching
-// rewardManagerConfig does not produce blocks — the C-Chain fails to
-// initialize on every node, at boot.
+// keyless blackhole 0x0100..00 — the C-Chain already holds ~3868 LUX there.
 //
-// That failure is only observable by booting a node, which is exactly what this
-// test replaces: the pairing is a property of the two files, checkable here.
+// This test enforces the pairing here, from the two files alone, because no
+// shipped luxd enforces it and none reads the field yet:
+//
+//   - extras.ChainConfig.verifyFeeSplit (luxfi/evm main) refuses an unpaired
+//     config, but exists in no evm tag, so no binary carries the guard.
+//   - plugin/evm parseGenesis populates extras by naming each genesis config key
+//     it supports (evmTimestamp, durangoTimestamp, quasarTimestamp,
+//     fortunaTimestamp, graniteTimestamp, precompile keys, feeConfig,
+//     allowFeeRecipients). feeSplitTimestamp is in that list on no tag and not on
+//     main either, and luxfi/evm holds extras in a side map rather than in the
+//     ChainConfig JSON, so the key cannot arrive by plain unmarshal. Until
+//     parseGenesis names it, feeSplitTimestamp in a cchain.json is inert: it
+//     neither activates the split nor fails a boot.
+//
+// So the timestamps below are a SCHEDULE, not an activation. Activating the
+// split takes an evm change plus a node roll; this test only guarantees that
+// when a build does read the field, the reward half has a governed destination.
 //
 // The two files split the concern deliberately and must stay in step:
 //
@@ -93,8 +103,9 @@ func TestFeeSplitHasGovernedDestination(t *testing.T) {
 				return
 			}
 			t.Fatalf("chain %d: cchain.json sets feeSplitTimestamp %d but upgrade.json enables no "+
-				"rewardManagerConfig with a rewardAddress at or before it — luxd refuses this config "+
-				"and the C-Chain will not initialize", cchain.Config.ChainID, *split)
+				"rewardManagerConfig with a rewardAddress at or before it — half of every fee would "+
+				"be burned and the other half credited to the keyless blackhole 0x0100..00",
+				cchain.Config.ChainID, *split)
 		})
 	}
 }
