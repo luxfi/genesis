@@ -20,17 +20,45 @@ Activation timestamps (UTC), staged devnet → testnet → mainnet:
 | testnet | 96368 | 1786320000 | 2026-08-10T00:00:00Z | `0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59` |
 | mainnet | 96369 | 1786924800 | 2026-08-17T00:00:00Z | `0x8E29b816c6C35b13cE1ff68D33E245C2bda8ac3D` (DAO Safe) |
 
-Both previously committed timestamps had gone stale and were unbootable:
+Both previously committed timestamps were stale, and each would be wrong the
+moment a build reads the field:
 
 - devnet was `1785129000` (2026-07-27T05:10Z) — in the PAST. A fork timestamp
   that moves from `nil` to a value at or before the head timestamp is a
   `ConfigCompatError` (`extras.isForkTimestampIncompatible`), so
   `SetupGenesisBlock` fails and the C-Chain does not initialize.
 - mainnet was `1785715200` (2026-08-03T00:00:00Z) with **no** `rewardManagerConfig`
-  anywhere in its schedule. `extras.verifyFeeSplit` refuses that outright —
-  half of every fee burned, the other half stranded at the keyless blackhole
-  `0x0100..00`, which already holds ~3867 LUX on 96369. `ChainConfig.Verify`
-  runs at VM init, so the node refuses to start.
+  anywhere in its schedule — half of every fee burned, the other half credited to
+  the keyless blackhole `0x0100..00`, which already holds ~3868 LUX on 96369 and
+  grows with every block.
+
+Neither of those failures can happen on a shipped binary today, and neither can
+the split fire. This is a SCHEDULE, not an activation:
+
+- `plugin/evm.parseGenesis` populates the extras config by naming each genesis
+  `config` key it supports (`evmTimestamp`, `durangoTimestamp`,
+  `quasarTimestamp`, `fortunaTimestamp`, `graniteTimestamp`, precompile keys,
+  `feeConfig`, `allowFeeRecipients`). `feeSplitTimestamp` is in that list on no
+  luxfi/evm tag and not on `main` either, and luxfi/evm keeps extras in a side
+  map rather than in the ChainConfig JSON (libevm integration was removed), so
+  the key cannot arrive by plain unmarshal. It is inert: it neither activates
+  the split nor fails a boot.
+- `extras.verifyFeeSplit`, the guard that refuses an unpaired split, exists on
+  `main` only — `git tag --contains` is empty for it.
+- `core/fee_split.go` first appears at evm `v1.104.14`. In every tag that has it
+  (through `v1.104.22`) the kept half is credited to the compiled-in
+  `extras.FeeRewardVault` = `0x0100..02`, NOT to the RewardManager coinbase;
+  crediting the coinbase is a `main`-only change. So the destination promised
+  above is only what `main` does.
+- Deployed reality: mainnet runs luxd `1.36.2` → chains `v1.7.2` → evm
+  `v1.99.51`; testnet `1.36.24` and devnet `1.36.25` → chains `v1.7.9` → evm
+  `v1.104.10`. None of the three contains a `FeeSplitTimestamp` field at all.
+
+Activating the split therefore takes an evm change (name the key in
+`parseGenesis`) plus a node roll — and the roll must be ordered after every live
+C-Chain genesis carries a FUTURE timestamp, or the compat rule above bites. The
+live `lux-devnet/luxd-genesis` ConfigMap currently carries `1785133547`
+(2026-07-27T06:25Z, already past) and that value exists in no repo.
 
 `configs/<net>/upgrade.json` therefore now carries `rewardManagerConfig`,
 appended last so the activation schedule stays monotonic:
@@ -42,14 +70,18 @@ appended last so the activation schedule stays monotonic:
   split, so fee routing to the DAO Safe is observable at the full rate before
   it halves. Until then 100% of mainnet fees keep landing at the blackhole.
 
-`configs/fee_split_test.go` pins the pairing that luxd enforces at boot, so a
-split with no governed destination fails in CI instead of on a validator, and
-pins the monotonic ordering that `verifyPrecompileUpgrades` requires.
+`configs/fee_split_test.go` pins the pairing here, from the two files alone,
+precisely because no shipped luxd enforces it — so a split with no governed
+destination fails in CI instead of on a validator. It also pins the monotonic
+ordering that `verifyPrecompileUpgrades` requires.
 
 Deployment note: `feeSplitTimestamp` reaches a running fleet only through the
 C-Chain genesis luxd loads at boot (`--genesis-file`, or these embedded configs).
 It must be loaded **before** the timestamp passes, or the config becomes
-unbootable by the rule above.
+unbootable by the rule above. It is not a `NetworkUpgrade` and so cannot be
+staged through `upgrade.json`; a policy fork that becomes unbootable once it
+passes unloaded belongs in `UpgradeConfig` like every other one, and moving it
+there is the durable fix.
 
 ### Mnemonic env unification — one var, one way
 
