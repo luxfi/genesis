@@ -29,7 +29,7 @@
     "eip155Block": 0,
     "eip158Block": 0,
     "evmTimestamp": 0,
-    "feeSplitTimestamp": 1785129000,
+    "feeSplitTimestamp": 1785974400,
     "feeConfig": {
       "baseFeeChangeDenominator": 36,
       "blockGasCostStep": 200000,
