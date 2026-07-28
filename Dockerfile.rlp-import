@@ -1,21 +1,21 @@
-# Dockerfile for the rlp-import CronJob/Job image. Symmetric with the
-# rlp-export image — both share the same minimal runtime.
+# Dockerfile for the rlp-import image.
+#
+# Builds from cmd/rlp-import ALONE. That directory is its own stdlib-only Go
+# module, so this build needs no module download and no network — and, unlike
+# the previous version of this file, it does not try to build a package that
+# lives outside the root module.
 #
 # Build:
 #   docker build -f Dockerfile.rlp-import -t ghcr.io/luxfi/rlp-import:vX.Y.Z .
 FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
+COPY cmd/rlp-import/ ./
 
-COPY . .
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 ENV CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH}
-RUN go build -trimpath -ldflags="-s -w" \
-    -o /out/rlp-import \
-    ./cmd/rlp-import
+RUN go build -trimpath -ldflags="-s -w" -o /out/rlp-import .
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata
