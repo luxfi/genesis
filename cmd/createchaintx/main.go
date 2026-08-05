@@ -561,7 +561,7 @@ func loadMnemonic(mnemonicFile, env string) (string, string, error) {
 // defaults to "default", matching the luxfi/kms client's KMS_ENV.
 //
 // This previously called Infisical's /api/v3/secrets/raw. That endpoint is not
-// served by kms.lux.network or kms.hanzo.ai — a request there returns the
+// served by kms.lux.cloud or kms.hanzo.ai — a request there returns the
 // console SPA's HTML, so the JSON decode failed and no mnemonic was ever
 // retrievable through this path.
 func fetchKMSMnemonic(endpoint, token, org, env string) (string, error) {
