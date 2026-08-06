@@ -271,25 +271,36 @@ func touchSentinel(path string) error {
 }
 
 // waitForLuxd polls ${rpc}/v1/health until 200, capped at timeout. Returns
-// nil when luxd is responsive, err otherwise. Polls every 2s.
+// nil when the C-chain RPC answers, err otherwise. Polls every 2s.
+//
+// It deliberately does NOT gate on ${rpc}/v1/health: on a public luxd that
+// endpoint reports the D-Chain check and can never return 200, so a health gate
+// parks this tool forever against a perfectly serving node.
 func waitForLuxd(rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/v1/health"
+	url := rpc + "/v1/bc/C/rpc"
+	body := `{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`
 	for time.Now().Before(deadline) {
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(body))
 		if err != nil {
 			return err
 		}
+		req.Header.Set("Content-Type", "application/json")
 		resp, err := importHTTPClient.Do(req)
 		if err == nil {
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 			resp.Body.Close()
-			if resp.StatusCode == http.StatusOK {
+			// ANY JSON-RPC envelope means the chain endpoint is reachable —
+			// including an error one. A node that answers `{"error":…}` is up,
+			// and calling it is what turns that into the specific exit code
+			// (admin-RPC-error), which reporting "unreachable" would erase.
+			if resp.StatusCode == http.StatusOK && bytes.Contains(b, []byte(`"jsonrpc"`)) {
 				return nil
 			}
 		}
 		time.Sleep(2 * time.Second)
 	}
-	return fmt.Errorf("luxd at %s never became healthy within %s", rpc, timeout)
+	return fmt.Errorf("luxd C-chain RPC at %s never answered within %s", rpc, timeout)
 }
 
 // jsonRPCRequest is the canonical JSON-RPC 2.0 request envelope. Inlined
