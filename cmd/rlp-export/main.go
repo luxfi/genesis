@@ -18,7 +18,10 @@
 //     same PVC as luxd) and if it shows Status=done + matching {first,last,
 //     firstHash,lastHash} for THIS run's range, exit 0 without calling luxd.
 //     This is the "operator schedules the same export every hour" optimization.
-//  2. Health probe. Confirm luxd is reachable on ${LuxdRPC}/v1/health.
+//  2. Reachability probe. Confirm the CHAIN answers on
+//     ${LuxdRPC}/v1/bc/${ChainAlias}/rpc (eth_blockNumber) — never
+//     ${LuxdRPC}/v1/health, which on a public luxd reports the D-Chain check
+//     and can never return 200, parking the export against a healthy node.
 //  3. RPC call. POST admin_exportChain to ${LuxdRPC}/v1/bc/${ChainAlias}/rpc
 //     with {file, first, last}. Respect KMS_AUTH_TOKEN bearer auth same as
 //     rlp-import.
@@ -248,30 +251,41 @@ func resolveToHeight(s string) (uint64, error) {
 	return v, nil
 }
 
-// waitForLuxd polls ${rpc}/v1/health until 200, capped at timeout.
+// waitForLuxd polls the C-chain RPC (eth_blockNumber) until it answers, capped
+// at timeout. It deliberately does NOT gate on ${rpc}/v1/health: on a public
+// luxd that endpoint reports the D-Chain check and can never return 200, so a
+// health gate parks this tool forever against a perfectly serving node. What an
+// RLP export needs is the chain it exports answering — nothing more.
 func waitForLuxd(ctx context.Context, rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/v1/health"
+	url := rpc + "/v1/bc/C/rpc"
+	body := `{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`
 	for time.Now().Before(deadline) {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(body))
 		if err != nil {
 			return err
 		}
+		req.Header.Set("Content-Type", "application/json")
 		resp, err := exportHTTPClient.Do(req)
 		if err == nil {
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 			resp.Body.Close()
-			if resp.StatusCode == http.StatusOK {
+			// ANY JSON-RPC envelope means the chain endpoint is reachable —
+			// including an error one. A node that answers `{"error":…}` is up,
+			// and calling it is what turns that into the specific exit code
+			// (admin-RPC-error), which reporting "unreachable" would erase.
+			if resp.StatusCode == http.StatusOK && bytes.Contains(b, []byte(`"jsonrpc"`)) {
 				return nil
 			}
 		}
 		time.Sleep(2 * time.Second)
 	}
-	return fmt.Errorf("luxd at %s never became healthy within %s", rpc, timeout)
+	return fmt.Errorf("luxd C-chain RPC at %s never answered within %s", rpc, timeout)
 }
 
 // jsonRPCRequest and jsonRPCResponse are inlined to keep this binary
