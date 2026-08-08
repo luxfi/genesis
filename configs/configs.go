@@ -152,23 +152,22 @@ func loadDynamicPChainAllocations(networkName string) *genesis.PChainConfig {
 
 // loadEmbeddedGenesisWithDynamic loads genesis with optional dynamic P-Chain allocations.
 func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.PChainConfig) ([]byte, error) {
-	// Load network.json from embedded
+	// network.json plus the shard tree is the only way a chain set is
+	// spelled. A pre-split combined genesis.json used to stand in here when
+	// network.json or pchain.json was unreadable. That fallback outlived the
+	// LP-134 T -> {F,M} split: the combined files still carried the retired
+	// tChainGenesis key, which no longer binds to any field, so falling back
+	// founded a network with no M-Chain and no F-Chain. An absent M-Chain
+	// leaves MChainID empty, and every restricted chain then refuses to
+	// activate. Read failures are reported, never answered with a quieter
+	// genesis.
 	networkData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "network.json"))
 	if err != nil {
-		// Fall back to single genesis.json file
-		return embeddedGenesis.ReadFile(filepath.Join(networkName, "genesis.json"))
+		return nil, fmt.Errorf("%s: read network.json: %w", networkName, err)
 	}
 	var network genesis.NetworkConfig
 	if err := json.Unmarshal(networkData, &network); err != nil {
 		return nil, fmt.Errorf("failed to parse network.json: %w", err)
-	}
-
-	// Check if split pchain.json/cchain.json exist - if not, fall back to genesis.json
-	_, pchainErr := embeddedGenesis.ReadFile(filepath.Join(networkName, "pchain.json"))
-	_, cchainErr := embeddedGenesis.ReadFile(filepath.Join(networkName, "cchain.json"))
-	if pchainErr != nil || cchainErr != nil {
-		// No split files, fall back to combined genesis.json (devnet case)
-		return embeddedGenesis.ReadFile(filepath.Join(networkName, "genesis.json"))
 	}
 
 	// Load P-Chain config - use dynamic if provided, otherwise embedded

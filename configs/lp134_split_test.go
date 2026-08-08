@@ -38,13 +38,20 @@ var lp134Shards = []lp134Spec{
 	{letter: "f", vm: "ThresholdVM", mode: "fhe", aliases: []string{"f", "fhe", "fhevm"},
 		has:    []string{"ringDegreeN", "ringModulusQ", "fhePrecompilePrefix"},
 		hasNot: []string{"mpcParties", "mpcThreshold", "mpcVerifyPrecompiles"}, noText: "0x08"},
-	{letter: "m", vm: "ThresholdVM", mode: "mpc", aliases: []string{"m", "mpc", "mpcvm"},
+	// vm is "mpcvm", not the substrate name: builder.FromConfig binds
+	// mChainGenesis to constants.MPCVMID, and the plugin the node loads is
+	// named for that ID. A quorum is spelled once, as policy "k-of-n" — the
+	// mpcThreshold/mpcParties pair it replaced could disagree with itself.
+	{letter: "m", vm: "mpcvm", mode: "mpc", aliases: []string{"m", "mpc", "mpcvm"},
 		precompiles: []string{
 			"0x0800000000000000000000000000000000000002", // FROST
 			"0x0800000000000000000000000000000000000003", // CGGMP21
 		},
-		has:    []string{"mpcParties", "mpcThreshold"},
-		hasNot: []string{"ringDegreeN", "ringModulusQ", "dkgParties", "dkgThreshold", "fhePrecompilePrefix"}, noText: "0x07"},
+		has: []string{"policy"},
+		hasNot: []string{
+			"mpcParties", "mpcThreshold", "threshold", "totalParties",
+			"ringDegreeN", "ringModulusQ", "dkgParties", "dkgThreshold", "fhePrecompilePrefix",
+		}, noText: "0x07"},
 	{letter: "k", vm: "KeyVM", aliases: []string{"k", "key", "keyvm", "kms"},
 		hasNot: []string{"mpcParties", "mpcThreshold", "mpcVerifyPrecompiles", "mode", "ringDegreeN"}},
 }
@@ -86,6 +93,33 @@ func TestLP134Split(t *testing.T) {
 					}
 				}
 			})
+		}
+	}
+}
+
+// TestChainSetHasOneSource asserts the shard tree is the only place a network's
+// chain set is written down.
+//
+// A combined genesis.json used to sit beside the shards as a fallback. It went
+// stale at the LP-134 split — still keyed tChainGenesis, never gaining
+// mChainGenesis or fChainGenesis — and because encoding/json drops keys with no
+// field, a network built from it came up with no M-Chain and no F-Chain and no
+// complaint. lux-devnet booted that way: nine chains where eleven were
+// declared, and MChainID empty, which is what every restricted chain checks
+// before it agrees to activate. Two sources for one fact is the whole bug;
+// deleting the second one is the fix.
+func TestChainSetHasOneSource(t *testing.T) {
+	for _, net := range lp134Nets {
+		for _, stale := range []string{"genesis.json", "genesis-new.json"} {
+			if _, err := os.Stat(filepath.Join("..", "configs", net, stale)); !os.IsNotExist(err) {
+				t.Errorf("%s/%s: a combined genesis file is a second source for the chain set; "+
+					"the {x,c,d,q,a,b,f,z,g,k,m}chain.json shards are the only one", net, stale)
+			}
+		}
+		for _, letter := range []string{"m", "f"} {
+			if _, err := os.Stat(lp134Path(net, letter)); err != nil {
+				t.Errorf("%s: %schain.json missing — the chain would be silently omitted from genesis", net, letter)
+			}
 		}
 	}
 }
