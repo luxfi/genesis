@@ -188,3 +188,10 @@ migrated-ethdb.disabled/
 # the compiled binary, not cmd/bootstrap-chain/ — an unanchored pattern here
 # silently swallows the source directory and every new file added to it
 /bootstrap-chain
+
+# live/ holds the artifacts that reproduce a RUNNING network — the only copies
+# of some of them. The blanket *.json above silently excluded live/mainnet/
+# genesis.json on its first commit while git reported success, so this negation
+# is not tidiness: without it the one document that reproduces mainnet is
+# untracked and no error says so.
+!live/**
