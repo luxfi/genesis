@@ -6110,33 +6110,6 @@
         "publicKey": "0x8d30e3601f4471a7faf6125576cf4810fbe22cc54ccf39a2de42a1ca0cc777c7ac3c58d6b6ae87eeb53eeca13f9704de",
         "proofOfPossession": "0x8e20acb5917e7e0655e923ad6754672e21078a8950a89143d61ae213b4327bb7b65e7fa1df9b7547aa6bb2c799e0c789051614e1980ba19df893dc23121c32397fb9449f7e700b9fcfbf360d824bfab95990eff2141d685fe1663a854df6ad3d"
       }
-    },
-    {
-      "nodeID": "NodeID-LnEy5o1NPzpmSy56uavuoMDL9oRcMjHjs",
-      "rewardAddress": "P-dev10vj0c2t2q4yk7jl245qjdvsrka4h7x084k20zu",
-      "delegationFee": 20000,
-      "signer": {
-        "publicKey": "0xb0b55fc6463670f8d64e7d636ef19b12af89769bdbe67dd4b2680fa88b0fc2c4b856a5376d3dfd7bd2423106a8ada9ea",
-        "proofOfPossession": "0xa15e0a1801b7bc2e8328c44fd1ba48bffc5f3fd361b82cf8616fef8304b0755823b6f263c5eedf9c75fb9a944789ad4b0c44ab3ff7826bf43986fb63df33609bdeac993823b6ec3b074fb3accdb9606ec5b09fcd75373a3bb096f5a2f1ad5289"
-      }
-    },
-    {
-      "nodeID": "NodeID-Pubc76XYx1BQCqZreJUUoAaXgmmEzapSz",
-      "rewardAddress": "P-dev10vj0c2t2q4yk7jl245qjdvsrka4h7x084k20zu",
-      "delegationFee": 20000,
-      "signer": {
-        "publicKey": "0xa6c45ff63d03c41702f4636ee259cf242cbea95f38b4732bf69897fcbb2cdf7da7889c372fdc4af6586cfd9a432344db",
-        "proofOfPossession": "0x9503ab01c7f669851f6f5ce7e78ac9bf3b76fc5d556e710be0a38b8f5a827df91e4ddffe8e7ca031799d075d74dcaae41189722ebd8d5822521a0f6bf7ac562c6cb2a8fbd1c4b3edb1a08e6804bdf9388fc3094e40449cf6eaf1b2b946d01852"
-      }
-    },
-    {
-      "nodeID": "NodeID-N5DAqzfZpSqkthaCtdfgkyx7m8ERut16A",
-      "rewardAddress": "P-dev10vj0c2t2q4yk7jl245qjdvsrka4h7x084k20zu",
-      "delegationFee": 20000,
-      "signer": {
-        "publicKey": "0xa1af8e8c11c4c9deeb4fe3e4abfbf3a11d0221d54cff26000b027e7a156f5293a76ccaa8004642cb83c4d079d36c4673",
-        "proofOfPossession": "0x870897299208d76e11e622a400d1dd8b913eed451c3dab637a64c72edba24cd67173431bd457c4ff0e637d66ec31d76b039164c940c91afe5c10e87c24f37c61222fc12206140783c643e0cd914f76a2a6d54cd20947a9fd84854e49c3feb628"
-      }
     }
   ]
 }
