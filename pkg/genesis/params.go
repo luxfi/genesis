@@ -80,7 +80,7 @@ var MainnetParams = Params{
 	TxFee:             MilliLux,
 	CreateAssetTxFee:  10 * MilliLux,
 	UptimeRequirement: 0.8,
-	MinValidatorStake: 2000 * Lux,
+	MinValidatorStake: 1_000 * Lux,
 	MaxValidatorStake: 5 * GigaLux,
 	MinDelegatorStake: 25 * Lux,
 	MinDelegationFee:  20000,

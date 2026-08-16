@@ -333,7 +333,7 @@ func GetConfig(networkID uint32) *genesiscfg.Config {
 // X-Chain is opt-in via config.XChainGenesis. The shard is a small JSON
 // asset descriptor:
 //
-//	{"symbol":"LUX","name":"Lux","denomination":9}
+//	{"symbol":"LUX","name":"Lux","denomination":6}
 //
 // When present, the builder constructs an XVM genesis whose primary
 // asset is that descriptor (with initial holders sourced from
