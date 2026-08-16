@@ -1,7 +1,7 @@
 {
   "allocations": [
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -408,7 +408,7 @@
       "evmAddr": "0x9011e888251ab053b7bd1cdb598db4f9ded94714"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -815,7 +815,7 @@
       "evmAddr": "0xeabcc110facbfebabc66ad6f9e7b67288e720b59"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -1222,7 +1222,7 @@
       "evmAddr": "0x8d5081153ae1cfb41f5c932fe0b6beb7e159cf84"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -1629,7 +1629,7 @@
       "evmAddr": "0xf8f12d0592e6d1bfe92ee16cabcc4a6f26daae23"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -2036,7 +2036,7 @@
       "evmAddr": "0xfb66808f708e1d4d7d43a8c75596e84f94e06806"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -2443,7 +2443,7 @@
       "evmAddr": "0x313cf291c069c58d6bd61b0d672673462b8951bd"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -2850,7 +2850,7 @@
       "evmAddr": "0xf7f52257a6143ce6bbd12a98ef2b0a3d0c648079"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -3257,7 +3257,7 @@
       "evmAddr": "0xca92ad0c91bd8de640b9daffeb338ac908725142"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -3664,7 +3664,7 @@
       "evmAddr": "0xb5b325df519eb58b7223d85aaeac8b56ab05f3d6"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -4071,7 +4071,7 @@
       "evmAddr": "0xcf5288bee8d8f63511c389d5015185fdede30e54"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -4478,7 +4478,7 @@
       "evmAddr": "0x16204223fe4470f4b1f1da19a368dc815736a3d7"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -4885,7 +4885,7 @@
       "evmAddr": "0x1b475a4c983dfe4f32bba4de8da8fd2c37f3a2a6"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -5292,7 +5292,7 @@
       "evmAddr": "0x1eb0b3e6cb2de3b25b45d6e49c33e683271d7bd5"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -5699,7 +5699,7 @@
       "evmAddr": "0x07283aa2c30523e9190a17b9598ff65599baae17"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -6106,7 +6106,7 @@
       "evmAddr": "0x4f49a5bbe8a6f673bd06261e9ccf1d23a004fc4d"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -6513,7 +6513,7 @@
       "evmAddr": "0x7337840b9d8cf2c78295fbc3373f6cea9cb9f286"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -6920,7 +6920,7 @@
       "evmAddr": "0xe374867773455c36db90776a6a4e4b5b21743763"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -7327,7 +7327,7 @@
       "evmAddr": "0x2ba3d932faae51ebaf2173b78c874d422a0cc186"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -7734,7 +7734,7 @@
       "evmAddr": "0x97f688735ed6d896fe740cbfd26983767a4cb9aa"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -8141,7 +8141,7 @@
       "evmAddr": "0xb5c2a4867d6096f0f4e3ae76c48fd92c412154f0"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -8548,7 +8548,7 @@
       "evmAddr": "0xc25d00876b6bb80a64e3032c2872440ebfaf5b80"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -8955,7 +8955,7 @@
       "evmAddr": "0x5a777e9b95f3a1706017f9b6fdc501ceced84248"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -9362,7 +9362,7 @@
       "evmAddr": "0xc19d8d7bc52c9f36da48b0a80eb8015c7add7916"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -9769,7 +9769,7 @@
       "evmAddr": "0xa105a413c349b175d8b445da814a6a766843f6ac"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -10176,7 +10176,7 @@
       "evmAddr": "0xf5b14e0ae37324877f8c03abe351c4743c95b5b4"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -10583,7 +10583,7 @@
       "evmAddr": "0x4e256878ed0aa6aea20394015c6f66443a6047e0"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -10990,7 +10990,7 @@
       "evmAddr": "0x111bdcfe8c5398c7764bc1220b99ca1edbcf5af7"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -11397,7 +11397,7 @@
       "evmAddr": "0x9c864a2884ed27c376e499aa75f5b064c2ef51a0"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -11804,7 +11804,7 @@
       "evmAddr": "0x471217e35cf573133b840c53e93ed1eacc51ac1c"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -12211,7 +12211,7 @@
       "evmAddr": "0x3690f692d17554f90a9bf7819d5b987e605245fa"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -12618,7 +12618,7 @@
       "evmAddr": "0x53163a5922f1531f5c98d69ac2dd130660c3c855"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -13025,7 +13025,7 @@
       "evmAddr": "0xb5acc73b22612bc1b99f98c6da7b3e175e8f7539"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -13432,7 +13432,7 @@
       "evmAddr": "0x2099389940444768c7738d4c45ff965cf36eca52"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -13839,7 +13839,7 @@
       "evmAddr": "0x341813adc2de5fa20982e592a136d0b26bd35228"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -14246,7 +14246,7 @@
       "evmAddr": "0xfc4e8955441c7def35c017d20127744736362164"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -14653,7 +14653,7 @@
       "evmAddr": "0x1d2eb1f0d268401b7c910d18e3f06fe1606964f7"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -15060,7 +15060,7 @@
       "evmAddr": "0x314fac4bd7d6a283985451202f25c6bcfaa037de"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -15467,7 +15467,7 @@
       "evmAddr": "0xc1ed5cef75c4285614c8b2878c60a92454ddf5d1"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -15874,7 +15874,7 @@
       "evmAddr": "0x3b084e285eef960873f9070b916b8b857e30cbe1"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -16281,7 +16281,7 @@
       "evmAddr": "0x2e2ba4324533fd6fb077450403d5fab25cd934f9"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -16688,7 +16688,7 @@
       "evmAddr": "0x96b995ff4847ffb5436132b4a86502c07789c7bf"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -17095,7 +17095,7 @@
       "evmAddr": "0x80924b34750c897c34c25b3ba13dbe95e3224efd"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -17502,7 +17502,7 @@
       "evmAddr": "0x1a845da3412a6d6231ab0e85faed72c260da55bc"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -17909,7 +17909,7 @@
       "evmAddr": "0x71aecace53bc0849a14f0b0a10224b00f6153352"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -18316,7 +18316,7 @@
       "evmAddr": "0x05cae5842a08165d4d736da9e49438574283aae9"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -18723,7 +18723,7 @@
       "evmAddr": "0x20d3f6b4ae88224ab9cd8dde689ffb646b14e4c1"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -19130,7 +19130,7 @@
       "evmAddr": "0x80e6653cb1ba2a0302207a0a21521caf81fcc763"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -19537,7 +19537,7 @@
       "evmAddr": "0x8da4c887aafceddf2b4d543e538be7215d3401c3"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -19944,7 +19944,7 @@
       "evmAddr": "0x0698495959f5570420baa955dae5ea2864933acf"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -20351,7 +20351,7 @@
       "evmAddr": "0x30341f789a0a8c81378ec169f77125a76660662f"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -20758,7 +20758,7 @@
       "evmAddr": "0x53bca7ff5dd0441db410bdc6ffd58703406434bf"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -21165,7 +21165,7 @@
       "evmAddr": "0x5b72d3ff49b12c84a101d17ec98d87bf7b70b6bc"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -21572,7 +21572,7 @@
       "evmAddr": "0x568aa29ed57e8575a794ec3e5fee20f886411e1c"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -21979,7 +21979,7 @@
       "evmAddr": "0xcb4e59591354111efb8c7b78543e1ada3bedd077"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -22386,7 +22386,7 @@
       "evmAddr": "0x944ab0665466a10f3c7e82096e2a7a6aff128378"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -22793,7 +22793,7 @@
       "evmAddr": "0x4315c1e150a8825403135ab705738dfe04f32183"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -23200,7 +23200,7 @@
       "evmAddr": "0x03b8bd0a20b05aadc9e457a4c967f45eeec163c4"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -23607,7 +23607,7 @@
       "evmAddr": "0x66d94a1014fa808ee9eab3ac38c0810ab7d0009d"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -24014,7 +24014,7 @@
       "evmAddr": "0xbb9ba2b3ece6ddc84a988d07d1d1dd34b48c66f8"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -24421,7 +24421,7 @@
       "evmAddr": "0xada3736a876a7fa4a454ab0605536e0a859d2a30"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -24828,7 +24828,7 @@
       "evmAddr": "0x8c21b1cb91c4fff11f69f6b21103e2d4b003035c"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -25235,7 +25235,7 @@
       "evmAddr": "0x980ca20f732c2217a3c7cc6ca252eba56e088a61"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -25642,7 +25642,7 @@
       "evmAddr": "0x721762ed0c130ce07d3dc56a1fff1f26499be8a6"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -26049,7 +26049,7 @@
       "evmAddr": "0x8e22f2f37e7a5c643d883c956c31a4bce08991f6"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -26456,7 +26456,7 @@
       "evmAddr": "0x59f8f59199c0b3c6e752941ff67bd015e73829ec"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -26863,7 +26863,7 @@
       "evmAddr": "0xe945dbb0ba699fcca469153ac6937943014c2b6f"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -27270,7 +27270,7 @@
       "evmAddr": "0x96cdbbe896a7f51342d8177ace00ef3475faadc3"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -27677,7 +27677,7 @@
       "evmAddr": "0x3c334af45a2f41274aa63fd9348faeba8966e279"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -28084,7 +28084,7 @@
       "evmAddr": "0x4f566da11b0711010abd9181631f6dafc1f0c6b8"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -28491,7 +28491,7 @@
       "evmAddr": "0xbb927d5e0b19631f6536b284444213cdddb93cdf"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -28898,7 +28898,7 @@
       "evmAddr": "0xf483a8a0ee70147a18ebcfad7bf1de0e48b1fa51"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -29305,7 +29305,7 @@
       "evmAddr": "0x55aa096febd81cdf27a0c2da2f857d3f3e7c55ef"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -29712,7 +29712,7 @@
       "evmAddr": "0xe8829fdc3c12fd95a48df248d028166d6c2d3598"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -30119,7 +30119,7 @@
       "evmAddr": "0xc805912a1e62828c0c36e674164e6a9e948722ef"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -30526,7 +30526,7 @@
       "evmAddr": "0x02acb0ee16fd2b1bf465f85d7ee112fa80c055fc"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -30933,7 +30933,7 @@
       "evmAddr": "0x3f39f5bfc9e99a7c7455fb101cdbda70d0595160"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -31340,7 +31340,7 @@
       "evmAddr": "0x9cf4d8bf5f1ec1997510c2126441c813a8c7cc6f"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -31747,7 +31747,7 @@
       "evmAddr": "0x2458cb853c406cdda14c6ad1ebc8b106a829529e"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -32154,7 +32154,7 @@
       "evmAddr": "0x4154bd5e8e15822ab96359d309166ec91f009248"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -32561,7 +32561,7 @@
       "evmAddr": "0x22ebce08e9f967f227f6e83d2edb6b600f1370e3"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -32968,7 +32968,7 @@
       "evmAddr": "0x1fcda7bc336de60fab3be7b2188cefe5aa590cbd"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -33375,7 +33375,7 @@
       "evmAddr": "0x6d84cdd6a387584922c7fdb1f70acf146f25c04b"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -33782,7 +33782,7 @@
       "evmAddr": "0xcbac896b5dcdfb87f1ebf80a0d033a3ef4f76f06"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -34189,7 +34189,7 @@
       "evmAddr": "0x7a05645cac4f3fda00b100924562d0a9085a082d"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -34596,7 +34596,7 @@
       "evmAddr": "0x8a19c91f810421d347ddbbe8158ab7f8693eae14"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -35003,7 +35003,7 @@
       "evmAddr": "0x8c7b7ff7196515a8f3cf04bd9e8a33c4ffc8c9c3"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -35410,7 +35410,7 @@
       "evmAddr": "0x8b8a5e59c1d430ab508dd6c45178f048c2afaced"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -35817,7 +35817,7 @@
       "evmAddr": "0x85a6ad52261990cf1e0e05d1dc471a8c4dda94e7"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -36224,7 +36224,7 @@
       "evmAddr": "0x43ba86de6709d76fa015e3cc3b7dde31703504f8"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -36631,7 +36631,7 @@
       "evmAddr": "0x1882d237e2fd5d4f3cce29215317847d2b75f3eb"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -37038,7 +37038,7 @@
       "evmAddr": "0xac994e2fcb6ae6078b27937b1b5374b891669fb8"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -37445,7 +37445,7 @@
       "evmAddr": "0x49660d0a746255accfee4aa004279f7b27179111"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -37852,7 +37852,7 @@
       "evmAddr": "0x74ab2b6e01bdf141fa73bc2355b58ceac38c0ac9"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -38259,7 +38259,7 @@
       "evmAddr": "0x7edbd481118e071fe9c4b85e404c56ccc351292c"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -38666,7 +38666,7 @@
       "evmAddr": "0x7792a945c604b6a8991bc37f0bba48ed3220e8d8"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -39073,7 +39073,7 @@
       "evmAddr": "0xf106e8a89d982dc13b25c933beefbcba266fff59"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -39480,7 +39480,7 @@
       "evmAddr": "0x054d2e1da5a1b5b9da158acba42aed1d45f5cf02"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -39887,7 +39887,7 @@
       "evmAddr": "0x4e79e052c5130d3918fcb9d6825158aeeef4890e"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,
@@ -40294,7 +40294,7 @@
       "evmAddr": "0xf5abbd1b2384c16aa6a4bd114b399de396c579a6"
     },
     {
-      "initialAmount": 500000000000000000,
+      "initialAmount": 50000000000000,
       "unlockSchedule": [
         {
           "amount": 5000000000000000,

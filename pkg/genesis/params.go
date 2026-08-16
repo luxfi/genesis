@@ -80,7 +80,7 @@ var MainnetParams = Params{
 	TxFee:             MilliLux,
 	CreateAssetTxFee:  10 * MilliLux,
 	UptimeRequirement: 0.8,
-	MinValidatorStake: 1_000 * Lux,
+	MinValidatorStake: 1_000_000 * Lux,
 	MaxValidatorStake: 5 * GigaLux,
 	MinDelegatorStake: 25 * Lux,
 	MinDelegationFee:  20000,
@@ -125,56 +125,6 @@ func GetParams(networkID uint32) Params {
 	}
 }
 
-// Default staking configs per network
-var (
-	MainnetStakingConfig = StakingConfig{
-		UptimeRequirement: 0.8,
-		MinValidatorStake: 2000 * Lux,
-		MaxValidatorStake: 5 * GigaLux,
-		MinDelegatorStake: 25 * Lux,
-		MinDelegationFee:  20000,                // 2%
-		MinStakeDuration:  2 * 7 * 24 * 60 * 60, // 2 weeks
-		MaxStakeDuration:  365 * 24 * 60 * 60,   // 1 year
-		RewardConfig: RewardConfig{
-			MaxConsumptionRate: 120000,
-			MinConsumptionRate: 100000,
-			MintingPeriod:      365 * 24 * 60 * 60,
-			SupplyCap:          2 * TeraLux, // 2 trillion LUX max supply
-		},
-	}
-
-	TestnetStakingConfig = StakingConfig{
-		UptimeRequirement: 0.8,
-		MinValidatorStake: 1_000_000 * Lux,
-		MaxValidatorStake: 3000000 * Lux,
-		MinDelegatorStake: 1 * Lux,
-		MinDelegationFee:  20000,
-		MinStakeDuration:  24 * 60 * 60,       // 1 day
-		MaxStakeDuration:  365 * 24 * 60 * 60, // 1 year
-		RewardConfig: RewardConfig{
-			MaxConsumptionRate: 120000,
-			MinConsumptionRate: 100000,
-			MintingPeriod:      365 * 24 * 60 * 60,
-			SupplyCap:          2 * TeraLux, // 2 trillion LUX max supply
-		},
-	}
-
-	LocalStakingConfig = StakingConfig{
-		UptimeRequirement: 0.2,
-		MinValidatorStake: 1_000_000 * Lux,
-		MaxValidatorStake: 3000000 * Lux,
-		MinDelegatorStake: 1 * Lux,
-		MinDelegationFee:  20000,
-		MinStakeDuration:  60,                 // 1 minute
-		MaxStakeDuration:  365 * 24 * 60 * 60, // 1 year
-		RewardConfig: RewardConfig{
-			MaxConsumptionRate: 120000,
-			MinConsumptionRate: 100000,
-			MintingPeriod:      365 * 24 * 60 * 60,
-			SupplyCap:          2 * TeraLux, // 2 trillion LUX max supply
-		},
-	}
-)
 
 // Default tx fee configs per network
 var (
@@ -194,15 +144,21 @@ var (
 	}
 )
 
-// GetStakingConfig returns staking config for a network
+// GetStakingConfig is the staking half of a network's parameters. It is a
+// projection, not a second copy: there was one, and its mainnet floor disagreed
+// with the parameters by a thousandfold while both compiled and every test
+// passed. The node reads this at boot, so this is the number a chain enforces.
 func GetStakingConfig(networkID uint32) StakingConfig {
-	switch networkID {
-	case constants.MainnetID:
-		return MainnetStakingConfig
-	case constants.TestnetID:
-		return TestnetStakingConfig
-	default:
-		return LocalStakingConfig
+	p := GetParams(networkID)
+	return StakingConfig{
+		UptimeRequirement: p.UptimeRequirement,
+		MinValidatorStake: p.MinValidatorStake,
+		MaxValidatorStake: p.MaxValidatorStake,
+		MinDelegatorStake: p.MinDelegatorStake,
+		MinDelegationFee:  p.MinDelegationFee,
+		MinStakeDuration:  p.MinStakeDuration,
+		MaxStakeDuration:  p.MaxStakeDuration,
+		RewardConfig:      p.RewardConfig,
 	}
 }
 
