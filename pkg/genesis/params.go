@@ -75,6 +75,12 @@ var LocalParams = Params{
 	},
 }
 
+// Activation is the one instant every mainnet rule turns on:
+// 2025-12-25 16:20 America/Los_Angeles. The precompile schedule and the staking
+// policy both read it, so no rule can activate at a moment its neighbours do
+// not know.
+const Activation int64 = 1766708400
+
 // MainnetParams contains default parameters for mainnet
 var MainnetParams = Params{
 	TxFee:             MilliLux,
