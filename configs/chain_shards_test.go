@@ -41,7 +41,7 @@ func TestGetGenesis_CChainShardPresentEmbedsCChainGenesis(t *testing.T) {
 // TestGetGenesis_XChainShardPresentEmbedsXChainGenesis is the X-Chain
 // equivalent of the C-Chain test above. Every Lux network ships an
 // xchain.json shard (the small asset descriptor
-// `{"symbol":"LUX","name":"Lux","denomination":9}`); the loader must
+// `{"symbol":"LUX","name":"Lux","denomination":6}`); the loader must
 // thread it into the marshalled primary genesis JSON as the
 // xChainGenesis field, where the builder later parses it to construct
 // the XVM genesis and CreateChainTx.
@@ -50,7 +50,7 @@ func TestGetGenesis_CChainShardPresentEmbedsCChainGenesis(t *testing.T) {
 // covers the absent-shard case for X), this enforces the same data-
 // driven contract for X that we already have for C/Q/Z: chain
 // presence is a file-tree edit, not an operator switch. The previous
-// hardcoded `Symbol: "LUX", Name: "Lux", Denomination: 9` literal in
+// hardcoded `Symbol: "LUX", Name: "Lux", Denomination: 6` literal in
 // builder.FromConfig is now sourced from the shard, so a P-only
 // network (P-only shape) can opt out by simply omitting the file.
 func TestGetGenesis_XChainShardPresentEmbedsXChainGenesis(t *testing.T) {
@@ -77,8 +77,8 @@ func TestGetGenesis_XChainShardPresentEmbedsXChainGenesis(t *testing.T) {
 			if err := json.Unmarshal([]byte(got), &asset); err != nil {
 				t.Fatalf("%s: xChainGenesis shard unparseable: %v", name, err)
 			}
-			if asset.Symbol != "LUX" || asset.Name != "Lux" || asset.Denomination != 9 {
-				t.Fatalf("%s: xChainGenesis shard drift: got %+v want {LUX Lux 9}", name, asset)
+			if asset.Symbol != "LUX" || asset.Name != "Lux" || asset.Denomination != 6 {
+				t.Fatalf("%s: xChainGenesis shard drift: got %+v want {LUX Lux 6}", name, asset)
 			}
 		})
 	}

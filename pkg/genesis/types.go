@@ -20,7 +20,7 @@ type Config struct {
 	InitialStakeDurationOffset uint64        `json:"initialStakeDurationOffset"`
 	InitialStakedFunds         []ids.ShortID `json:"initialStakedFunds"`
 	InitialStakers             []Staker      `json:"initialStakers"`
-	XChainGenesis              string        `json:"xChainGenesis,omitempty"` // X-Chain: UTXO Exchange VM (small JSON: {"symbol":"LUX","name":"Lux","denomination":9}); empty → skip X-Chain
+	XChainGenesis              string        `json:"xChainGenesis,omitempty"` // X-Chain: UTXO Exchange VM (small JSON: {"symbol":"LUX","name":"Lux","denomination":6}); empty → skip X-Chain
 	CChainGenesis              string        `json:"cChainGenesis"`
 	DChainGenesis              string        `json:"dChainGenesis,omitempty"` // D-Chain: DEX VM genesis
 	QChainGenesis              string        `json:"qChainGenesis,omitempty"` // Q-Chain: Quantum VM genesis
@@ -303,7 +303,7 @@ type ConfigOutput struct {
 	InitialStakeDurationOffset uint64           `json:"initialStakeDurationOffset"`
 	InitialStakedFunds         []string         `json:"initialStakedFunds"`
 	InitialStakers             []StakerJSON     `json:"initialStakers"`
-	XChainGenesis              string           `json:"xChainGenesis,omitempty"` // X-Chain: UTXO Exchange VM (small JSON: {"symbol":"LUX","name":"Lux","denomination":9}); empty → skip X-Chain
+	XChainGenesis              string           `json:"xChainGenesis,omitempty"` // X-Chain: UTXO Exchange VM (small JSON: {"symbol":"LUX","name":"Lux","denomination":6}); empty → skip X-Chain
 	CChainGenesis              string           `json:"cChainGenesis"`
 	DChainGenesis              string           `json:"dChainGenesis,omitempty"` // D-Chain: DEX VM genesis
 	QChainGenesis              string           `json:"qChainGenesis,omitempty"` // Q-Chain: Quantum VM genesis
