@@ -229,7 +229,9 @@
     {
       "rewardManagerConfig": {
         "blockTimestamp": 1766708400,
-        "adminAddresses": ["0x9011E888251AB053B7bD1cdB598Db4f9DEd94714"],
+        "adminAddresses": [
+          "0x9011E888251AB053B7bD1cdB598Db4f9DEd94714"
+        ],
         "initialRewardConfig": {
           "rewardAddress": "0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59"
         }

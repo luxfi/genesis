@@ -44,4 +44,16 @@ func TestMainnetUpgradeScheduleActivatesAtTheOneInstant(t *testing.T) {
 	if seen == 0 {
 		t.Fatal("no blockTimestamp found in the mainnet upgrade schedule")
 	}
+	// One instant means one entry per precompile. The EVM refuses a second entry
+	// for a key unless it activates strictly later, and there is no later.
+	ups, _ := doc["precompileUpgrades"].([]any)
+	seenKey := map[string]bool{}
+	for _, e := range ups {
+		for k := range e.(map[string]any) {
+			if seenKey[k] {
+				t.Fatalf("%s appears twice in the schedule; at one activation there can be one entry per precompile", k)
+			}
+			seenKey[k] = true
+		}
+	}
 }
