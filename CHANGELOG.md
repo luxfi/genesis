@@ -52,9 +52,14 @@ the split fire. This is a SCHEDULE, not an activation:
   `extras.FeeRewardVault` = `0x0100..02`, NOT to the RewardManager coinbase;
   crediting the coinbase is a `main`-only change. So the destination promised
   above is only what `main` does.
-- Deployed reality: mainnet runs luxd `1.36.2` → chains `v1.7.2` → evm
-  `v1.99.51`; testnet `1.36.24` and devnet `1.36.25` → chains `v1.7.9` → evm
-  `v1.104.10`. None of the three contains a `FeeSplitTimestamp` field at all.
+- Deployed reality (verified live 2026-08-22 via `info.getNodeVersion` + git):
+  mainnet luxd `v1.36.148` → chains `v1.7.26` → evm `v1.104.30`; testnet
+  `v1.36.147` (same chains/evm); devnet `v1.36.139` → chains `v1.7.24` → evm
+  `v1.104.30`. All three carry the `FeeSplitTimestamp` field + `verifyFeeSplit` +
+  `creditTxFee` (present since evm `v1.104.14`), but NOT the `parseGenesis` reader
+  that populates the field from config — that is only on evm `main`/`v1.104.50`.
+  Even current node `main` (`v1.36.177` → chains `v1.7.33`) still pins evm
+  `v1.104.30`, so nothing shipped reads `feeSplitTimestamp` yet.
 
 The evm change has landed on `main` (see the parseGenesis note above), so
 activation now takes only a node roll carrying that binary — and the roll must
@@ -105,8 +110,9 @@ order; each step has a check that must pass before the next.
    `luxfi/chains`' evm dep to `v1.104.50` and tag chains (it pins `v1.104.30`
    today), then bump `luxfi/node`'s chains dep to that tag and tag node (`v1.36.177`
    → next patch). CI then builds the luxd image. The deployed fleet runs evm
-   `v1.99.51` via chains `v1.7.2`, so this roll crosses a large version gap, not
-   just the fee-split change — give it the review any major luxd bump gets.
+   `v1.104.30` via chains `v1.7.26` (luxd v1.36.148), so the gap to `v1.104.50`
+   is ~20 patches / 75 files — a normal patch-range bump, smaller than once
+   feared, but review the `.31`–`.50` range, not just the fee-split commit.
    DONE-WHEN: a luxd image exists whose bundled `evm.parseGenesis` carries
    `feeSplitTimestamp` — the two `TestParseGenesis*` tests are in that evm.
 
