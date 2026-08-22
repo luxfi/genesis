@@ -98,12 +98,17 @@ The DAO Safe is deployed and both files point at it. What remains is one roll,
 and it is owner-gated because it cycles the mainnet validator set. Do it in this
 order; each step has a check that must pass before the next.
 
-1. Ship the evm binary that names `feeSplitTimestamp` and credits the coinbase.
-   The code is on `main` (parseGenesis reads the key; `core/fee_split.go` credits
-   the coinbase `GetCoinbaseAt` resolves from RewardManager). Tag a patch, let
-   CI build the image. DONE-WHEN: the image exists in GHCR and `evm.parseGenesis`
-   in it carries `feeSplitTimestamp` — the two `TestParseGenesis*` tests are in
-   the build.
+1. Get the fix into a deployable luxd. evm is a Go module, not the deployable;
+   luxd bundles it through `luxfi/chains`. The fix is on evm `main`, tagged
+   `v1.104.50` (parseGenesis reads the key; `core/fee_split.go` credits the
+   coinbase `GetCoinbaseAt` resolves from RewardManager). Propagate it: bump
+   `luxfi/chains`' evm dep to `v1.104.50` and tag chains (it pins `v1.104.30`
+   today), then bump `luxfi/node`'s chains dep to that tag and tag node (`v1.36.177`
+   → next patch). CI then builds the luxd image. The deployed fleet runs evm
+   `v1.99.51` via chains `v1.7.2`, so this roll crosses a large version gap, not
+   just the fee-split change — give it the review any major luxd bump gets.
+   DONE-WHEN: a luxd image exists whose bundled `evm.parseGenesis` carries
+   `feeSplitTimestamp` — the two `TestParseGenesis*` tests are in that evm.
 
 2. Confirm the two destinations agree, from the two files alone, before anything
    rolls: `rewardManagerConfig.initialRewardConfig.rewardAddress` in
