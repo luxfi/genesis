@@ -18,7 +18,7 @@ Activation timestamps (UTC), staged devnet → testnet → mainnet:
 |---------|-------|-------------------|---|---------------|
 | devnet  | 96367 | 1785974400 | 2026-08-06T00:00:00Z | `0x8E29b816c6C35b13cE1ff68D33E245C2bda8ac3D` (DAO Safe) |
 | testnet | 96368 | 1786320000 | 2026-08-10T00:00:00Z | `0xEAbCC110fAcBfebabC66Ad6f9E7B67288e720B59` |
-| mainnet | 96369 | 1786924800 | 2026-08-17T00:00:00Z | `0x8E29b816c6C35b13cE1ff68D33E245C2bda8ac3D` (DAO Safe) |
+| mainnet | 96369 | 1789430400 | 2026-09-15T00:00:00Z | `0xF66B025b46844AFA5d6df54cf0C00E1583cE1abA` (DAO Safe, deployed CREATE2) |
 
 Both previously committed timestamps were stale, and each would be wrong the
 moment a build reads the field:
@@ -38,11 +38,13 @@ the split fire. This is a SCHEDULE, not an activation:
 - `plugin/evm.parseGenesis` populates the extras config by naming each genesis
   `config` key it supports (`evmTimestamp`, `durangoTimestamp`,
   `quasarTimestamp`, `fortunaTimestamp`, `graniteTimestamp`, precompile keys,
-  `feeConfig`, `allowFeeRecipients`). `feeSplitTimestamp` is in that list on no
-  luxfi/evm tag and not on `main` either, and luxfi/evm keeps extras in a side
-  map rather than in the ChainConfig JSON (libevm integration was removed), so
-  the key cannot arrive by plain unmarshal. It is inert: it neither activates
-  the split nor fails a boot.
+  `feeConfig`, `allowFeeRecipients`). `feeSplitTimestamp` is now named there on
+  `main` (`TestParseGenesisReadsFeeSplitTimestamp` /
+  `TestParseGenesisRefusesSplitWithoutRewardManager` pin both the round-trip and
+  the refusal); on every SHIPPED tag it is still absent, and luxfi/evm keeps
+  extras in a side map rather than in the ChainConfig JSON (libevm integration
+  was removed), so on those tags the key cannot arrive by plain unmarshal. On a
+  shipped binary it stays inert — it neither activates the split nor fails a boot.
 - `extras.verifyFeeSplit`, the guard that refuses an unpaired split, exists on
   `main` only — `git tag --contains` is empty for it.
 - `core/fee_split.go` first appears at evm `v1.104.14`. In every tag that has it
@@ -54,11 +56,13 @@ the split fire. This is a SCHEDULE, not an activation:
   `v1.99.51`; testnet `1.36.24` and devnet `1.36.25` → chains `v1.7.9` → evm
   `v1.104.10`. None of the three contains a `FeeSplitTimestamp` field at all.
 
-Activating the split therefore takes an evm change (name the key in
-`parseGenesis`) plus a node roll — and the roll must be ordered after every live
-C-Chain genesis carries a FUTURE timestamp, or the compat rule above bites. The
-live `lux-devnet/luxd-genesis` ConfigMap currently carries `1785133547`
-(2026-07-27T06:25Z, already past) and that value exists in no repo.
+The evm change has landed on `main` (see the parseGenesis note above), so
+activation now takes only a node roll carrying that binary — and the roll must
+be ordered after every live C-Chain genesis carries a FUTURE timestamp, or the
+compat rule above bites. The live `lux-devnet/luxd-genesis` ConfigMap currently
+carries `1785133547` (2026-07-27T06:25Z, already past) and that value exists in
+no repo. The ordered flag-day procedure is written out under "Fee-split roll"
+below; it is owner-gated because it rolls the mainnet validator set.
 
 `configs/<net>/upgrade.json` therefore now carries `rewardManagerConfig`,
 appended last so the activation schedule stays monotonic:
@@ -66,9 +70,14 @@ appended last so the activation schedule stays monotonic:
 - devnet `1784057456` and testnet `1784063913` are the values **already live**
   on those fleets, committed here verbatim; an already-activated precompile
   upgrade may not be modified or absent from a later config.
-- mainnet activates at `1786320000` (2026-08-10T00:00:00Z), a week before its
-  split, so fee routing to the DAO Safe is observable at the full rate before
-  it halves. Until then 100% of mainnet fees keep landing at the blackhole.
+- mainnet carries `rewardManagerConfig` (with the rest of its 49 precompiles) at
+  `1766708400`, the Dec-25 clean-slate reboot timestamp — so on the reboot chain
+  the reward destination is live from genesis and 100% of fees route to the DAO
+  Safe `0xF66B025b46844AFA5d6df54cf0C00E1583cE1abA` before the split ever halves
+  them. The split then forks on at `1789430400` (2026-09-15). Rolling the split
+  onto the EXISTING chain instead (no reboot) is the other path, and there both
+  the precompile and the split need timestamps ahead of the live head — that
+  branch is the owner-gated "Fee-split roll" below.
 
 `configs/fee_split_test.go` pins the pairing here, from the two files alone,
 precisely because no shipped luxd enforces it — so a split with no governed
@@ -82,6 +91,58 @@ unbootable by the rule above. It is not a `NetworkUpgrade` and so cannot be
 staged through `upgrade.json`; a policy fork that becomes unbootable once it
 passes unloaded belongs in `UpgradeConfig` like every other one, and moving it
 there is the durable fix.
+
+### Fee-split roll — the ordered flag-day (owner-gated)
+
+The DAO Safe is deployed and both files point at it. What remains is one roll,
+and it is owner-gated because it cycles the mainnet validator set. Do it in this
+order; each step has a check that must pass before the next.
+
+1. Ship the evm binary that names `feeSplitTimestamp` and credits the coinbase.
+   The code is on `main` (parseGenesis reads the key; `core/fee_split.go` credits
+   the coinbase `GetCoinbaseAt` resolves from RewardManager). Tag a patch, let
+   CI build the image. DONE-WHEN: the image exists in GHCR and `evm.parseGenesis`
+   in it carries `feeSplitTimestamp` — the two `TestParseGenesis*` tests are in
+   the build.
+
+2. Confirm the two destinations agree, from the two files alone, before anything
+   rolls: `rewardManagerConfig.initialRewardConfig.rewardAddress` in
+   `configs/mainnet/upgrade.json` == the deployed DAO Safe
+   `0xF66B025b46844AFA5d6df54cf0C00E1583cE1abA`, and the Safe has code on 96369.
+   `configs/fee_split_test.go` already pins RewardManager-enabled-at-the-split
+   from the files; run it. DONE-WHEN: that test is green and `eth_getCode` on the
+   Safe is non-empty.
+
+3. Read the LIVE head time on a mainnet validator (in-pod, not a public LB) and
+   pick the branch:
+   - Clean-slate reboot: the reboot genesis makes every precompile (RewardManager
+     included) active at block 0, so only `feeSplitTimestamp` must be future
+     relative to the reboot — it is (`1789430400`, 2026-09-15). No timestamp edit.
+   - Roll onto the existing chain: BOTH must be ahead of the live head at roll
+     time, RewardManager ≤ split. RewardManager currently sits at `1766708400`
+     (past); to add it to a running chain, bump it to a future value ≤
+     `1789430400` and keep it the last, highest entry so
+     `verifyPrecompileUpgrades` stays monotonic. Then bump `feeSplitTimestamp`
+     too if 2026-09-15 is no longer comfortably ahead of the head.
+   DONE-WHEN: live head time < RewardManager activation ≤ `feeSplitTimestamp`.
+
+4. Roll the fleet on the new binary + config, owner-gated and one node at a time,
+   counting `(nodes at tip − α)` before each step — never below the safety
+   margin. `verifyFeeSplit` runs at parse, so a node handed a split with no
+   governed destination REFUSES to boot rather than burning-and-stranding; a
+   failed parse on one node is a safe stop, not a chain halt. DONE-WHEN: all
+   validators are on the new binary and at the tip, `latest == finalized`.
+
+5. After the split activates, confirm the money moves: the DAO Safe balance rises
+   with block production and the blackhole `0x0100..00` stops growing. DONE-WHEN:
+   the Safe's balance delta over a window is positive and equals ~half of fees
+   spent in that window; the blackhole delta is ~zero.
+
+Reversibility: steps 1–3 touch only code, config, and reads — fully reversible.
+Step 4 is the point of no return for the burn (burning is irreversible by
+design), so step 3's check is the gate that must hold. The destination is not:
+RewardManager's admin (`0x9011` today) can `setRewardAddress` to move where the
+kept half lands afterward, no roll and no fork.
 
 ### Mnemonic env unification — one var, one way
 
