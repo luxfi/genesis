@@ -1,8 +1,14 @@
 {
   "pq": true,
   "admin-api-enabled": true,
-  "eth-apis": ["eth", "eth-filter", "net", "web3", "internal-eth", "internal-blockchain", "internal-transaction", "internal-account", "admin"],
+  "eth-apis": ["eth", "eth-filter", "net", "web3", "internal-eth", "internal-blockchain", "internal-transaction", "internal-account"],
   "log-level": "info",
-  "pruning-enabled": false,
+  "pruning-enabled": true,
+  "state-sync-enabled": true,
+  "state-sync-min-blocks": 16384,
+  "commit-interval": 4096,
+  "trie-clean-cache": 64,
+  "trie-dirty-cache": 64,
+  "snapshot-cache": 32,
   "rpc-gas-cap": 50000000
 }
