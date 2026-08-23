@@ -1,0 +1,12 @@
+{
+  "pq": true,
+  "admin-api-enabled": true,
+  "eth-apis": ["eth", "eth-filter", "net", "web3", "internal-eth", "internal-blockchain", "internal-transaction", "internal-account", "admin"],
+  "log-level": "info",
+  "pruning-enabled": false,
+  "state-sync-enabled": false,
+  "trie-clean-cache": 512,
+  "trie-dirty-cache": 512,
+  "snapshot-cache": 256,
+  "rpc-gas-cap": 50000000
+}
