@@ -95,6 +95,29 @@ func GetGenesis(networkID uint32) ([]byte, error) {
 	return loadGenesisFromFS(networkID)
 }
 
+// GetBootstrappers returns the embedded bootstrapper list for a network, so a
+// node finds peers with zero on-disk config — the runtime image bakes no
+// bootstrappers.json, so reading from ~/work/lux/genesis or /etc/lux is a
+// dead path in a container. The same JSON files that seed the disk layout are
+// the embed source, so there is one source of truth. Returns nil for networks
+// with no embedded list (localnet/custom); the caller then falls back to disk
+// paths or an explicit --bootstrap-nodes.
+func GetBootstrappers(networkID uint32) []genesis.Bootstrapper {
+	networkName := networkNameFromID(networkID)
+	if networkName == "" {
+		return nil
+	}
+	data, err := fs.ReadFile(embeddedGenesis, networkName+"/bootstrappers.json")
+	if err != nil {
+		return nil
+	}
+	var bootstrappers []genesis.Bootstrapper
+	if err := json.Unmarshal(data, &bootstrappers); err != nil {
+		return nil
+	}
+	return bootstrappers
+}
+
 // GetGenesisWithAllocations returns genesis with custom P-Chain allocations.
 // This allows booting networks with custom validator allocations.
 func GetGenesisWithAllocations(networkID uint32, allocations []genesis.AllocationJSON) ([]byte, error) {
