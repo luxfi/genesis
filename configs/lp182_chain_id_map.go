@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2026, Lux Partners Limited. All rights reserved.
+// Copyright (C) 2024-2026, Lux Industries Inc. All rights reserved.
 // See the file LICENSE for licensing terms.
 
 // LP-018 §Canonical EVM chainID map — per (network family, environment)
