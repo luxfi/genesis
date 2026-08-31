@@ -19,10 +19,10 @@
 //     firstHash,lastHash} for THIS run's range, exit 0 without calling luxd.
 //     This is the "operator schedules the same export every hour" optimization.
 //  2. Reachability probe. Confirm the CHAIN answers on
-//     ${LuxdRPC}/v1/bc/${ChainAlias}/rpc (eth_blockNumber) — never
+//     ${LuxdRPC}/v1/chain/${ChainAlias}/rpc (eth_blockNumber) — never
 //     ${LuxdRPC}/v1/health, which on a public luxd reports the D-Chain check
 //     and can never return 200, parking the export against a healthy node.
-//  3. RPC call. POST admin_exportChain to ${LuxdRPC}/v1/bc/${ChainAlias}/rpc
+//  3. RPC call. POST admin_exportChain to ${LuxdRPC}/v1/chain/${ChainAlias}/rpc
 //     with {file, first, last}. Respect KMS_AUTH_TOKEN bearer auth same as
 //     rlp-import.
 //  4. Translate the response status into an exit code:
@@ -258,7 +258,7 @@ func resolveToHeight(s string) (uint64, error) {
 // RLP export needs is the chain it exports answering — nothing more.
 func waitForLuxd(ctx context.Context, rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/v1/bc/C/rpc"
+	url := rpc + "/v1/chain/C/rpc"
 	body := `{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`
 	for time.Now().Before(deadline) {
 		select {
@@ -325,7 +325,7 @@ type exportResult struct {
 	Message         string `json:"message,omitempty"`
 }
 
-// callAdminExportChain POSTs admin_exportChain to the per-alias /v1/bc/
+// callAdminExportChain POSTs admin_exportChain to the per-alias /v1/chain/
 // endpoint. Returns the parsed result on success, err on luxd-side failure.
 func callAdminExportChain(ctx context.Context, rpc, alias, file string, first, last uint64) (*exportResult, error) {
 	body, err := json.Marshal(jsonRPCRequest{
@@ -339,7 +339,7 @@ func callAdminExportChain(ctx context.Context, rpc, alias, file string, first, l
 	if err != nil {
 		return nil, err
 	}
-	url := rpc + "/v1/bc/" + alias + "/rpc"
+	url := rpc + "/v1/chain/" + alias + "/rpc"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
