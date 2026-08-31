@@ -208,7 +208,7 @@ func TestRun_HappyPath(t *testing.T) {
 		switch {
 		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/chain/"):
 			exportCalled = true
 			exportBodyRaw, _ = io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
@@ -268,7 +268,7 @@ func TestRun_NoopFromServer(t *testing.T) {
 		switch {
 		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/chain/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","result":{
 				"success": true,
 				"status": "noop",
@@ -307,7 +307,7 @@ func TestRun_InterruptedFromServer(t *testing.T) {
 		switch {
 		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/chain/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","result":{
 				"success": false,
 				"status": "interrupted",
@@ -369,7 +369,7 @@ func TestRun_AdminRPCError(t *testing.T) {
 		switch {
 		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/chain/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","error":{"code":-32601,"message":"admin API not enabled"},"id":1}`))
 		default:
 			http.NotFound(w, r)

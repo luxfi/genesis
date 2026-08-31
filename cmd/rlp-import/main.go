@@ -20,7 +20,7 @@
 //  3. SHA-256 verify. Compare against ${SHA256}; abort on mismatch.
 //  4. Wipe ${DataDir}/chainData/${BlockchainID} so admin.importChain starts
 //     from a known-empty EVM state.
-//  5. POST admin.importChain → ${LuxdRPC}/v1/bc/${ChainAlias}/rpc with the
+//  5. POST admin.importChain → ${LuxdRPC}/v1/chain/${ChainAlias}/rpc with the
 //     RLP path. Wait for an HTTP 200 + JSON-RPC result.
 //  6. Touch the sentinel. Only on full success; partial-success leaves
 //     no sentinel so the K8s Job retry policy re-runs the steps next pod.
@@ -278,7 +278,7 @@ func touchSentinel(path string) error {
 // parks this tool forever against a perfectly serving node.
 func waitForLuxd(rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/v1/bc/C/rpc"
+	url := rpc + "/v1/chain/C/rpc"
 	body := `{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`
 	for time.Now().Before(deadline) {
 		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(body))
@@ -324,7 +324,7 @@ type jsonRPCResponse struct {
 	ID int `json:"id"`
 }
 
-// callAdminImportChain POSTs admin.importChain to the per-alias /v1/bc/
+// callAdminImportChain POSTs admin.importChain to the per-alias /v1/chain/
 // endpoint. Returns nil on success, err with the JSON-RPC error message
 // on luxd-side failure.
 func callAdminImportChain(rpc, alias, rlpPath string) error {
@@ -337,7 +337,7 @@ func callAdminImportChain(rpc, alias, rlpPath string) error {
 	if err != nil {
 		return err
 	}
-	url := rpc + "/v1/bc/" + alias + "/rpc"
+	url := rpc + "/v1/chain/" + alias + "/rpc"
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return err

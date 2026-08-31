@@ -122,7 +122,7 @@ func TestRun_HappyPath(t *testing.T) {
 			_, _ = w.Write(body)
 		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/chain/"):
 			importCalled = true
 			importBodyRaw, _ = io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
@@ -263,7 +263,7 @@ func TestRun_AdminRPCErrorExits3(t *testing.T) {
 			_, _ = w.Write([]byte("x"))
 		case r.URL.Path == "/v1/health":
 			w.WriteHeader(http.StatusOK)
-		case strings.HasPrefix(r.URL.Path, "/v1/bc/"):
+		case strings.HasPrefix(r.URL.Path, "/v1/chain/"):
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","error":{"code":-32601,"message":"admin API not enabled"},"id":1}`))
 		default:
 			http.NotFound(w, r)
