@@ -7,6 +7,7 @@ go 1.26.3
 // need genesis data types don't pull luxfi/consensus + its
 // post-quantum threshold deps.
 
+
 require (
 	github.com/luxfi/consensus v1.25.1
 	github.com/luxfi/genesis v0.0.0-00010101000000-000000000000
@@ -24,7 +25,7 @@ require (
 	github.com/luxfi/codec v1.1.4 // indirect
 	github.com/luxfi/constants v1.5.7 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
-	github.com/luxfi/crypto v1.19.17 // indirect
+	github.com/luxfi/crypto v1.19.15 // indirect
 	github.com/luxfi/geth v1.16.98 // indirect
 	github.com/luxfi/go-bip32 v1.0.2 // indirect
 	github.com/luxfi/go-bip39 v1.1.2 // indirect
