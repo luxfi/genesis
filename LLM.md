@@ -100,7 +100,7 @@ Every Lux chain genesis MUST satisfy these, or block import / consensus will fai
 | State root | `0x2d1cedac263020c5c56ef962f6abe0da1f5217bdc6468f8c9258a0ea23699e80` | `jq -r .stateRoot configs/mainnet/cchain.json` |
 | Warp precompile in alloc | `0200000000000000000000000000000000000005` `nonce:0x1` `code:0x01` | `jq '.alloc."0200000000000000000000000000000000000005"' configs/mainnet/cchain.json` |
 | `warpConfig.blockTimestamp` | `1730446786` (== genesis ts `0x672485c2`) | must equal genesis timestamp |
-| Treasury | `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714` = 2T LUX | `jq '.alloc."0x9011…"' configs/mainnet/cchain.json` |
+| Treasury | DAO Safe `0x94F2744e…` = 1T + Z Safe `0x5FD60a37…` = 100B (see Genesis Treasury) | `jq '.alloc."0x94F2744eb928986B477Adc23dbF4049733544584".balance' configs/mainnet/cchain.json` |
 | File determinism | sorted, sha256 matches Canonical Genesis Checksums table below | `shasum -a 256 configs/mainnet/cchain.json` |
 
 If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the literal canonical `cchain.json` content. Common drift: `chainId=1` + missing warp = wrong-network template.
@@ -111,10 +111,10 @@ If genesis hash drifts → check `cChainGenesis` in `genesis.json` is the litera
 
 | Network | Network ID | Chain ID | Genesis Hash | Treasury |
 |---------|------------|----------|--------------|----------|
-| Mainnet | 1 | 96369 | `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e` | 2T LUX |
-| Testnet | 2 | 96368 | `0xfc909f7e992d9cb91485f114f6d333f3823a12f2c72bbf51ed2c8eea749b2d2e` | 2T LUX |
-| Devnet | 3 | 96367 | `0x836f6053473e4331bb347afc45b641f12075c63a302f4e56e64239a3ba4acd4b` | 2T LUX |
-| Local | 1337 | 1337 | - | 2T LUX |
+| Mainnet | 1 | 96369 | `0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e` | 1.1T LUX |
+| Testnet | 2 | 96368 | `0xfc909f7e992d9cb91485f114f6d333f3823a12f2c72bbf51ed2c8eea749b2d2e` | 1.1T LUX |
+| Devnet | 3 | 96367 | `0x836f6053473e4331bb347afc45b641f12075c63a302f4e56e64239a3ba4acd4b` | 1.1T LUX |
+| Local | 1337 | 1337 | - | 1.1T LUX |
 
 > **Historical note**: testnet was `0x1c5fe37764b8bc146dc88bc1c2e0259cd8369b07a06439bcfa1782b5d4fb0995`
 > and devnet was `0x53fe8be293555d20de41847f96081f4e8beca1ee2c206999ffbf7c70e497cf43`
@@ -163,9 +163,9 @@ silent operator switch.
 
 | Chain | Mainnet ID | Testnet ID | Devnet ID | Treasury |
 |-------|-----------|-----------|-----------|----------|
-| Zoo | 200200 | 200201 | 200202 | 2T ZOO |
+| Zoo | 200200 | 200201 | 200202 | 1.1T ZOO |
 | SPC | 36911 | 36910 | 36912 | 1B SPC |
-| Hanzo | 36963 | 36962* | 36964 | 1B AI |
+| Hanzo | 36963 | 36962* | 36964 | 1.1T AI |
 | Pars | 494949 | 494950 | 494951 | 2T PARS |
 
 *Note: Hanzo testnet was deployed with chain ID 36964 (devnet ID) due to a deployment error. The intended ID is 36962.
@@ -182,13 +182,42 @@ silent operator switch.
 
 ## Genesis Treasury
 
-All networks use the same production treasury address:
+2T is the **maximum supply**, not the genesis allocation. Genesis mints 1.1T into
+two Safes; the remaining ~900B is mined by the community up to the 2T cap
+(`pkg/genesis.TotalSupply`). `0x9011E888251AB053B7bD1cdB598Db4f9DEd94714` holds no
+premine — it is only the signer on both Safes.
 
 ```
-Address: 0x9011E888251AB053B7bD1cdB598Db4f9DEd94714
-Balance: 2,000,000,000,000,000,000,000,000,000,000 wei (2T LUX)
-Hex:     0x193e5939a08ce9dbd480000000
+DAO Safe  0x94F2744eb928986B477Adc23dbF4049733544584  1,000,000,000,000  (0xc9f2c9cd04674edea40000000)
+Z Safe    0x5FD60a37ab9d92f0AA819F35525c59270bAe7bb3    100,000,000,000  (0x1431e0fae6d7217caa0000000)
 ```
+
+Both are Safe v1.5.0 (SafeL2), 1-of-1 owned by `0x9011E888…`, **predeployed with code
+and storage** so they hold code and answer `getOwners()` at block 0 — no post-genesis
+factory call is required and the address cannot drift with a deployer nonce or a
+recompile. The genesis also carries the CREATE2 deployer, the SafeL2 singleton, the
+SafeProxyFactory and the CompatibilityFallbackHandler, so `proxyCreationCode()` on the
+predeployed factory reproduces both Safe addresses from their salts on-chain.
+
+Addresses are chain-independent — identical on every Lux, Hanzo and Zoo network:
+
+| Role | Address | Derivation |
+|---|---|---|
+| CREATE2 deployer | `0x4e59b44847b379578588920ca78fbf26c0b4956c` | Arachnid deterministic deployer |
+| SafeL2 v1.5.0 singleton | `0xa9B6062A992095fF34AcEBb447163125FEC935c2` | CREATE2(deployer, salt 0) |
+| SafeProxyFactory | `0x9AcB0B4B04C6B1dEA2298cE7F4AA838aEc315653` | CREATE2(deployer, salt 0) |
+| CompatibilityFallbackHandler | `0xCA22C23238b89c2aFe41388364F1DFeC24030554` | CREATE2(deployer, salt 0) |
+| DAO Safe | `0x94F2744eb928986B477Adc23dbF4049733544584` | `createProxyWithNonce`, salt `keccak("dao.safe.v1")` |
+| Z Safe | `0x5FD60a37ab9d92f0AA819F35525c59270bAe7bb3` | `createProxyWithNonce`, salt `keccak("z.safe.v1")` |
+
+Bytecode provenance: `safe-global/safe-smart-account` v1.5.0 at
+`a2e19c6aa42a45ceec68057f3fa387f169c5b321`, built with solc 0.8.31 (optimizer 200,
+via-IR, cancun) under `luxfi/standard`'s `foundry.toml`.
+
+Because the alloc changed, the C-Chain state root — and therefore the genesis hash and
+the C-Chain blockchain ID — change with it. On a network that already has history this
+is a re-genesis, not a config edit; the hashes recorded above still describe the
+pre-split files.
 
 ## Directory Structure
 
