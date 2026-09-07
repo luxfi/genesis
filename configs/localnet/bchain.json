@@ -8,5 +8,10 @@
   "timestamp": 1735689600,
   "version": 1,
   "vm": "BridgeVM",
-  "chainId": 31777
+  "chainId": 31777,
+  "minConfirmations": 1,
+  "maxBridgeAmount": 1000000000000000,
+  "dailyBridgeLimit": 10000000000000000,
+  "requireValidatorBond": 1000000000000000,
+  "maxSigners": 100
 }
