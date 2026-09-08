@@ -244,6 +244,26 @@
           "rewardAddress": "0x8E29b816c6C35b13cE1ff68D33E245C2bda8ac3D"
         }
       }
+    },
+    {
+      "dexPositionManagerConfig": {
+        "blockTimestamp": 1766708400
+      }
+    },
+    {
+      "dexStateViewConfig": {
+        "blockTimestamp": 1766708400
+      }
+    },
+    {
+      "dexQuoterConfig": {
+        "blockTimestamp": 1766708400
+      }
+    },
+    {
+      "dexSettleConfig": {
+        "blockTimestamp": 1766708400
+      }
     }
   ],
   "stateUpgrades": []
