@@ -52,7 +52,7 @@
     "warpConfig": {
       "blockTimestamp": 0,
       "quorumNumerator": 67,
-      "requirePrimaryNetworkSigners": false
+      "requirePrimaryNetworkSigners": true
     },
     "durangoTimestamp": 0,
     "quasarTimestamp": 0,
