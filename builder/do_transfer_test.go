@@ -78,7 +78,7 @@ func TestTransferPChain(t *testing.T) {
 	fmt.Printf("Target (CLI): %s  ShortID: %x\n", dstAddr, targetShortID[:])
 
 	// Get UTXOs for source
-	pURL := "https://api.lux-dev.network/v1/chain/P"
+	pURL := "https://api.lux-dev.network/v1/chain/p"
 	utxoResult, err := rpc(pURL, "platform.getUTXOs", map[string]interface{}{
 		"addresses": []string{srcAddr},
 		"limit":     10,

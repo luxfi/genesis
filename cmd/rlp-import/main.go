@@ -278,7 +278,7 @@ func touchSentinel(path string) error {
 // parks this tool forever against a perfectly serving node.
 func waitForLuxd(rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/v1/chain/C/rpc"
+	url := rpc + "/v1/chain/c/rpc"
 	body := `{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`
 	for time.Now().Before(deadline) {
 		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(body))

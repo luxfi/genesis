@@ -592,13 +592,13 @@ netrunner start --networks mainnet
 # Verify genesis hash
 curl -X POST -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x0",false],"id":1}' \
-  http://127.0.0.1:9630/v1/chain/C/rpc | jq '.result.hash'
+  http://127.0.0.1:9630/v1/chain/c/rpc | jq '.result.hash'
 # Expected: "0x3f4fa2a0b0ce089f52bf0ae9199c75ffdd76ecafc987794050cb0d286f1ec61e"
 
 # Verify warp precompile in state
 curl -X POST -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","method":"eth_getCode","params":["0x0200000000000000000000000000000000000005","0x0"],"id":1}' \
-  http://127.0.0.1:9630/v1/chain/C/rpc | jq '.result'
+  http://127.0.0.1:9630/v1/chain/c/rpc | jq '.result'
 # Expected: "0x01"
 ```
 

@@ -258,7 +258,7 @@ func resolveToHeight(s string) (uint64, error) {
 // RLP export needs is the chain it exports answering — nothing more.
 func waitForLuxd(ctx context.Context, rpc string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	url := rpc + "/v1/chain/C/rpc"
+	url := rpc + "/v1/chain/c/rpc"
 	body := `{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}`
 	for time.Now().Before(deadline) {
 		select {
