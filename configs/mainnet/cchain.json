@@ -40,7 +40,7 @@
     "warpConfig": {
       "blockTimestamp": 1730446786,
       "quorumNumerator": 67,
-      "requirePrimaryNetworkSigners": false
+      "requirePrimaryNetworkSigners": true
     }
   },
   "nonce": "0x0",
