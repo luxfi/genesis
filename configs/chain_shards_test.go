@@ -231,6 +231,27 @@ func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 //
 // Each ID is unique across {network × letter} so a misrouted tx cannot
 // be replayed against the wrong chain.
+//
+// WHAT THESE NUMBERS ARE, AND WHY THEY STAY. An EVM chain id is EIP-155 replay
+// protection: it means something exactly where EVM transactions are signed,
+// which on the primary network is the C-Chain and nowhere else. The other nine
+// letters run AIVM, BridgeVM, DexVM, ThresholdVM, GraphVM, KeyVM, mpcvm,
+// QuantumVM and ZKVM — none of them an EVM, none of them signing a transaction
+// this number could protect. P and X carry no chainId at all, which is the
+// shape the other nine would have if the field had been added where it applies.
+//
+// Nothing reads them. Grep the estate: these nine values appear in the network
+// configs and in this test, and in no other code.
+//
+// They stay anyway, and this test is why. They are in the genesis of a live
+// network, and a chain's genesis bytes are the network's identity — editing one
+// mints a different network whose nodes cannot talk to the one that exists. So
+// the cost of the nine is nine dead numbers, and the cost of tidying them is a
+// fork. This test holds them still.
+//
+// If work needs to name the chain that produced it rather than the chain it
+// settles on, the value is that chain's blockchainID from its CreateChainTx, or
+// its letter. Not a number in this range.
 func TestPrimaryChainShards_PerChainCanonicalChainID(t *testing.T) {
 	want := map[string]map[string]int{
 		"mainnet": {
