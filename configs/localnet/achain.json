@@ -5,6 +5,5 @@
   "networkId": 1337,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "AIVM",
-  "chainId": 31667
+  "vm": "AIVM"
 }

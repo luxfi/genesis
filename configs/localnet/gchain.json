@@ -5,6 +5,5 @@
   "networkId": 1337,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "GraphVM",
-  "chainId": 32107
+  "vm": "GraphVM"
 }

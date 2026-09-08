@@ -4,8 +4,7 @@
     "mpc",
     "mpcvm"
   ],
-  "chainId": 32437,
-  "description": "Threshold MPC signing — off-EVM CGGMP21/FROST ceremony for bridge custody of external wallets",
+  "description": "Threshold MPC signing \u2014 off-EVM CGGMP21/FROST ceremony for bridge custody of external wallets",
   "message": "Lux M-Chain Genesis",
   "mode": "mpc",
   "mpcVerifyPrecompiles": [

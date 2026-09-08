@@ -266,10 +266,9 @@ func TestPrimaryChainShards_PerChainCanonicalChainID(t *testing.T) {
 			"d": 96470, "q": 96570, "a": 96670, "b": 96770,
 			"f": 97270, "z": 96970, "g": 97070, "k": 97170, "m": 97370,
 		},
-		"localnet": {
-			"d": 31447, "q": 31557, "a": 31667, "b": 31777,
-			"f": 32327, "z": 31997, "g": 32107, "k": 32217, "m": 32437,
-		},
+		// localnet is absent on purpose. It is the one network not frozen by a
+		// running validator set, so it is the one that got to drop the field —
+		// see TestNonEVMShardsCarryNoChainID, which now requires its absence.
 	}
 	for net, byLetter := range want {
 		net := net
@@ -294,5 +293,47 @@ func TestPrimaryChainShards_PerChainCanonicalChainID(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestNonEVMShardsCarryNoChainID is the rule, going forward: a chain that is
+// not an EVM does not get an EVM chain id.
+//
+// An EVM chain id is EIP-155 replay protection. It protects a signed EVM
+// transaction from being replayed on another EVM, and it means exactly nothing
+// on a chain running AIVM, BridgeVM, DexVM, ThresholdVM, GraphVM, KeyVM, mpcvm,
+// QuantumVM or ZKVM — none of which signs such a transaction. P and X have
+// always carried none, which is the shape the rest should have had.
+//
+// mainnet, testnet and devnet are exempt and always will be. Their shard JSON
+// goes into a CreateChainTx verbatim (builder.go: []byte(config.AChainGenesis)),
+// so the field is part of the chain's genesis bytes, which decide its blockchain
+// ID, which decides the network's genesis hash. Removing it there does not tidy
+// those networks — it defines different ones, which the running nodes would
+// refuse to join. Those numbers are frozen by arithmetic, not by preference,
+// and TestPrimaryChainShards_PerChainCanonicalChainID holds them still.
+//
+// Every network minted after this test exists starts without them.
+func TestNonEVMShardsCarryNoChainID(t *testing.T) {
+	nonEVM := []string{"achain", "bchain", "dchain", "fchain", "gchain", "kchain", "mchain", "qchain", "zchain"}
+	for _, net := range []string{"localnet", "local"} {
+		for _, letter := range nonEVM {
+			path := filepath.Join(net, letter+".json")
+			raw, err := os.ReadFile(path)
+			if os.IsNotExist(err) {
+				continue
+			}
+			if err != nil {
+				t.Fatalf("%s: %v", path, err)
+			}
+			var shard map[string]any
+			if err := json.Unmarshal(raw, &shard); err != nil {
+				t.Fatalf("%s: %v", path, err)
+			}
+			if _, present := shard["chainId"]; present {
+				t.Errorf("%s declares chainId, but its VM signs no EVM transaction for one to protect. "+
+					"Only the C-Chain has an EVM chain id; give this chain none.", path)
+			}
+		}
 	}
 }

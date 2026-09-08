@@ -12,6 +12,5 @@
   "timestamp": 1735689600,
   "tradingPairs": [],
   "version": 1,
-  "vm": "DexVM",
-  "chainId": 31447
+  "vm": "DexVM"
 }

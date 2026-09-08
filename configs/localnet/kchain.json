@@ -5,12 +5,11 @@
     "keyvm",
     "kms"
   ],
-  "description": "KMS — key management (ML-KEM / ML-DSA / BLS)",
+  "description": "KMS \u2014 key management (ML-KEM / ML-DSA / BLS)",
   "message": "Lux K-Chain Genesis",
   "name": "K-Chain",
   "networkId": 1337,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "KeyVM",
-  "chainId": 32217
+  "vm": "KeyVM"
 }

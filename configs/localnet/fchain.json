@@ -4,7 +4,7 @@
     "fhe",
     "fhevm"
   ],
-  "description": "Threshold FHE confidential compute — off-EVM threshold DECRYPT (TFHE, ring N=1024 q=12289)",
+  "description": "Threshold FHE confidential compute \u2014 off-EVM threshold DECRYPT (TFHE, ring N=1024 q=12289)",
   "dkgParties": 10,
   "dkgThreshold": 7,
   "fhePrecompilePrefix": "0x07",
@@ -16,6 +16,5 @@
   "ringModulusQ": 12289,
   "timestamp": 1735689600,
   "version": 1,
-  "vm": "ThresholdVM",
-  "chainId": 32327
+  "vm": "ThresholdVM"
 }
