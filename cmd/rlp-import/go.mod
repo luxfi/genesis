@@ -5,4 +5,4 @@
 // which is unresolvable in a container build context.
 module github.com/luxfi/genesis/cmd/rlp-import
 
-go 1.26.4
+go 1.26.8

@@ -10,4 +10,4 @@
 // no module download and no network.
 module github.com/luxfi/genesis/cmd/rlp-export
 
-go 1.26.4
+go 1.26.8

@@ -1,6 +1,6 @@
 module github.com/luxfi/genesis/cmd
 
-go 1.26.5
+go 1.26.8
 
 // Tools-tier nested module. Imports the parent genesis module for
 // data types + the heavy luxfi/node SDK for wallet/tx-builder bits.

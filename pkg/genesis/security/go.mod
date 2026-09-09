@@ -1,6 +1,6 @@
 module github.com/luxfi/genesis/pkg/genesis/security
 
-go 1.26.3
+go 1.26.8
 
 // Security tier — uses luxfi/consensus for ChainSecurityProfile
 // verification. Kept SEPARATE so downstream consumers that only
