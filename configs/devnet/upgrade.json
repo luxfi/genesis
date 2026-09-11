@@ -92,6 +92,51 @@
       }
     },
     {
+      "aiInferenceConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "aivmBridgeConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "ed25519Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "kzg4844Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "modelRegistryConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "secp256r1Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "starkfriVerify": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "swapConfig": {
+        "blockTimestamp": 0
+      }
+    },
+    {
+      "v3Config": {
+        "blockTimestamp": 0
+      }
+    },
+    {
       "pulsarVerify": {
         "blockTimestamp": 1766708400
       }

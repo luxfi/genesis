@@ -256,6 +256,51 @@
           "rewardAddress": "0xF66B025b46844AFA5d6df54cf0C00E1583cE1abA"
         }
       }
+    },
+    {
+      "aiInferenceConfig": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "aivmBridgeConfig": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "ed25519Config": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "kzg4844Config": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "modelRegistryConfig": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "secp256r1Config": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "starkfriVerify": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "swapConfig": {
+        "blockTimestamp": 1790812800
+      }
+    },
+    {
+      "v3Config": {
+        "blockTimestamp": 1790812800
+      }
     }
   ],
   "stateUpgrades": [
