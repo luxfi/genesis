@@ -256,47 +256,47 @@
     },
     {
       "aiInferenceConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "aivmBridgeConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "ed25519Config": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "kzg4844Config": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "modelRegistryConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "secp256r1Config": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "starkfriVerify": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "swapConfig": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     },
     {
       "v3Config": {
-        "blockTimestamp": 0
+        "blockTimestamp": 1766708400
       }
     }
   ],
