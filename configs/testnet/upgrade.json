@@ -18,7 +18,7 @@
       }
     },
     {
-      "cggmp21Verify": {
+      "cggmp21Config": {
         "blockTimestamp": 0
       }
     },
@@ -52,7 +52,7 @@
       }
     },
     {
-      "frostVerify": {
+      "frostConfig": {
         "blockTimestamp": 0
       }
     },
@@ -67,7 +67,7 @@
       }
     },
     {
-      "mldsaVerify": {
+      "mldsaConfig": {
         "blockTimestamp": 0
       }
     },
@@ -82,7 +82,7 @@
       }
     },
     {
-      "slhdsaVerify": {
+      "slhdsaConfig": {
         "blockTimestamp": 0
       }
     },
@@ -92,27 +92,27 @@
       }
     },
     {
-      "pulsarVerify": {
+      "pulsarConfig": {
         "blockTimestamp": 1766708400
       }
     },
     {
-      "magnetarVerify": {
+      "magnetarConfig": {
         "blockTimestamp": 1766708400
       }
     },
     {
-      "p3qVerify": {
+      "p3qConfig": {
         "blockTimestamp": 1766708400
       }
     },
     {
-      "coronaThreshold": {
+      "coronaConfig": {
         "blockTimestamp": 1766708400
       }
     },
     {
-      "hqcEncapsulate": {
+      "hqcConfig": {
         "blockTimestamp": 1766708400
       }
     },
@@ -162,7 +162,7 @@
       }
     },
     {
-      "sr25519Verify": {
+      "sr25519Config": {
         "blockTimestamp": 1766708400
       }
     },
@@ -288,7 +288,7 @@
       }
     },
     {
-      "starkfriVerify": {
+      "starkfriConfig": {
         "blockTimestamp": 1766708400
       }
     },

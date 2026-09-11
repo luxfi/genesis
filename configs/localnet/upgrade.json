@@ -26,7 +26,7 @@
       }
     },
     {
-      "cggmp21Verify": {
+      "cggmp21Config": {
         "blockTimestamp": 0
       }
     },
@@ -60,7 +60,7 @@
       }
     },
     {
-      "frostVerify": {
+      "frostConfig": {
         "blockTimestamp": 0
       }
     },
@@ -75,7 +75,7 @@
       }
     },
     {
-      "mldsaVerify": {
+      "mldsaConfig": {
         "blockTimestamp": 0
       }
     },
@@ -90,7 +90,7 @@
       }
     },
     {
-      "slhdsaVerify": {
+      "slhdsaConfig": {
         "blockTimestamp": 0
       }
     },
@@ -100,27 +100,27 @@
       }
     },
     {
-      "pulsarVerify": {
+      "pulsarConfig": {
         "blockTimestamp": 0
       }
     },
     {
-      "magnetarVerify": {
+      "magnetarConfig": {
         "blockTimestamp": 0
       }
     },
     {
-      "p3qVerify": {
+      "p3qConfig": {
         "blockTimestamp": 0
       }
     },
     {
-      "coronaThreshold": {
+      "coronaConfig": {
         "blockTimestamp": 0
       }
     },
     {
-      "hqcEncapsulate": {
+      "hqcConfig": {
         "blockTimestamp": 0
       }
     },
@@ -170,7 +170,7 @@
       }
     },
     {
-      "sr25519Verify": {
+      "sr25519Config": {
         "blockTimestamp": 0
       }
     },
@@ -285,7 +285,7 @@
       }
     },
     {
-      "starkfriVerify": {
+      "starkfriConfig": {
         "blockTimestamp": 1766708400
       }
     },
