@@ -194,3 +194,6 @@ migrated-ethdb.disabled/
 # is not tidiness: without it the one document that reproduces mainnet is
 # untracked and no error says so.
 !live/**
+
+# Local symlinks to LLM.md
+CLAUDE.md
