@@ -1,0 +1,14 @@
+# Hanzo CI/CD for luxfi/genesis: .github/workflows/cicd.yml imports hanzoai/ci,
+# which reads this file. The build door builds each image, one BuildKit Job
+# per platform.
+images:
+  - name: rlp-export
+    context: .
+    dockerfile: Dockerfile.rlp-export
+    repo: ghcr.io/luxfi/rlp-export
+    platforms: [linux/amd64]
+  - name: rlp-import
+    context: .
+    dockerfile: Dockerfile.rlp-import
+    repo: ghcr.io/luxfi/rlp-import
+    platforms: [linux/amd64]
