@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-// upgradeFile holds the top-level keys of an upgrade.json and nothing else:
+// upgradeKeys holds the top-level keys of an upgrade.json and nothing else:
 // the same three fields as luxfi/evm's params/extras UpgradeConfig. The C-Chain
 // VM decodes upgrade bytes with DisallowUnknownFields (plugin/evm/vm.go), so a
 // key it does not know stops the chain from initializing at all.
-type upgradeFile struct {
+type upgradeKeys struct {
 	NetworkUpgradeOverrides json.RawMessage `json:"networkUpgradeOverrides,omitempty"`
 	StateUpgrades           json.RawMessage `json:"stateUpgrades,omitempty"`
 	PrecompileUpgrades      json.RawMessage `json:"precompileUpgrades,omitempty"`
@@ -36,7 +36,7 @@ func TestUpgradeFilesDecodeStrictly(t *testing.T) {
 			}
 			dec := json.NewDecoder(bytes.NewReader(b))
 			dec.DisallowUnknownFields()
-			var u upgradeFile
+			var u upgradeKeys
 			if err := dec.Decode(&u); err != nil {
 				t.Fatalf("%s: the VM would refuse this file: %v", path, err)
 			}
