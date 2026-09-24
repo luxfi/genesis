@@ -71,8 +71,10 @@ func readEmbedded(t *testing.T, network, name string, out any) {
 	}
 }
 
+// Recorded networks are absent: their C-Chain genesis is the one they were born
+// with, which schedules no split, so one reaches them by upgrade or not at all.
 func TestFeeSplitHasGovernedDestination(t *testing.T) {
-	for _, network := range embeddedNetworks {
+	for _, network := range assembledNetworks {
 		t.Run(network, func(t *testing.T) {
 			var cchain cChainFile
 			readEmbedded(t, network, "cchain.json", &cchain)

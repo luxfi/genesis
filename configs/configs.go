@@ -71,7 +71,11 @@ const (
 var embeddedGenesis embed.FS
 
 // GetGenesis returns the genesis JSON bytes for a network ID.
-// It supports dynamic P-Chain allocations via environment variables or files:
+//
+// A network with history — mainnet and testnet — returns the document it was
+// born from, byte for byte (recorded). Every other shipped network is
+// assembled from its shards, and supports dynamic P-Chain allocations via
+// environment variables or files:
 //   - PCHAIN_ALLOCS: JSON string of allocations
 //   - PCHAIN_ALLOCS_FILE: Path to allocations JSON file
 //   - ~/.lux/genesis/{network}/pchain.json: Standard override location
@@ -88,6 +92,9 @@ func GetGenesis(networkID uint32) ([]byte, error) {
 		data, err := loadEmbeddedGenesisWithDynamic(networkName, dynamicPChain)
 		if err == nil {
 			return data, nil
+		}
+		if recorded(networkName) {
+			return nil, err
 		}
 	}
 
@@ -173,17 +180,31 @@ func loadDynamicPChainAllocations(networkName string) *genesis.PChainConfig {
 	return nil
 }
 
+// recorded reports whether a network ships the genesis it was born from.
+//
+// A network with history cannot have its genesis changed: the bytes are its
+// identity — every blockchain ID, the staker set, the units every balance
+// since block 0 is denominated in. So mainnet and testnet ship the document
+// their validators boot (the luxd-genesis ConfigMap), and a node started
+// without --genesis-file joins that network rather than one with the right
+// block 0 and different chain IDs. They are 9-decimal by birth, and keep the
+// retired tChainGenesis they were born with.
+func recorded(networkName string) bool {
+	_, err := fs.Stat(embeddedGenesis, networkName+"/genesis.json")
+	return err == nil
+}
+
 // loadEmbeddedGenesisWithDynamic loads genesis with optional dynamic P-Chain allocations.
 func loadEmbeddedGenesisWithDynamic(networkName string, dynamicPChain *genesis.PChainConfig) ([]byte, error) {
-	// network.json plus the shard tree is the only way a chain set is
-	// spelled. A pre-split combined genesis.json used to stand in here when
-	// network.json or pchain.json was unreadable. That fallback outlived the
-	// LP-134 T -> {F,M} split: the combined files still carried the retired
-	// tChainGenesis key, which no longer binds to any field, so falling back
-	// founded a network with no M-Chain and no F-Chain. An absent M-Chain
-	// leaves MChainID empty, and every restricted chain then refuses to
-	// activate. Read failures are reported, never answered with a quieter
-	// genesis.
+	if recorded(networkName) {
+		if dynamicPChain != nil && len(dynamicPChain.Allocations) > 0 {
+			return nil, fmt.Errorf("%s: its genesis is recorded; allocations given to it would found a different network", networkName)
+		}
+		return embeddedGenesis.ReadFile(networkName + "/genesis.json")
+	}
+
+	// Every other network is network.json plus the shard tree. Read failures
+	// are reported, never answered with a quieter genesis.
 	networkData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "network.json"))
 	if err != nil {
 		return nil, fmt.Errorf("%s: read network.json: %w", networkName, err)
@@ -482,98 +503,6 @@ func networkNameFromID(networkID uint32) string {
 	default:
 		return ""
 	}
-}
-
-// GetCanonicalGenesisBytes returns the canonical genesis bytes for a network.
-// This function builds the genesis from split files (network.json, pchain.json, cchain.json)
-// to ensure cChainGenesis is properly serialized as a JSON string.
-//
-// CRITICAL: The embedded genesis.json stores cChainGenesis as an object for easy editing,
-// but luxd requires it to be a JSON-encoded string. This function handles the conversion.
-func GetCanonicalGenesisBytes(networkID uint32) ([]byte, error) {
-	networkName := networkNameFromID(networkID)
-	if networkName == "" {
-		return nil, fmt.Errorf("unknown network ID: %d", networkID)
-	}
-
-	// First, try to build from split files (network.json + pchain.json + cchain.json)
-	// This properly stringifies cChainGenesis
-	data, err := buildCanonicalGenesisFromSplitFiles(networkName)
-	if err == nil {
-		return data, nil
-	}
-
-	// Fall back to file system locations with split files
-	home, _ := os.UserHomeDir()
-	candidates := []string{
-		filepath.Join(home, "work/lux/genesis/configs", networkName),
-		filepath.Join(home, ".lux/genesis", networkName),
-		filepath.Join("/etc/lux/genesis", networkName),
-	}
-
-	for _, dir := range candidates {
-		if data, err := buildGenesisFromDir(dir); err == nil {
-			return data, nil
-		}
-	}
-
-	return nil, fmt.Errorf("canonical genesis not found for network %s (need split files: network.json, pchain.json, cchain.json)", networkName)
-}
-
-// buildCanonicalGenesisFromSplitFiles builds genesis from embedded split files.
-// This ensures cChainGenesis is properly serialized as a JSON string.
-func buildCanonicalGenesisFromSplitFiles(networkName string) ([]byte, error) {
-	// Load network.json
-	networkData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "network.json"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read network.json: %w", err)
-	}
-	var network genesis.NetworkConfig
-	if err := json.Unmarshal(networkData, &network); err != nil {
-		return nil, fmt.Errorf("failed to parse network.json: %w", err)
-	}
-
-	// Load pchain.json
-	pchainData, err := embeddedGenesis.ReadFile(filepath.Join(networkName, "pchain.json"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read pchain.json: %w", err)
-	}
-	var pchain genesis.PChainConfig
-	if err := json.Unmarshal(pchainData, &pchain); err != nil {
-		return nil, fmt.Errorf("failed to parse pchain.json: %w", err)
-	}
-
-	// Opt-in chains via embedded shards. Same data-driven contract as
-	// the primary loader: shard present → chain emitted; absent → skipped.
-	chainShards, err := loadAllChainShards(networkName)
-	if err != nil {
-		return nil, err
-	}
-
-	// Build combined genesis config
-	config := genesis.ConfigOutput{
-		NetworkID:                  network.NetworkID,
-		Allocations:                pchain.Allocations,
-		StartTime:                  network.StartTime,
-		InitialStakeDuration:       pchain.InitialStakeDuration,
-		InitialStakeDurationOffset: pchain.InitialStakeDurationOffset,
-		InitialStakedFunds:         pchain.InitialStakedFunds,
-		InitialStakers:             pchain.InitialStakers,
-		XChainGenesis:              chainShards.X,
-		CChainGenesis:              chainShards.C,
-		DChainGenesis:              chainShards.D,
-		QChainGenesis:              chainShards.Q,
-		AChainGenesis:              chainShards.A,
-		BChainGenesis:              chainShards.B,
-		FChainGenesis:              chainShards.F,
-		ZChainGenesis:              chainShards.Z,
-		GChainGenesis:              chainShards.G,
-		KChainGenesis:              chainShards.K,
-		MChainGenesis:              chainShards.M,
-		Message:                    network.Message,
-	}
-
-	return json.Marshal(config)
 }
 
 // loadGenesisFromFS loads genesis from file system locations.

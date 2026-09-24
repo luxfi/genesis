@@ -21,7 +21,9 @@ import (
 // "no two chains share an alias" in a single assertion — and makes the class of
 // self-contradictory include/exclude lists impossible by construction.
 
-var lp134Nets = []string{"mainnet", "testnet", "devnet", "localnet"}
+// The split applies where a chain set is written as shards. mainnet and testnet
+// keep the chain set they were born with (recorded).
+var lp134Nets = assembledNetworks
 
 type lp134Spec struct {
 	letter      string
@@ -97,8 +99,8 @@ func TestLP134Split(t *testing.T) {
 	}
 }
 
-// TestChainSetHasOneSource asserts the shard tree is the only place a network's
-// chain set is written down.
+// TestChainSetHasOneSource asserts a network's chain set is written down in one
+// place: its recorded genesis.json if it has history, its shard tree if not.
 //
 // A combined genesis.json used to sit beside the shards as a fallback. It went
 // stale at the LP-134 split — still keyed tChainGenesis, never gaining
@@ -109,6 +111,16 @@ func TestLP134Split(t *testing.T) {
 // before it agrees to activate. Two sources for one fact is the whole bug;
 // deleting the second one is the fix.
 func TestChainSetHasOneSource(t *testing.T) {
+	for _, net := range []string{"mainnet", "testnet"} {
+		if !recorded(net) {
+			t.Errorf("%s: no recorded genesis.json", net)
+		}
+		for _, letter := range []string{"x", "c", "d", "q", "a", "b", "f", "z", "g", "k", "m"} {
+			if _, err := os.Stat(lp134Path(net, letter)); !os.IsNotExist(err) {
+				t.Errorf("%s: %schain.json beside a recorded genesis is a second source for the chain set", net, letter)
+			}
+		}
+	}
 	for _, net := range lp134Nets {
 		for _, stale := range []string{"genesis.json", "genesis-new.json"} {
 			if _, err := os.Stat(filepath.Join("..", "configs", net, stale)); !os.IsNotExist(err) {

@@ -1,0 +1,130 @@
+{
+  "networkID": 2,
+  "allocations": [
+    {
+      "evmAddr": "0x5e3df93a78f6b9a9bf9f59bfc557a3fe919137c3",
+      "utxoAddr": "P-test1tv8gnrh8sg2xc658r9vafdu47kvdqyg3954suj",
+      "initialAmount": 0,
+      "unlockSchedule": [
+        {
+          "amount": 50000000000000,
+          "locktime": 0
+        }
+      ]
+    },
+    {
+      "evmAddr": "0xe23b18e77cb2349207d8d83764980152be5dcad5",
+      "utxoAddr": "P-test1vq2pe7xqslyzqr6xp50w5v2pqw0cgv0jslpkl0",
+      "initialAmount": 0,
+      "unlockSchedule": [
+        {
+          "amount": 50000000000000,
+          "locktime": 0
+        }
+      ]
+    },
+    {
+      "evmAddr": "0x1326c8665e6624b529f124b629b92f7220f9daab",
+      "utxoAddr": "P-test1a2qnwvxwfyhehajvgllhv8hsjw635u8qnyqulp",
+      "initialAmount": 0,
+      "unlockSchedule": [
+        {
+          "amount": 50000000000000,
+          "locktime": 0
+        }
+      ]
+    },
+    {
+      "evmAddr": "0x30a0ac67f1455211d07691288d3d3dedc7afa61a",
+      "utxoAddr": "P-test1jj07usnxqsfhek2deu5r6qgft4fn4zj3trghml",
+      "initialAmount": 0,
+      "unlockSchedule": [
+        {
+          "amount": 50000000000000,
+          "locktime": 0
+        }
+      ]
+    },
+    {
+      "evmAddr": "0x309798a4f63ae8e82506a2fc8f34e0c45e58e8c8",
+      "utxoAddr": "P-test1j47yxm4c2x033gk8zxguj5604za98u6ly90faq",
+      "initialAmount": 0,
+      "unlockSchedule": [
+        {
+          "amount": 50000000000000,
+          "locktime": 0
+        }
+      ]
+    },
+    {
+      "evmAddr": "0x28b154e381cfd36e66a22bb9236f8a5b0b47d00a",
+      "utxoAddr": "P-test19zc4fcupelfkue4z9wujxmu2tv9505q27ph88j",
+      "initialAmount": 0,
+      "unlockSchedule": [
+        {
+          "amount": 100000000000,
+          "locktime": 0
+        }
+      ]
+    }
+  ],
+  "startTime": 1780422426,
+  "initialStakeDuration": 31536000,
+  "initialStakeDurationOffset": 5400,
+  "initialStakedFunds": [
+    "P-test1tv8gnrh8sg2xc658r9vafdu47kvdqyg3954suj",
+    "P-test1vq2pe7xqslyzqr6xp50w5v2pqw0cgv0jslpkl0",
+    "P-test1a2qnwvxwfyhehajvgllhv8hsjw635u8qnyqulp",
+    "P-test1jj07usnxqsfhek2deu5r6qgft4fn4zj3trghml",
+    "P-test1j47yxm4c2x033gk8zxguj5604za98u6ly90faq"
+  ],
+  "initialStakers": [
+    {
+      "nodeID": "NodeID-Jc1ACAWeKDZR4N5PgxNsPrrcKrKMTh4ct",
+      "rewardAddress": "P-test1tv8gnrh8sg2xc658r9vafdu47kvdqyg3954suj",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0xb57029264ce3e70b26ebd7c8796ee0a097f878973448716a6a61e3b0243f822aba62665f3a6dd318f688ca1baa9248c5",
+        "proofOfPossession": "0xa4ea78beabc3fdd9b2f6be1204f8c63a2ee0452ab7ea0977c102714f6a4d3a50c6bcb51e8fcb97fab51a4f4649c3367b10fde7b6960bfb7fc2785c6fb77a65dcd448ddf5533914930c919a296253c6dbb25d79443c96309c53dcc3477e553dde"
+      }
+    },
+    {
+      "nodeID": "NodeID-CTyFvG1HYdcMLqdmKwqA8EFPRQdmrNat3",
+      "rewardAddress": "P-test1vq2pe7xqslyzqr6xp50w5v2pqw0cgv0jslpkl0",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0xa8c919018cece3848005a5ccb70239bd9d7e4847ca3a5509e0038be4be3ef2bf4c448b838e1a6f64a72face134c0300d",
+        "proofOfPossession": "0xa665d53d4e5a56883799004ff6afb2d8f8b075bb51aad0568bb6e2dd27afb676bf93d0559481c69088205edafffafa090c470af7888e19c7ce29be2a9e5f261c8216c6d4e8bec3bf0a07f15b3731721c2f1a4e551b56eb729d33ba28ecbe7b93"
+      }
+    },
+    {
+      "nodeID": "NodeID-Hvsc6vanABE3ufcMhpMVEMVGpZ68DhoMb",
+      "rewardAddress": "P-test1a2qnwvxwfyhehajvgllhv8hsjw635u8qnyqulp",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0x8311f8eb155c17c3331fe16b1ead106d79674ed56979df1188fad111af4bc632d1d9bccf8dcc63a314d8b3cd6e015c8a",
+        "proofOfPossession": "0x80eed5ca57a1ed4a07f65e9661cce582fcab20e3703f8db4f6d322ee871c6d13ca736d564c72170f55f3cc5b1f992f4310888a5c65fba9bd6a72ddb36917794a1fe4762f71776acc514000224cf418ef5ffcd00fb67c3e72a6228db606334e08"
+      }
+    },
+    {
+      "nodeID": "NodeID-44e37hMkUbjpoWsJrWcvBB4kcMK3ab8qg",
+      "rewardAddress": "P-test1jj07usnxqsfhek2deu5r6qgft4fn4zj3trghml",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0xa1efbd891644e1ec9c4f4e423e9a336dfafe551634dd222426734881b80bd80bebf34d06e95da5cf6222735e172ee21a",
+        "proofOfPossession": "0x8db0c22bf8ffc19964eb1d8c952fd0aa7cc12ee44941e3bbcd126bf54b9f90e4becd826819e68d6bb6eb368ce278531618b95e04c09c1eb7cb4a727c5a380c752894621ea3d80888fa11d8eca26e785d97978814e931f6141cf7f1069cda28c0"
+      }
+    },
+    {
+      "nodeID": "NodeID-HcFvgYUxXJx4gzQ7Sgsj8grYK6FDEgBrr",
+      "rewardAddress": "P-test1j47yxm4c2x033gk8zxguj5604za98u6ly90faq",
+      "delegationFee": 20000,
+      "signer": {
+        "publicKey": "0xa07f54a097a707887321389d1234fad5deb7a694af48224edb4206883a1569b6b3e66338fea993ce691db5a0a9690766",
+        "proofOfPossession": "0xa8430081d55f578c8060b8042b6b3e41d2583c87c1896b72d908b68efb96027ab86fa6ba3ef7f6e22aa4a56abb4eaa69053e7adbab4a292152b94921070e0621ff8948b92bc2aa7641381b20d340be355e42086946e78c2b175441e1e6c43b9a"
+      }
+    }
+  ],
+  "cChainGenesis": "{\n  \"config\": {\n    \"chainId\": 96368,\n    \"homesteadBlock\": 0,\n    \"eip150Block\": 0,\n    \"eip155Block\": 0,\n    \"eip158Block\": 0,\n    \"byzantiumBlock\": 0,\n    \"constantinopleBlock\": 0,\n    \"petersburgBlock\": 0,\n    \"istanbulBlock\": 0,\n    \"muirGlacierBlock\": 0,\n    \"berlinBlock\": 0,\n    \"londonBlock\": 0,\n    \"arrowGlacierBlock\": 0,\n    \"grayGlacierBlock\": 0,\n    \"mergeNetsplitBlock\": 0,\n    \"terminalTotalDifficulty\": 0,\n    \"shanghaiTime\": 0,\n    \"cancunTime\": 0,\n    \"evmTimestamp\": 0,\n    \"blobSchedule\": {\n      \"cancun\": {\n        \"baseFeeUpdateFraction\": 3338477,\n        \"max\": 6,\n        \"target\": 3\n      }\n    },\n    \"feeConfig\": {\n      \"gasLimit\": 12000000,\n      \"targetBlockRate\": 2,\n      \"minBaseFee\": 25000000000,\n      \"targetGas\": 500000000,\n      \"baseFeeChangeDenominator\": 36,\n      \"minBlockGasCost\": 0,\n      \"maxBlockGasCost\": 1000000,\n      \"blockGasCostStep\": 200000\n    },\n    \"warpConfig\": {\n      \"blockTimestamp\": 1730517266,\n      \"quorumNumerator\": 67,\n      \"requirePrimaryNetworkSigners\": false\n    }\n  },\n  \"nonce\": \"0x0\",\n  \"timestamp\": \"0x67259912\",\n  \"extraData\": \"0x\",\n  \"gasLimit\": \"0xb71b00\",\n  \"difficulty\": \"0x0\",\n  \"mixHash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n  \"coinbase\": \"0x0000000000000000000000000000000000000000\",\n  \"alloc\": {\n    \"0200000000000000000000000000000000000005\": {\n      \"balance\": \"0x0\",\n      \"code\": \"0x01\",\n      \"nonce\": \"0x1\"\n    },\n    \"0x9011E888251AB053B7bD1cdB598Db4f9DEd94714\": {\n      \"balance\": \"0x193e5939a08ce9dbd480000000\"\n    }\n  },\n  \"baseFeePerGas\": \"0x5d21dba00\",\n  \"number\": \"0x0\",\n  \"gasUsed\": \"0x0\",\n  \"parentHash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\n  \"skipPostMergeFields\": true\n}\n",
+  "message": "Lux et Veritas"
+}

@@ -7,24 +7,34 @@ This repository contains the canonical genesis configurations for all Lux networ
 ## Directory Structure
 
 ```
-genesis/
-├── mainnet/           # LUX Mainnet (Chain ID: 96369)
-│   ├── cchain.json    # C-Chain genesis (EVM compatible)
-│   ├── pchain.json    # P-Chain genesis (ProtocolVM)
-│   ├── xchain.json    # X-Chain genesis (Exchange chain)
-│   ├── network.json   # Network configuration
-│   └── genesis.json   # Full network genesis
-├── testnet/           # LUX Testnet (Chain ID: 96368)
-│   ├── cchain.json    # C-Chain genesis (EVM compatible)
-│   └── genesis.json   # Full testnet genesis
-├── devnet/            # LUX Devnet (Chain ID: 96367) - Fast iteration network
-│   └── cchain.json    # C-Chain genesis (EVM compatible)
-├── local/             # Local development network (Chain ID: 1337)
-│   ├── cchain.json    # C-Chain genesis (EVM compatible)
-│   └── genesis.json   # Local network genesis
-├── bootstrappers.json # Network bootstrapper nodes
-└── checkpoints.json   # Network checkpoints
+configs/
+├── mainnet/             # network 1, C-Chain 96369 — recorded
+│   ├── genesis.json     # the genesis its validators boot, byte for byte
+│   ├── upgrade.json
+│   └── bootstrappers.json
+├── testnet/             # network 2, C-Chain 96368 — recorded
+│   └── …                # the same three files
+├── devnet/              # network 3, C-Chain 96367 — assembled
+│   ├── network.json
+│   ├── pchain.json
+│   └── {x,c,d,q,a,b,f,z,g,k,m}chain.json
+└── localnet/            # network 1337, C-Chain 31337 — assembled
 ```
+
+## Recorded and assembled networks
+
+A network with history cannot have its genesis changed: the bytes are its
+identity — every blockchain ID, the staker set, and the units every balance
+since block 0 is denominated in. So **mainnet and testnet are recorded**:
+`genesis.json` is the document in their `luxd-genesis` ConfigMap, and
+`GetGenesis` returns it byte for byte. A node started without `--genesis-file`
+joins the running network — C-Chain `2Hx3UMuW…` with block 0 `0x3f4fa2a0…` on
+mainnet, `5kjSQWfw…` with block 0 `0x1c5fe377…` on testnet. Both are 9-decimal
+by birth, and allocations handed to them are refused.
+
+**devnet, localnet and new networks are assembled** from `network.json`,
+`pchain.json` and one shard per chain, in 6-decimal units. A shard present is a
+chain in genesis; a shard absent is not.
 
 ## Mainnet C-Chain Genesis
 
@@ -37,7 +47,7 @@ The mainnet C-Chain was initialized with a single genesis allocation:
 ### Key Parameters
 
 - **Chain ID**: 96369
-- **Gas Limit**: 30,000,000 (0x1C9C380)
+- **Gas Limit**: 12,000,000 (0xB71B00)
 - **Min Base Fee**: 25 gwei
 - **Block Rate**: 2 seconds
 
@@ -45,16 +55,16 @@ The mainnet C-Chain was initialized with a single genesis allocation:
 
 | Network | Chain ID | Network ID | Purpose |
 |---------|----------|------------|---------|
-| LUX Mainnet | 96369 | 96369 | Production network |
-| LUX Testnet | 96368 | 96368 | Public test network |
+| LUX Mainnet | 96369 | 1 | Production network |
+| LUX Testnet | 96368 | 2 | Public test network |
 | LUX Devnet | 96367 | 3 | Fast iteration dev network |
-| Local | 1337 | 1337 | Local development |
+| Local | 31337 | 1337 | Local development |
 
 ## Network Configurations
 
 ### Mainnet (96369)
 - **Block Rate**: 2 seconds
-- **Gas Limit**: 30M
+- **Gas Limit**: 12M
 - **Min Base Fee**: 25 gwei
 - **Genesis Account**: `0x9011...` with 2T LUX
 
@@ -127,7 +137,8 @@ git clone https://github.com/luxfi/genesis
 git clone https://github.com/luxfi/state
 
 # Initialize with genesis
-geth init --datadir /path/to/db genesis/mainnet/cchain.json
+jq -r .cChainGenesis genesis/configs/mainnet/genesis.json > cchain.json
+geth init --datadir /path/to/db cchain.json
 
 # Import blocks from state repo
 geth import --datadir /path/to/db state/rlp/lux-mainnet/lux-mainnet-96369.rlp

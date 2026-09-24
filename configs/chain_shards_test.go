@@ -54,7 +54,7 @@ func TestGetGenesis_CChainShardPresentEmbedsCChainGenesis(t *testing.T) {
 // builder.FromConfig is now sourced from the shard, so a P-only
 // network (P-only shape) can opt out by simply omitting the file.
 func TestGetGenesis_XChainShardPresentEmbedsXChainGenesis(t *testing.T) {
-	for _, name := range []string{"mainnet", "testnet", "localnet"} {
+	for _, name := range []string{"localnet"} {
 		t.Run(name, func(t *testing.T) {
 			data, err := GetGenesis(networkIDFromName(t, name))
 			if err != nil {
@@ -170,8 +170,8 @@ func networkIDFromName(t *testing.T, name string) uint32 {
 // If a future genesis intentionally needs to omit a chain (e.g. a P+X-only
 // regulated-securities L1), that's a NEW config-tree, not a regression on the
 // canonical Lux primary networks. Editing this test to drop a chain on
-// mainnet/testnet/devnet is a load-bearing decision — bring it to design
-// review.
+// devnet is a load-bearing decision — bring it to design review. mainnet and
+// testnet are recorded: their chain set is the one they were born with.
 func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 	required := []string{
 		"xChainGenesis",
@@ -186,7 +186,7 @@ func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 		"kChainGenesis",
 		"mChainGenesis",
 	}
-	for _, name := range []string{"mainnet", "testnet", "devnet", "localnet"} {
+	for _, name := range assembledNetworks {
 		t.Run(name, func(t *testing.T) {
 			data, err := GetGenesis(networkIDFromName(t, name))
 			if err != nil {
@@ -254,14 +254,6 @@ func TestGetGenesis_AllPrimaryChainsBakedIn(t *testing.T) {
 // its letter. Not a number in this range.
 func TestPrimaryChainShards_PerChainCanonicalChainID(t *testing.T) {
 	want := map[string]map[string]int{
-		"mainnet": {
-			"d": 96469, "q": 96569, "a": 96669, "b": 96769,
-			"f": 97269, "z": 96969, "g": 97069, "k": 97169, "m": 97369,
-		},
-		"testnet": {
-			"d": 96468, "q": 96568, "a": 96668, "b": 96768,
-			"f": 97268, "z": 96968, "g": 97068, "k": 97168, "m": 97368,
-		},
 		"devnet": {
 			"d": 96470, "q": 96570, "a": 96670, "b": 96770,
 			"f": 97270, "z": 96970, "g": 97070, "k": 97170, "m": 97370,
